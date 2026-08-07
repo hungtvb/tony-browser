@@ -1,10 +1,25 @@
 import React, { useState } from 'react'
 
 const styles: Record<string, React.CSSProperties> = {
-  bar: { display: 'flex', gap: 8, padding: '8px 10px', background: '#14161c', borderBottom: '1px solid #2a2e39' },
-  input: { flex: 1, padding: '8px 14px', borderRadius: 20, border: '1px solid #2a2e39', background: '#1a1d24', color: '#e5e7eb', fontSize: 14, outline: 'none' },
-  btn: { padding: '8px 16px', borderRadius: 20, border: 'none', background: '#3b5bdb', color: '#fff', cursor: 'pointer', fontWeight: 600 },
-  ai: { padding: '8px 14px', borderRadius: 20, border: '1px solid #2a2e39', background: '#1a1d24', cursor: 'pointer', fontSize: 16 },
+  bar: {
+    display: 'flex', gap: 8, padding: '8px 14px', background: 'rgba(28,28,30,0.85)',
+    backdropFilter: 'saturate(180%) blur(20px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+    borderBottom: '1px solid rgba(255,255,255,0.08)', alignItems: 'center',
+  },
+  input: {
+    flex: 1, padding: '7px 14px', borderRadius: 980, border: '1px solid rgba(255,255,255,0.12)',
+    background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 13, outline: 'none',
+    letterSpacing: '-0.12px', transition: 'border-color 0.15s ease, background 0.15s ease',
+  },
+  btn: {
+    padding: '7px 18px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)',
+    color: '#fff', cursor: 'pointer', fontWeight: 500, fontSize: 13, letterSpacing: '-0.12px',
+  },
+  ai: {
+    padding: '7px 14px', borderRadius: 980, border: '1px solid rgba(255,255,255,0.12)',
+    background: 'rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: 15,
+  },
 }
 
 export default function AddressBar({ onNavigate, onOpenAI }: { onNavigate: (url: string) => void; onOpenAI: () => void }) {
@@ -19,10 +34,16 @@ export default function AddressBar({ onNavigate, onOpenAI }: { onNavigate: (url:
 
   return (
     <div style={styles.bar}>
-      <input style={styles.input} placeholder="Nhập địa chỉ web hoặc tìm kiếm..." value={value}
-        onChange={e => setValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && go()} />
-      <button style={styles.btn} onClick={go}>Đi</button>
-      <button style={styles.ai} title="Trợ lý AI" onClick={onOpenAI}>🪄</button>
+      <input
+        className="apple-focus"
+        style={styles.input}
+        placeholder="Nhập địa chỉ web hoặc tìm kiếm..."
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && go()}
+      />
+      <button className="apple-focus" style={styles.btn} onClick={go}>Đi</button>
+      <button className="apple-focus" style={styles.ai} title="Trợ lý AI" onClick={onOpenAI}>🪄</button>
     </div>
   )
 }

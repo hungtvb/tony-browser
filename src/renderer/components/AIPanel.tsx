@@ -1,23 +1,38 @@
 import React, { useState, useEffect } from 'react'
-import type { AIConfig, AIStatus } from '../../shared/types'
+import type { AIConfig } from '../../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
   panel: {
-    position: 'fixed', top: 92, right: 0, bottom: 0, width: 380, zIndex: 100,
-    background: '#1a1d24', borderLeft: '1px solid #2a2e39', display: 'flex',
-    flexDirection: 'column',
+    position: 'fixed', top: 0, right: 0, bottom: 0, width: 380, zIndex: 100,
+    background: 'rgba(20,20,22,0.96)',
+    backdropFilter: 'saturate(180%) blur(24px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(24px)',
+    borderLeft: '1px solid rgba(255,255,255,0.08)',
+    display: 'flex', flexDirection: 'column',
   },
-  header: { padding: '10px 14px', borderBottom: '1px solid #2a2e39', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  body: { flex: 1, overflow: 'auto', padding: 12, fontSize: 13, lineHeight: 1.6 },
-  inputRow: { display: 'flex', gap: 6, padding: 10, borderTop: '1px solid #2a2e39' },
-  input: { flex: 1, padding: 8, borderRadius: 8, border: '1px solid #2a2e39', background: '#111318', color: '#e5e7eb', outline: 'none' },
-  btn: { padding: '8px 12px', borderRadius: 8, border: 'none', background: '#3b5bdb', color: '#fff', cursor: 'pointer' },
-  actions: { display: 'flex', gap: 6, padding: '6px 10px' },
-  chip: { padding: '5px 10px', borderRadius: 12, background: '#2a2e39', color: '#c9ced8', fontSize: 12, cursor: 'pointer', border: 'none' },
-  settings: { background: '#111318', borderRadius: 8, padding: 10, marginBottom: 10 },
-  config: { width: '100%', marginBottom: 6, padding: 6, borderRadius: 6, border: '1px solid #2a2e39', background: '#1a1d24', color: '#e5e7eb', fontSize: 12 },
-  field: { width: '100%', marginBottom: 6, padding: 6, borderRadius: 6, border: '1px solid #2a2e39', background: '#1a1d24', color: '#e5e7eb', fontSize: 12 },
-  text: { fontSize: 13 },
+  header: {
+    padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+    fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    fontSize: 15, letterSpacing: '-0.12px',
+  },
+  body: { flex: 1, overflow: 'auto', padding: 14, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.12px' },
+  inputRow: { display: 'flex', gap: 6, padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' },
+  input: {
+    flex: 1, padding: 8, borderRadius: 980, border: '1px solid rgba(255,255,255,0.12)',
+    background: 'rgba(255,255,255,0.08)', color: '#fff', outline: 'none', fontSize: 13,
+  },
+  btn: { padding: '8px 14px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)', color: '#fff', cursor: 'pointer', fontSize: 13 },
+  actions: { display: 'flex', gap: 6, padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' },
+  chip: {
+    padding: '4px 12px', borderRadius: 980, background: 'rgba(255,255,255,0.08)',
+    color: 'rgba(255,255,255,0.85)', fontSize: 11, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
+  },
+  settings: { background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, margin: '0 14px', marginTop: 10 },
+  config: {
+    width: '100%', marginBottom: 8, padding: 7, borderRadius: 8,
+    border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(0,0,0,0.3)',
+    color: '#fff', fontSize: 12, outline: 'none',
+  },
 }
 
 export default function AIPanel({ onClose, activeTabId }: { onClose: () => void; activeTabId: string }) {
@@ -50,8 +65,8 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       <div style={styles.header}>
         <span>🪄 Trợ lý AI</span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button style={styles.chip} onClick={() => setShowSettings(s => !s)}>⚙️</button>
-          <button style={styles.chip} onClick={onClose}>✕</button>
+          <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)}>⚙️</button>
+          <button className="apple-focus" style={styles.chip} onClick={onClose}>✕</button>
         </div>
       </div>
 
@@ -63,24 +78,24 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
             onChange={e => setConfig({ ...config, apiKey: e.target.value })} />
           <input style={styles.config} placeholder="Model (vd: gpt-4o-mini)" value={config.model}
             onChange={e => setConfig({ ...config, model: e.target.value })} />
-          <button style={styles.btn} onClick={saveCfg}>Lưu</button>
+          <button className="apple-focus" style={{ ...styles.btn, width: '100%' }} onClick={saveCfg}>Lưu cấu hình</button>
         </div>
       )}
 
       <div style={styles.actions}>
-        <button style={styles.chip} onClick={() => run('summarizePage')}>📄 Tóm tắt trang</button>
-        <button style={styles.chip} onClick={() => run('summarizeAll')}>📚 Tổng hợp tab</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Tóm tắt trang</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Tổng hợp tab</button>
       </div>
 
-      <div style={styles.body} className="ai-output">
-        <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>{out}</pre>
+      <div style={styles.body}>
+        <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{out}</pre>
       </div>
 
       <div style={styles.inputRow}>
         <input style={styles.input} placeholder="Hỏi gì về trang này?" value={msg}
           onChange={e => setMsg(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && run('chat', msg)} />
-        <button style={styles.btn} onClick={() => run('chat', msg)}>Gửi</button>
+        <button className="apple-focus" style={styles.btn} onClick={() => run('chat', msg)}>Gửi</button>
       </div>
     </div>
   )

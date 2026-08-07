@@ -5,10 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tony Browser</title>
     <style>
+      /* ─── Apple Design Tokens ─── */
+      :root {
+        --apple-bg: #000000;
+        --apple-bg-light: #1d1d1f;
+        --apple-surface: #272729;
+        --apple-surface2: #2a2a2d;
+        --apple-text: #ffffff;
+        --apple-text-secondary: rgba(255, 255, 255, 0.64);
+        --apple-text-tertiary: rgba(255, 255, 255, 0.48);
+        --apple-blue: #0071e3;
+        --apple-blue-bright: #2997ff;
+        --apple-gray-1: #f5f5f7;
+        --apple-gray-text: #1d1d1f;
+        --apple-glass: rgba(22, 22, 24, 0.72);
+        --apple-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+        --apple-radius-sm: 5px;
+        --apple-radius: 8px;
+        --apple-radius-lg: 12px;
+        --apple-radius-pill: 980px;
+        --apple-space: 8px;
+        --apple-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        --apple-font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: system-ui, -apple-system, sans-serif; background: #0f1115; color: #e5e7eb; overflow: hidden; }
+      body {
+        font-family: var(--apple-font);
+        background: #000000;
+        color: var(--apple-text);
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: -0.12px;
+      }
+      ::selection { background: var(--apple-blue); color: #fff; }
+
+      /* Scrollbar kiểu macOS */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 8px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+
+      .apple-focus:focus-visible {
+        outline: 2px solid var(--apple-blue);
+        outline-offset: 2px;
+        border-radius: var(--apple-radius);
+      }
     </style>
-    <script type="module" crossorigin src="./assets/index-QmUhYPvl.js"></script>
+    <script type="module" crossorigin src="./assets/index-CVmV-jLV.js"></script>
   </head>
   <body>
     <div id="root"></div>

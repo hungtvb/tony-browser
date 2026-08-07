@@ -2,15 +2,23 @@ import React, { useEffect, useState } from 'react'
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
-    display: 'flex', gap: 6, padding: '6px 10px', background: '#14161c',
-    borderBottom: '1px solid #2a2e39', alignItems: 'center',
+    display: 'flex', gap: 6, padding: '6px 14px', background: 'rgba(28,28,30,0.7)',
+    borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center',
+    backdropFilter: 'saturate(180%) blur(12px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(12px)',
   },
   chip: {
-    padding: '4px 10px', borderRadius: 12, fontSize: 12, cursor: 'pointer',
-    border: '1px solid #2a2e39', background: '#1a1d24', color: '#c9ced8',
+    padding: '3px 11px', borderRadius: 980, fontSize: 11, cursor: 'pointer',
+    border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)',
+    color: 'rgba(255,255,255,0.8)', letterSpacing: '-0.08px', transition: 'all 0.15s ease',
   },
-  active: { background: '#2f9e44', borderColor: '#2f9e44', color: '#fff' },
-  label: { fontSize: 12, color: '#6b7280', marginLeft: 'auto' },
+  chipStatic: {
+    padding: '3px 11px', borderRadius: 980, fontSize: 11, border: '1px solid rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.64)', letterSpacing: '-0.08px',
+  },
+  active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#fff' },
+  warn: { color: '#ff9f0a' },
+  label: { fontSize: 11, color: 'rgba(255,255,255,0.48)', marginLeft: 'auto', letterSpacing: '-0.08px' },
 }
 
 export default function FeatureBar() {
@@ -37,12 +45,12 @@ export default function FeatureBar() {
 
   return (
     <div style={styles.bar}>
-      <button style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
-        {focusOn ? '🧘 Focus: BẬT' : '🧘 Focus: TẮT'}
+      <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
+        {focusOn ? '🧘 Focus Bật' : '🧘 Focus Tắt'}
       </button>
-      <span style={{ ...styles.chip, cursor: 'default' }}>💤 {sleeping} tab ngủ</span>
-      {warnings.length > 0 && <span style={{ ...styles.chip, cursor: 'default', color: '#f0a020' }}>⚠️ {warnings.length} tab nặng RAM</span>}
-      <span style={styles.label}>v0.4 — Tony Browser</span>
+      <span style={styles.chipStatic}>💤 {sleeping} tab ngủ</span>
+      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}>⚠️ {warnings.length} nặng RAM</span>}
+      <span style={styles.label}>tony-browser v0.4</span>
     </div>
   )
 }

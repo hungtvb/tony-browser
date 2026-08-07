@@ -7,9 +7,9 @@ import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
-  app: { display: 'flex', flexDirection: 'column', height: '100vh' },
-  content: { flex: 1, position: 'relative', background: '#0f1115' },
-  status: { position: 'absolute', bottom: 8, right: 10, fontSize: 12, color: '#6b7280' },
+  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' },
+  content: { flex: 1, position: 'relative', background: '#000' },
+  status: { position: 'absolute', bottom: 10, right: 14, fontSize: 11, color: 'rgba(255,255,255,0.48)', letterSpacing: '-0.08px' },
 }
 
 export default function App() {
@@ -34,13 +34,15 @@ export default function App() {
       <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)} />
       <div style={styles.content}>
         {active && (
-          <p style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>
-            🌐 Đang xem: <strong style={{ color: '#e5e7eb' }}>{active.title}</strong>
-            <br />
-            <span style={{ fontSize: 12 }}>{active.url}</span>
-          </p>
+          <div style={{ textAlign: 'center', paddingTop: 64, color: 'rgba(255,255,255,0.48)' }}>
+            <div style={{ fontSize: 13 }}>🌐 Đang xem</div>
+            <div style={{ fontSize: 21, fontWeight: 600, color: '#fff', marginTop: 6, letterSpacing: '-0.28px' }}>
+              {active.title}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.64)', marginTop: 8 }}>{active.url}</div>
+          </div>
         )}
-        <div style={styles.status}>🛡️ Đã chặn {privacy.blocked} request (danh sách {privacy.listSize} miền)</div>
+        <div style={styles.status}>🛡️ Đã chặn {privacy.blocked} request · {privacy.listSize} miền</div>
       </div>
       {aiOpen && <AIPanel activeTabId={activeId} onClose={() => setAiOpen(false)} />}
     </div>
