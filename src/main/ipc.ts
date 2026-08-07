@@ -54,7 +54,7 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
       if (!privacyFilterOn) { callback({}); return }
-      const filter = session.webRequest.filterResponseData(String(details.id))
+      const filter = session.webRequest.filterResponseData(details.id)
       const chunks: Buffer[] = []
       filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
       filter.on('end', () => {

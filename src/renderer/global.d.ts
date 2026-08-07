@@ -15,5 +15,5 @@ declare module '*.png' {
   export default content
 }
 
-// window.tony global type được khai báo ở src/preload/index.d.ts (TonyAPI)
+// window.tony global type được khai báo ở src/preload/tony-api.d.ts (TonyAPI)
 export {}

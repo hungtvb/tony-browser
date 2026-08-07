@@ -15,7 +15,7 @@ export {}
 declare global {
   namespace Electron {
     interface WebRequest {
-      filterResponseData(requestId: string): {
+      filterResponseData(requestId: number): {
         on(event: 'data', listener: (chunk: Buffer | Uint8Array) => void): void
         on(event: 'end' | 'error', listener: () => void): void
         write(data: string | Buffer | Uint8Array): void
