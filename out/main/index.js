@@ -53,26 +53,32 @@ function detachView(win, view) {
   if (view.webContents.isDestroyed()) return;
   win.contentView.removeChildView(view);
 }
-function createTabView(url) {
+function createTabView(url, container = "default") {
+  const ses = container === "default" ? electron.session.defaultSession : electron.session.fromPartition(`persist:container-${container}`);
   const view = new electron.WebContentsView({
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: false,
+      partition: container === "default" ? void 0 : `persist:container-${container}`
     }
   });
+  applyPermissions(ses);
   view.setVisible(false);
   view.webContents.loadURL(url).catch(() => {
     view.webContents.loadURL('data:text/html,<h1 style="font-family:sans-serif">Không tải được trang</h1>');
   });
   return view;
 }
-function ensureSession() {
-  const ses = electron.session.defaultSession;
+function applyPermissions(ses) {
   ses.setPermissionRequestHandler((_wc, permission, callback) => {
     const allow = ["clipboard-read", "clipboard-sanitized-write", "fullscreen", "media", "geolocation", "notifications", "pointerLock"];
     callback(allow.includes(permission));
   });
+}
+function ensureSession() {
+  const ses = electron.session.defaultSession;
+  applyPermissions(ses);
   return ses;
 }
 function createTabManager(factory) {
@@ -80,15 +86,18 @@ function createTabManager(factory) {
   const tabs = /* @__PURE__ */ new Map();
   let activeId = "";
   let counter = 0;
-  function open(url) {
+  function open(url, container = "default") {
     const id = `tab-${++counter}-${Date.now()}`;
     const view = factory(id);
-    const tab = { id, url, title: "New Tab", loading: true, view };
+    const tab = { id, url, title: "New Tab", loading: true, view, container };
     tabs.set(id, tab);
     activeId = id;
     view.loadURL(url);
     emitter.emit("changed", { type: "open", id });
     return tab;
+  }
+  function listByContainer(container) {
+    return [...tabs.values()].filter((t) => t.container === container);
   }
   function close(id) {
     const tab = tabs.get(id);
@@ -123,6 +132,7 @@ function createTabManager(factory) {
     close,
     activate,
     list,
+    listByContainer,
     get,
     getActive,
     broadcast,
@@ -827,7 +837,7 @@ let privacyFilterOn = true;
 let blockedCount = 0;
 let listSize = 0;
 function tabToState(t) {
-  return { id: t.id, url: t.url, title: t.title, loading: t.loading };
+  return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? "default" };
 }
 function attachPrivacy(win, _deps) {
   const { session } = win.webContents;
@@ -846,12 +856,22 @@ function registerIpc(deps2) {
   const tm2 = deps2.getTabManager();
   const win = deps2.getWindow;
   electron.ipcMain.handle("tabs:list", () => tm2.list().map(tabToState));
-  electron.ipcMain.handle("tabs:open", (_e, url) => {
-    const tab = tm2.open(url);
+  electron.ipcMain.handle("tabs:open", (_e, url, container) => {
+    const tab = tm2.open(url, container ?? "default");
     const view = deps2.createRealView(tab.url);
     deps2.trackView(tab.id, view);
     const w = win();
     if (w) attachView(w, view);
+    broadcastTabs();
+    return tabToState(tab);
+  });
+  electron.ipcMain.handle("tabs:openContainer", (_e, url, container) => {
+    const tab = tm2.open(url, container);
+    const view = deps2.createRealView(tab.url);
+    deps2.trackView(tab.id, view);
+    const w = win();
+    if (w) attachView(w, view);
+    broadcastTabs();
     return tabToState(tab);
   });
   electron.ipcMain.handle("tabs:close", (_e, id) => {

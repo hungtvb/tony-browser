@@ -26,7 +26,7 @@ let listSize = 0
 type TM = ReturnType<typeof createTabManager>
 
 function tabToState(t: any): TabState {
-  return { id: t.id, url: t.url, title: t.title, loading: t.loading }
+  return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }
 }
 
 export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
@@ -51,13 +51,24 @@ export function registerIpc(deps: IpcDeps) {
   // ─── tabs ───
   ipcMain.handle('tabs:list', () => tm.list().map(tabToState))
 
-  ipcMain.handle('tabs:open', (_e, url: string) => {
-    const tab = tm.open(url)
+  ipcMain.handle('tabs:open', (_e, url: string, container?: string) => {
+    const tab = tm.open(url, container ?? 'default')
     // tạo view thật
     const view = deps.createRealView(tab.url)
     deps.trackView(tab.id, view)
     const w = win()
     if (w) attachView(w, view)
+    broadcastTabs()
+    return tabToState(tab)
+  })
+
+  ipcMain.handle('tabs:openContainer', (_e, url: string, container: string) => {
+    const tab = tm.open(url, container)
+    const view = deps.createRealView(tab.url)
+    deps.trackView(tab.id, view)
+    const w = win()
+    if (w) attachView(w, view)
+    broadcastTabs()
     return tabToState(tab)
   })
 

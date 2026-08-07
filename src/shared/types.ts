@@ -5,6 +5,7 @@ export interface TabState {
   url: string
   title: string
   loading: boolean
+  container: string
 }
 
 export interface AIConfig {
@@ -46,6 +47,15 @@ export interface AIStatus {
 
 export type AIRequestParams = AIAskParams
 
+export const CONTAINERS = ['default', 'work', 'personal', 'banking'] as const
+export type ContainerName = typeof CONTAINERS[number]
+export const CONTAINER_COLORS: Record<string, string> = {
+  default: '#6b7280',
+  work: '#0071e3',
+  personal: '#34c759',
+  social: '#af52de',
+}
+
 export interface FocusState {
   enabled: boolean
   blocklist: string[]
@@ -73,7 +83,8 @@ export interface TonyAPI {
   platform: string
   getAppInfo: () => { electron: string; chrome: string }
   tabs: {
-    open: (url: string) => Promise<TabState>
+    open: (url: string, container?: string) => Promise<TabState>
+    openContainer: (url: string, container: string) => Promise<TabState>
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
     list: () => Promise<TabState[]>

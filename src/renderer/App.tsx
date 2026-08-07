@@ -3,6 +3,7 @@ import TabBar from './components/TabBar'
 import AddressBar from './components/AddressBar'
 import AIPanel from './components/AIPanel'
 import FeatureBar from './components/FeatureBar'
+import ContainerMenu from './components/ContainerMenu'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -13,9 +14,10 @@ const styles: Record<string, React.CSSProperties> = {
 }
 
 export default function App() {
-  const { tabs, activeId, open, close, activate } = useTabs()
+  const { tabs, activeId, open, openInContainer, close, activate } = useTabs()
   const [privacy, setPrivacy] = useState<PrivacyStats>({ blocked: 0, listSize: 0 })
   const [aiOpen, setAiOpen] = useState(false)
+  const [containerMenu, setContainerMenu] = useState(false)
 
   useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
@@ -29,7 +31,17 @@ export default function App() {
 
   return (
     <div style={styles.app}>
-      <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close} />
+      <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
+        onNewTab={() => setContainerMenu(true)} />
+      {containerMenu && (
+        <ContainerMenu
+          onPick={(url, container) => {
+            open(url || 'https://www.google.com', container)
+            setContainerMenu(false)
+          }}
+          onClose={() => setContainerMenu(false)}
+        />
+      )}
       <FeatureBar />
       <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)} />
       <div style={styles.content}>

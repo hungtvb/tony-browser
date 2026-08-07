@@ -14,6 +14,7 @@ export interface Tab {
   title: string
   loading: boolean
   view: View
+  container: string
 }
 
 export type TabEvent = { type: 'open' | 'close' | 'activate'; id: string }
@@ -24,15 +25,19 @@ export function createTabManager(factory: ViewFactory) {
   let activeId = ''
   let counter = 0
 
-  function open(url: string): Tab {
+  function open(url: string, container = 'default'): Tab {
     const id = `tab-${++counter}-${Date.now()}`
     const view = factory(id)
-    const tab: Tab = { id, url, title: 'New Tab', loading: true, view }
+    const tab: Tab = { id, url, title: 'New Tab', loading: true, view, container }
     tabs.set(id, tab)
     activeId = id
     view.loadURL(url)
     emitter.emit('changed', { type: 'open', id })
     return tab
+  }
+
+  function listByContainer(container: string): Tab[] {
+    return [...tabs.values()].filter(t => t.container === container)
   }
 
   function close(id: string) {
@@ -75,6 +80,7 @@ export function createTabManager(factory: ViewFactory) {
     close,
     activate,
     list,
+    listByContainer,
     get,
     getActive,
     broadcast,

@@ -1,6 +1,7 @@
 import React from 'react'
+import { CONTAINER_COLORS } from '../../shared/types'
 
-interface Tab { id: string; title: string; url: string }
+interface Tab { id: string; title: string; url: string; container?: string }
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -16,8 +17,10 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.8)',
     whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis',
     flexShrink: 0, letterSpacing: '-0.12px', border: 'none', transition: 'background 0.15s ease',
+    display: 'flex', alignItems: 'center', gap: 6,
   },
   active: { background: 'rgba(255,255,255,0.16)', color: '#fff' },
+  dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
   close: { marginLeft: 8, opacity: 0.5, cursor: 'pointer', fontSize: 11 },
   plus: {
     padding: '4px 12px', background: 'transparent', border: 'none', borderRadius: 8,
@@ -25,13 +28,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-export default function TabBar({ tabs, activeId, onSelect, onClose }: {
+export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: {
   tabs: Tab[]; activeId: string
   onSelect: (id: string) => void; onClose: (id: string) => void
+  onNewTab?: () => void
 }) {
   return (
     <div style={styles.bar}>
-      <button className="apple-focus" style={styles.plus} title="Tab mới" onClick={() => onSelect('new-tab')}>+</button>
+      <button className="apple-focus" style={styles.plus} title="Tab mới" onClick={() => onNewTab?.()}>+</button>
       {tabs.map(t => (
         <button
           key={t.id}
@@ -40,6 +44,7 @@ export default function TabBar({ tabs, activeId, onSelect, onClose }: {
           onClick={() => onSelect(t.id)}
           title={t.url}
         >
+          <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
           {t.title}
           <span style={styles.close} onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>
         </button>

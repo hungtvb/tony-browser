@@ -8,7 +8,8 @@ const api = {
     chrome: process.versions.chrome
   }),
   tabs: {
-    open: (url) => electron.ipcRenderer.invoke("tabs:open", url),
+    open: (url, container) => electron.ipcRenderer.invoke("tabs:open", url, container),
+    openContainer: (url, container) => electron.ipcRenderer.invoke("tabs:openContainer", url, container),
     close: (id) => electron.ipcRenderer.invoke("tabs:close", id),
     activate: (id) => electron.ipcRenderer.invoke("tabs:activate", id),
     list: () => electron.ipcRenderer.invoke("tabs:list"),

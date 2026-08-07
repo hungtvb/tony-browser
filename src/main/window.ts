@@ -41,14 +41,20 @@ export function detachView(win: BrowserWindow, view: WebContentsView) {
   win.contentView.removeChildView(view)
 }
 
-export function createTabView(url: string): WebContentsView {
+export function createTabView(url: string, container = 'default'): WebContentsView {
+  // Mỗi container có session riêng → cookie/lịch sử tách biệt
+  const ses = container === 'default'
+    ? session.defaultSession
+    : session.fromPartition(`persist:container-${container}`)
   const view = new WebContentsView({
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      partition: container === 'default' ? undefined : `persist:container-${container}`,
     },
   })
+  applyPermissions(ses)
   view.setVisible(false)
   view.webContents.loadURL(url).catch(() => {
     view.webContents.loadURL('data:text/html,<h1 style="font-family:sans-serif">Không tải được trang</h1>')
@@ -56,13 +62,17 @@ export function createTabView(url: string): WebContentsView {
   return view
 }
 
-/** Đảm bảo session dùng chung có các quyền hạn hợp lý cho browser */
-export function ensureSession() {
-  const ses = session.defaultSession
-  // Chặn thông báo spam + popup quyền
+/** Áp quyền hạn cho session (dùng chung cho default + container) */
+function applyPermissions(ses: Electron.Session) {
   ses.setPermissionRequestHandler((_wc, permission, callback) => {
     const allow = ['clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'media', 'geolocation', 'notifications', 'pointerLock']
     callback(allow.includes(permission))
   })
+}
+
+/** Đảm bảo session dùng chung có các quyền hạn hợp lý cho browser */
+export function ensureSession() {
+  const ses = session.defaultSession
+  applyPermissions(ses)
   return ses
 }

@@ -21,8 +21,11 @@ export function useTabs() {
     })
   }, [])
 
-  function open(url: string) {
-    window.tony?.tabs.open(url).then(t => setActiveId(t.id))
+  function open(url: string, container?: string) {
+    window.tony?.tabs.open(url, container ?? 'default').then(t => setActiveId(t.id))
+  }
+  function openInContainer(url: string, container: string) {
+    window.tony?.tabs.openContainer(url, container).then(t => setActiveId(t.id))
   }
   function close(id: string) {
     window.tony?.tabs.close(id)
@@ -32,5 +35,5 @@ export function useTabs() {
     window.tony?.tabs.activate(id)
   }
 
-  return { tabs, activeId, ready, open, close, activate }
+  return { tabs, activeId, ready, open, openInContainer, close, activate }
 }
