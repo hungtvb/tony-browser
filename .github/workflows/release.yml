@@ -23,9 +23,7 @@ jobs:
         run: npm test
 
       - name: Build & package Linux
-        run: npx electron-vite build && npx electron-builder --linux AppImage deb
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-vite build && npx electron-builder --linux AppImage deb --publish never
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -52,9 +50,7 @@ jobs:
         run: npm test
 
       - name: Build & package Windows (NSIS installer)
-        run: npx electron-vite build && npx electron-builder --win nsis
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-vite build && npx electron-builder --win nsis --publish never
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
