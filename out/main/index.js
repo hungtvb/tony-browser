@@ -162,103 +162,235 @@ function createBlocklist(domains) {
     }
   };
 }
+const URL_PATTERNS = [
+  /[\/.]ads\./,
+  /[\/.]adservice\./,
+  /[\/.]adserver\./,
+  /[\/.]adnxs\./,
+  /[\/.]doubleclick\./,
+  /[\/.]googlesyndication\./,
+  /[\/.]googleadservices\./,
+  /[\/.]scorecardresearch\./,
+  /[\/.]quantserve\./,
+  /[\/.]moatads\./,
+  /\/ads\/|\/advert(?:isement)?s?\//,
+  /\/banners?\//,
+  /\/sponsored[\/.]/,
+  /[\/.]ads?bygoogle\./,
+  /\/ads\.js/,
+  /\/adsbygoogle\.js/,
+  /\/gtag\/js\?.*id=G-/,
+  /(?:impression|tracking|pixel|beacon|telemetry)[\/.=?]/,
+  /[\/.]analytics\./,
+  /[\/.]google-analytics\./,
+  /[\/.]facebook\.com\/tr\//
+];
+function createUrlFilter() {
+  return {
+    shouldBlock(url) {
+      try {
+        const lower = url.toLowerCase();
+        if (URL_PATTERNS.some((p) => p.test(lower))) return true;
+        return false;
+      } catch {
+        return false;
+      }
+    }
+  };
+}
 const blocklistDomains = [
-  "doubleclick.net",
-  "googlesyndication.com",
-  "googleadservices.com",
-  "google-analytics.com",
-  "googletagmanager.com",
-  "googletagservices.com",
-  "facebook.com/tr",
-  "connect.facebook.net",
-  "fbcdn.net",
-  "ads.facebook.com",
-  "analytics.tiktok.com",
-  "ads.tiktok.com",
-  "tiktokv.com",
-  "youtube-nocookie.com",
-  "scorecardresearch.com",
-  "quantserve.com",
+  "2mdn.net",
+  "aaxads.com",
+  "adcash.com",
+  "adcolony.com",
+  "addthis.com",
+  "addtoany.com",
+  "adform.net",
+  "adjust.com",
+  "adk2x.com",
+  "adlightning.com",
   "adnxs.com",
+  "adobe.com",
+  "adroll.com",
+  "ads.facebook.com",
+  "ads.tiktok.com",
+  "adsafeprotected.com",
   "adsrvr.org",
+  "adsterra.com",
+  "adsymptotic.com",
+  "adtechus.com",
+  "advertising.com",
+  "adzerk.net",
+  "akamaihd.net/ads",
+  "alexa.com",
+  "amazon-adsystem.com",
+  "amplitude.com",
+  "analytics.tiktok.com",
+  "applovin.com",
+  "appnexus.com",
+  "appsflyer.com",
+  "avocet.io",
+  "awin1.com",
+  "bidswitch.net",
+  "bit.ly",
+  "bluekai.com",
+  "branch.io",
+  "braze.com",
+  "brealtime.com",
+  "bufferapp.com",
+  "bugsnag.com",
+  "c.statcounter.com",
+  "casalemedia.com",
+  "chartbeat.com",
+  "chartboost.com",
+  "cj.com",
+  "clarity.ms",
+  "clicky.com",
+  "commission-junction.com",
+  "comscore.com",
+  "connect.facebook.net",
+  "content.ad",
+  "contextweb.com",
+  "coral.ru",
+  "cpx.to",
+  "crazyegg.com",
+  "crisp.chat",
   "criteo.com",
   "criteo.net",
-  "taboola.com",
-  "outbrain.com",
-  "mgid.com",
-  "adroll.com",
-  "amazon-adsystem.com",
-  "aaxads.com",
-  "advertising.com",
-  "media.net",
-  "pubmatic.com",
-  "rubiconproject.com",
-  "openx.net",
-  "spotxchange.com",
-  "lijit.com",
-  "sovrn.com",
-  "yieldmo.com",
-  "gumgum.com",
-  "indexexchange.com",
-  "contextweb.com",
-  "casalemedia.com",
-  "districtm.io",
-  "smartadserver.com",
-  "undertone.com",
-  "teads.tv",
-  "sharethrough.com",
-  "revcontent.com",
-  "content.ad",
-  "tribalfusion.com",
-  "zedo.com",
-  "adform.net",
-  "moatads.com",
-  "innovid.com",
-  "spotify.com/ads",
-  "hotjar.com",
-  "fullstory.com",
-  "mixpanel.com",
-  "segment.com",
-  "amplitude.com",
-  "braze.com",
-  "optimizely.com",
-  "crazyegg.com",
-  "mouseflow.com",
-  "luckyorange.com",
-  "clarity.ms",
-  "newrelic.com",
+  "curalate.com",
   "datadoghq.com",
-  "sentry.io",
-  "bugsnag.com",
-  "logrocket.com",
-  "plausible.io",
-  "matomo.org",
-  "chartbeat.com",
-  "parsely.com",
-  "comscore.com",
-  "nielsen.com",
-  "bluekai.com",
-  "krxd.net",
-  "tapad.com",
   "demdex.net",
-  "omtrdc.net",
+  "disqus.com",
+  "districtm.io",
+  "doubleclick.net",
+  "doubleclick.net/instream",
+  "eloqua.com",
   "everesttech.net",
-  "2mdn.net",
+  "exoclick.com",
+  "facebook.com/tr",
+  "facebook.net",
+  "fbcdn.net",
+  "firebase.google.com",
+  "firebaselog.com",
   "flashtalking.com",
-  "adcolony.com",
-  "vungle.com",
-  "unityads.unity3d.com",
-  "chartboost.com",
-  "applovin.com",
-  "mopub.com",
-  "inmobi.com",
-  "adzerk.net",
-  "bidswitch.net",
-  "brealtime.com",
-  "lh3.googleusercontent.com/ads",
+  "freshchat.com",
+  "fullstory.com",
+  "getclicky.com",
+  "goo.gl",
+  "google-analytics.com",
+  "google.com/adsense",
+  "google.com/dfp",
+  "google.com/doubleclick",
+  "google.com/pagead",
+  "googleadservices.com",
+  "googleadservices.com/pagead",
+  "googlesyndication.com",
+  "googlesyndication.com/adsbygoogle",
+  "googletagmanager.com",
+  "googletagservices.com",
+  "gravatar.com",
   "gstatic.com/ads",
+  "gstatic.com/video",
+  "gumgum.com",
+  "heap.io",
+  "hilltopads.net",
+  "hotjar.com",
+  "hubspot.com/analytics",
+  "imasdk.googleapis.com",
+  "impactradius.com",
+  "indexexchange.com",
+  "inmobi.com",
+  "innovid.com",
+  "intercom.io",
+  "juicyads.com",
+  "kochava.com",
+  "krxd.net",
+  "leanplum.com",
+  "lh3.googleusercontent.com/ads",
+  "liadm.com",
+  "lijit.com",
+  "linkedin.com/analytics",
+  "linksynergy.com",
+  "logrocket.com",
+  "lotame.com",
+  "luckyorange.com",
+  "marketo.com",
+  "matomo.org",
+  "media.net",
+  "mgid.com",
+  "mixpanel.com",
+  "moatads.com",
+  "mookie1.com",
+  "mopub.com",
+  "mouseflow.com",
+  "munchkin.marketo.net",
+  "newrelic.com",
+  "nielsen.com",
+  "olark.com",
+  "omniture.com",
+  "omtrdc.net",
+  "onclickads.net",
+  "onesignal.com",
+  "openx.net",
+  "optimizely.com",
+  "outbrain.com",
+  "pagead2.googlesyndication.com",
+  "pardot.com",
+  "parsely.com",
+  "pinterest.com/ct",
+  "piwik.org",
+  "platform.twitter.com",
+  "plausible.io",
+  "popads.net",
+  "propellerads.com",
+  "pubmatic.com",
+  "pushengage.com",
+  "quantcount.com",
+  "quantserve.com",
+  "revcontent.com",
+  "rhythmone.com",
+  "rlcdn.com",
+  "rollbar.com",
+  "rubiconproject.com",
+  "scorecardresearch.com",
+  "segment.com",
+  "segment.io",
+  "sentry.io",
+  "sessioncam.com",
+  "sharethis.com",
+  "sharethrough.com",
+  "skimresources.com",
+  "smartadserver.com",
+  "snap.licdn.com",
+  "sovrn.com",
+  "spot.im",
+  "spotify.com/ads",
+  "spotxchange.com",
+  "statcounter.com",
+  "t.co",
+  "taboola.com",
+  "tapad.com",
+  "teads.tv",
+  "tidio.co",
+  "tiktokv.com",
+  "tinyurl.com",
+  "tradedoubler.com",
+  "trafficjunky.net",
+  "tremorhub.com",
+  "tribalfusion.com",
+  "undertone.com",
+  "unityads.unity3d.com",
+  "urbanairship.com",
+  "viglink.com",
+  "vungle.com",
+  "webtrekk.net",
+  "www.google-analytics.com/analytics.js",
+  "yieldmo.com",
+  "youtube-nocookie.com",
   "ytimg.com/ads",
-  "gravatar.com"
+  "zanox.com",
+  "zedo.com",
+  "zendesk.com/analytics"
 ];
 class AIService {
   config = null;
@@ -842,15 +974,30 @@ function tabToState(t) {
 function attachPrivacy(win, _deps) {
   const { session } = win.webContents;
   const bl = createBlocklist(blocklistDomains);
+  const urlFilter = createUrlFilter();
   listSize = bl.size;
   session.webRequest.onBeforeRequest({ urls: ["*://*/*"] }, (details, callback) => {
-    if (privacyFilterOn && bl.shouldBlock(details.url)) {
+    if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url))) {
       blockedCount++;
       callback({ cancel: true });
     } else {
       callback({});
     }
   });
+}
+function createCosmeticInjector() {
+  const { createCosmeticFilter } = require("./privacy/filters");
+  const cosmetic = createCosmeticFilter();
+  return function attachToWebContents(wc) {
+    if (!privacyFilterOn) return;
+    wc.on("dom-ready", () => {
+      try {
+        wc.executeJavaScript(cosmetic.injectScript()).catch(() => {
+        });
+      } catch {
+      }
+    });
+  };
 }
 function registerIpc(deps2) {
   const tm2 = deps2.getTabManager();
@@ -1074,6 +1221,7 @@ function registerIpc(deps2) {
 }
 let mainWindow = null;
 const viewByTab = /* @__PURE__ */ new Map();
+const attachCosmetic = createCosmeticInjector();
 function sessionFile() {
   return path__namespace.join(electron.app.getPath("userData"), "session.json");
 }
@@ -1106,6 +1254,7 @@ const deps = {
       return;
     }
     viewByTab.set(tabId, view);
+    attachCosmetic(view.webContents);
     view.webContents.on("page-title-updated", (_e, title) => {
       const t = tm.get(tabId);
       if (t) {
@@ -1128,6 +1277,7 @@ electron.app.whenReady().then(() => {
       const tab = tm.open(s.url, s.container ?? "default");
       const view = createTabView(s.url, s.container ?? "default");
       viewByTab.set(tab.id, view);
+      attachCosmetic(view.webContents);
       view.webContents.on("page-title-updated", (_e, title) => {
         const t = tm.get(tab.id);
         if (t) {

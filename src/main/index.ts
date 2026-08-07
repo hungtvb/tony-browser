@@ -2,12 +2,13 @@
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView } from './window'
 import { createTabManager } from './tabs/TabManager'
-import { registerIpc, attachPrivacy, type IpcDeps } from './ipc'
+import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import * as fs from 'fs'
 import * as path from 'path'
 
 let mainWindow: BrowserWindow | null = null
 const viewByTab = new Map<string, WebContentsView>()
+const attachCosmetic = createCosmeticInjector()
 
 // path lưu session (JSON store tự viết, tránh ESM-only dep)
 function sessionFile() {
@@ -38,6 +39,7 @@ const deps: IpcDeps = {
   trackView: (tabId: string, view: WebContentsView | null) => {
     if (!view) { viewByTab.delete(tabId); return }
     viewByTab.set(tabId, view)
+    attachCosmetic(view.webContents)
     view.webContents.on('page-title-updated', (_e, title) => {
       const t = tm.get(tabId)
       if (t) { t.title = title; tm.broadcast() }
@@ -60,6 +62,7 @@ app.whenReady().then(() => {
       const tab = tm.open(s.url, s.container ?? 'default')
       const view = createTabView(s.url, s.container ?? 'default')
       viewByTab.set(tab.id, view)
+      attachCosmetic(view.webContents)
       view.webContents.on('page-title-updated', (_e, title) => {
         const t = tm.get(tab.id)
         if (t) { t.title = title; tm.broadcast() }

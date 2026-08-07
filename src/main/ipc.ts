@@ -2,6 +2,7 @@
 import { ipcMain, BrowserWindow, WebContentsView } from 'electron'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
+import { createUrlFilter } from './privacy/filters'
 import blocklistDomains from './privacy/blocklist.json'
 import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
@@ -32,16 +33,29 @@ function tabToState(t: any): TabState {
 export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
   const { session } = win.webContents
   const bl = createBlocklist(blocklistDomains)
+  const urlFilter = createUrlFilter()
   listSize = bl.size
 
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
-    if (privacyFilterOn && bl.shouldBlock(details.url)) {
+    if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url))) {
       blockedCount++
       callback({ cancel: true })
     } else {
       callback({})
     }
   })
+}
+
+// Injectable cosmetic filter dùng trong trackView (mỗi tab mới)
+export function createCosmeticInjector() {
+  const { createCosmeticFilter } = require('./privacy/filters')
+  const cosmetic = createCosmeticFilter()
+  return function attachToWebContents(wc: any) {
+    if (!privacyFilterOn) return
+    wc.on('dom-ready', () => {
+      try { wc.executeJavaScript(cosmetic.injectScript()).catch(() => {}) } catch { /* ignore */ }
+    })
+  }
 }
 
 export function registerIpc(deps: IpcDeps) {
