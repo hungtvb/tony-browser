@@ -12659,6 +12659,13 @@ const undoIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0
 const layoutIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M180-510q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0 450q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0-600v210-210Zm0 390v210-210Z"/></svg>';
 const sendIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M814-452 162-178q-15 6-28.5-2.5T120-205v-550q0-16 13.5-24.5T162-782l652 274q18 8 18 28t-18 28ZM180-253l544-227-544-230v168l242 62-242 60v167Zm0 0v-457 457Z"/></svg>';
 const lockIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M220-80q-24.75 0-42.37-17.63Q160-115.25 160-140v-434q0-24.75 17.63-42.38Q195.25-634 220-634h70v-96q0-78.85 55.61-134.42Q401.21-920 480.11-920q78.89 0 134.39 55.58Q670-808.85 670-730v96h70q24.75 0 42.38 17.62Q800-598.75 800-574v434q0 24.75-17.62 42.37Q764.75-80 740-80H220Zm0-60h520v-434H220v434Zm314.5-162.03Q557-324.06 557-355q0-30-22.67-54.5t-54.5-24.5q-31.83 0-54.33 24.5t-22.5 55q0 30.5 22.67 52.5t54.5 22q31.83 0 54.33-22.03ZM350-634h260v-96q0-54.17-37.88-92.08-37.88-37.92-92-37.92T388-822.08q-38 37.91-38 92.08v96ZM220-140v-434 434Z"/></svg>';
+const lightbulbIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M422.5-103.5Q399-127 399-161h162q0 34-23.5 57.5T480-80q-34 0-57.5-23.5ZM348-223q-13 0-21.5-8.5T318-253q0-13 8.5-21.5T348-283h264q13 0 21.5 8.5T642-253q0 13-8.5 21.5T612-223H348Zm-25-121q-66-43-104.5-107.5T180-597q0-122 89-211t211-89q122 0 211 89t89 211q0 81-38 145.5T637-344H323Zm22-60h271q48-32 76-83t28-110q0-99-70.5-169.5T480-837q-99 0-169.5 70.5T240-597q0 59 28 110t77 83Zm135 0Z"/></svg>';
+const wavingIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M690-40q-12 0-21-8.9-9-8.89-9-21.5 0-12.6 8.63-21.1 8.62-8.5 21.37-8.5 72 0 121-49.5T860-270q0-13 8.69-21.5t21-8.5q12.31 0 21.31 8.78 9 8.78 9 21.22 0 96-67.28 163T690-40ZM70-659q-12.44 0-21.22-9T40-689q0-95.85 67.28-163.43Q174.56-920 270-920q12.85 0 21.93 9 9.07 9 9.07 21.31 0 12.31-8.5 21T271-860q-70.54 0-120.77 49.5Q100-761 100-690q0 13.17-8.62 22.09Q82.75-659 70-659Zm691-93q0 12-9 21L497-476q-9 9-21.1 8.58-12.1-.41-20.9-9.58-9-8.8-9-20.9 0-12.1 9-21.1l255-254q9-9 21-9t21 9q9 9 9 21Zm76 131.84q0 12.16-9 21.16L601-372q-9 9-21 8.5t-21-9.11q-9-9.39-9-21.39t9-21l226-226q9.07-9 21.53-9 12.47 0 21.47 8.84 9 8.84 9 21ZM195-199q-91-91-91.5-218T194-635l101-101q9-9 21-9t21 9l21 21q12 12 19.5 28t8.5 30l163-164q9.07-9 21.53-9 12.47 0 21.47 9.05 9 9.06 9 21.5 0 12.45-9 21.45L389-575l-65 65 26 26q42 42 40.5 100.5t-43.6 100.6l-.9.9q-9 9-21 8.5t-21-9.11q-9-9.39-9-21.49 0-12.1 9-20.9l1-1q25-25 25.5-58.5T307-442l-47-47q-9-9.07-9-21.53 0-12.47 9-21.47l56-55q17-17 17-42.5T316-672l-80 80q-73 73-72.5 175T237-242q74 74 177 75.5T590-238l241-241q9.07-9 21.53-9 12.47 0 21.47 8.84 9 8.84 9 21T874-437L633-196q-91 91-219 89.5T195-199Zm217-217Z"/></svg>';
+const sparkleIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="m726-728-72-32q-5-2-7-5t-2-8q0-5 2-8.5t7-5.5l72-31 29-69q2-5 5.5-7.5t8.5-2.5q5 0 8.5 2.5t5.5 7.5l29 69 72 31q5 2 7 5.5t2 8.5q0 5-2 8t-7 5l-72 32-29 65q-2 5-5.5 7t-8.5 2q-5 0-8.5-2t-5.5-7l-29-65ZM240-391 85-460q-7-3-10.5-9T71-481q0-6 3.5-12t10.5-9l155-69 72-153q3-7 8.5-10t11.5-3q6 0 11.5 2.5t8.5 9.5l73 154 155 69q7 3 10.5 9t3.5 12q0 6-3.5 12t-10.5 9l-155 69-73 154q-3 7-8.5 10t-11.5 3q-6 0-11.5-3t-8.5-10l-72-154Zm92 49 48-96 98-43-98-43-48-96-47 96-99 43 99 43 47 96Zm397 206-72-31q-5-2-7-5.5t-2-8.5q0-5 2-8.5t7-5.5l72-31 29-69q2-5 5.5-7t8.5-2q5 0 8.5 2t5.5 7l29 69 72 31q5 2 7 5.5t2 8.5q0 5-2 8.5t-7 5.5l-72 31-29 66q-2 5-5.5 7t-8.5 2q-5 0-8.5-2t-5.5-7l-29-66ZM332-481Z"/></svg>';
+const openInNewIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h249q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H180v600h600v-249q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v249q0 24-18 42t-42 18H180Zm600-617L403-360q-9 9-21 8.5t-21-9.5q-9-9-9-21t9-21l377-377H549q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h261q12.75 0 21.38 8.62Q840-822.75 840-810v261q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-188Z"/></svg>';
+const gridIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M180-510q-24.75 0-42.37-17.63Q120-545.25 120-570v-210q0-24.75 17.63-42.38Q155.25-840 180-840h210q24.75 0 42.38 17.62Q450-804.75 450-780v210q0 24.75-17.62 42.37Q414.75-510 390-510H180Zm0 390q-24.75 0-42.37-17.63Q120-155.25 120-180v-210q0-24.75 17.63-42.38Q155.25-450 180-450h210q24.75 0 42.38 17.62Q450-414.75 450-390v210q0 24.75-17.62 42.37Q414.75-120 390-120H180Zm390-390q-24.75 0-42.37-17.63Q510-545.25 510-570v-210q0-24.75 17.63-42.38Q545.25-840 570-840h210q24.75 0 42.38 17.62Q840-804.75 840-780v210q0 24.75-17.62 42.37Q804.75-510 780-510H570Zm0 390q-24.75 0-42.37-17.63Q510-155.25 510-180v-210q0-24.75 17.63-42.38Q545.25-450 570-450h210q24.75 0 42.38 17.62Q840-414.75 840-390v210q0 24.75-17.62 42.37Q804.75-120 780-120H570ZM180-570h210v-210H180v210Zm390 0h210v-210H570v210Zm0 390h210v-210H570v210Zm-390 0h210v-210H180v210Zm390-390Zm0 180Zm-180 0Zm0-180Z"/></svg>';
+const menuIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M150-240q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h660q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Zm0-210q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h660q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Zm0-210q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h660q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Z"/></svg>';
+const arrowIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M700-658 223-181q-9 9-21 9t-21-9q-9-9-9-21t9-21l477-477H394q-13 0-21.5-8.5T364-730q0-13 8.5-21.5T394-760h336q13 0 21.5 8.5T760-730v336q0 13-8.5 21.5T730-364q-13 0-21.5-8.5T700-394v-264Z"/></svg>';
 const ICONS = {
   focus: focusIcon,
   reader: readerIcon,
@@ -12677,7 +12684,14 @@ const ICONS = {
   undo: undoIcon,
   layout: layoutIcon,
   send: sendIcon,
-  lock: lockIcon
+  lock: lockIcon,
+  lightbulb: lightbulbIcon,
+  waving: wavingIcon,
+  sparkle: sparkleIcon,
+  "open-in-new": openInNewIcon,
+  grid: gridIcon,
+  menu: menuIcon,
+  arrow: arrowIcon
 };
 function extractPath(svg) {
   const m = svg.match(/<path[^>]*d="([^"]+)"/);
@@ -12724,7 +12738,7 @@ const styles$a = {
     transition: "border-color 0.15s ease, background 0.15s ease"
   },
   btn: {
-    padding: "7px 18px",
+    padding: "7px 12px",
     borderRadius: 980,
     border: "none",
     background: "var(--apple-blue)",
@@ -12732,7 +12746,11 @@ const styles$a = {
     cursor: "pointer",
     fontWeight: 500,
     fontSize: 13,
-    letterSpacing: "-0.12px"
+    letterSpacing: "-0.12px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    transition: "all 0.15s ease"
   },
   ai: {
     padding: "7px 10px",
@@ -12744,11 +12762,15 @@ const styles$a = {
     color: "#fff",
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center"
-  }
+    justifyContent: "center",
+    transition: "all 0.15s ease"
+  },
+  aiHover: { background: "rgba(255,255,255,0.16)" },
+  searchIcon: { display: "flex", color: "rgba(255,255,255,0.4)" }
 };
 function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }) {
   const [value, setValue] = reactExports.useState("");
+  const [hoverBtn, setHoverBtn] = reactExports.useState(null);
   function go() {
     const v = value.trim();
     if (!v) return;
@@ -12756,6 +12778,7 @@ function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }) {
     onNavigate(url);
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$a.bar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$a.searchIcon, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "search", size: 15 }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
       {
@@ -12767,12 +12790,12 @@ function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }) {
         onKeyDown: (e) => e.key === "Enter" && go()
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.btn, onClick: go, children: "Đi" }),
-    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Reader Mode", onClick: onReader, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "reader", size: 18 }) }),
-    onPip && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Picture-in-Picture", onClick: onPip, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "pip", size: 18 }) }),
-    onSplit && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Split View", onClick: onSplit, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "split", size: 18 }) }),
-    onTts && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Đọc bài / Lưu trang", onClick: onTts, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "tts", size: 18 }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Trợ lý AI", onClick: onOpenAI, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "ai", size: 18 }) })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.btn, onClick: go, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "arrow", size: 14 }) }),
+    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$a.ai, ...hoverBtn === "reader" ? styles$a.aiHover : {} }, title: "Reader Mode", onClick: onReader, onMouseEnter: () => setHoverBtn("reader"), onMouseLeave: () => setHoverBtn(null), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "reader", size: 18 }) }),
+    onPip && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$a.ai, ...hoverBtn === "pip" ? styles$a.aiHover : {} }, title: "Picture-in-Picture", onClick: onPip, onMouseEnter: () => setHoverBtn("pip"), onMouseLeave: () => setHoverBtn(null), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "pip", size: 18 }) }),
+    onSplit && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$a.ai, ...hoverBtn === "split" ? styles$a.aiHover : {} }, title: "Split View", onClick: onSplit, onMouseEnter: () => setHoverBtn("split"), onMouseLeave: () => setHoverBtn(null), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "split", size: 18 }) }),
+    onTts && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$a.ai, ...hoverBtn === "tts" ? styles$a.aiHover : {} }, title: "Đọc bài / Lưu trang", onClick: onTts, onMouseEnter: () => setHoverBtn("tts"), onMouseLeave: () => setHoverBtn(null), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "tts", size: 18 }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$a.ai, ...hoverBtn === "ai" ? styles$a.aiHover : {} }, title: "Trợ lý AI", onClick: onOpenAI, onMouseEnter: () => setHoverBtn("ai"), onMouseLeave: () => setHoverBtn(null), children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "ai", size: 18 }) })
   ] });
 }
 const styles$9 = {
@@ -12972,7 +12995,29 @@ const styles$8 = {
   },
   active: { background: "var(--apple-blue)", borderColor: "var(--apple-blue)", color: "#fff" },
   warn: { color: "#ff9f0a" },
-  label: { fontSize: 11, color: "rgba(255,255,255,0.48)", marginLeft: "auto", letterSpacing: "-0.08px" }
+  brand: {
+    marginLeft: "auto",
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    fontSize: 12,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.85)",
+    letterSpacing: "-0.2px",
+    padding: "3px 10px",
+    borderRadius: 980,
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    userSelect: "none"
+  },
+  brandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg, #2997ff, #0071e3)",
+    boxShadow: "0 0 8px rgba(0,113,227,0.6)"
+  },
+  brandVer: { fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 400, marginLeft: 2 }
 };
 function FeatureBar({ layout, onToggleLayout }) {
   const [focusOn, setFocusOn] = reactExports.useState(false);
@@ -13008,7 +13053,8 @@ function FeatureBar({ layout, onToggleLayout }) {
       " tab ngủ"
     ] }),
     warnings.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { ...styles$8.chipStatic, ...styles$8.warn }, children: [
-      "⚠️ ",
+      /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "lock", size: 13 }),
+      " ",
       warnings.length,
       " nặng RAM"
     ] }),
@@ -13017,7 +13063,11 @@ function FeatureBar({ layout, onToggleLayout }) {
       " ",
       layout === "side" ? "Dọc" : "Ngang"
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$8.label, children: "tony-browser v0.11" })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$8.brand, title: "Tony Browser", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$8.brandDot }),
+      "Tony Browser",
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$8.brandVer, children: "v0.11" })
+    ] })
   ] });
 }
 const styles$7 = {
@@ -13393,12 +13443,21 @@ const styles$2 = {
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
-    background: "radial-gradient(ellipse at top, rgba(0,113,227,0.08), transparent 55%)",
+    background: "radial-gradient(ellipse at top, rgba(0,113,227,0.10), transparent 55%)",
     padding: 40
   },
-  greeting: { fontSize: 40, fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 4, background: "linear-gradient(180deg,#fff, rgba(255,255,255,0.7))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  greetingWrap: { display: "flex", alignItems: "center", gap: 12, marginBottom: 4 },
+  greeting: { fontSize: 40, fontWeight: 700, letterSpacing: "-0.8px", background: "linear-gradient(180deg,#fff, rgba(255,255,255,0.7))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  wave: { color: "var(--apple-blue)", display: "flex" },
   sub: { fontSize: 14, color: "var(--apple-text-tertiary)", marginBottom: 40, letterSpacing: "-0.2px" },
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 16, width: "100%", maxWidth: 720 },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 104px)",
+    gap: 16,
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: 720
+  },
   tile: {
     display: "flex",
     flexDirection: "column",
@@ -13430,7 +13489,8 @@ const styles$2 = {
     color: "#fff",
     boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12), 0 4px 12px rgba(0,0,0,0.3)"
   },
-  name: { fontSize: 12, color: "var(--apple-text-secondary)", textAlign: "center", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+  name: { fontSize: 12, color: "var(--apple-text-secondary)", textAlign: "center", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  tip: { marginTop: 48, fontSize: 12, color: "var(--apple-text-tertiary)", letterSpacing: "-0.1px", display: "flex", alignItems: "center", gap: 6 }
 };
 const SITES = [
   { name: "Google", url: "https://google.com", icon: "G", color: "#4285f4" },
@@ -13445,7 +13505,10 @@ const SITES = [
 function SpeedDial({ onNavigate }) {
   const [hover, setHover] = reactExports.useState(null);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.wrap, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.greeting, children: "Chào Đại ca 👋" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.greetingWrap, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.greeting, children: "Chào Đại ca" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$2.wave, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "waving", size: 32, title: "waving hand" }) })
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.sub, children: "Hôm nay muốn làm gì? Hãy chọn trang yêu thích hoặc nhập địa chỉ." }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.grid, children: SITES.map((s) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "div",
@@ -13461,9 +13524,9 @@ function SpeedDial({ onNavigate }) {
       },
       s.url
     )) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginTop: 48, fontSize: 12, color: "var(--apple-text-tertiary)", letterSpacing: "-0.1px" }, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "var(--apple-text-secondary)" }, children: "💡 Mẹo:" }),
-      " Ctrl+K mở lệnh nhanh · Ctrl+Shift+F tìm tab"
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.tip, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "var(--apple-text-secondary)", display: "flex" }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "lightbulb", size: 14 }) }),
+      "Mẹo: Ctrl+K mở lệnh nhanh · Ctrl+Shift+F tìm tab"
     ] })
   ] });
 }
@@ -13480,7 +13543,10 @@ const styles$1 = {
     maxWidth: "60%",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    whiteSpace: "nowrap"
+    whiteSpace: "nowrap",
+    display: "flex",
+    alignItems: "center",
+    gap: 5
   },
   toastWrap: {
     position: "fixed",
@@ -13519,7 +13585,10 @@ function ToastStack({ toasts }) {
   )) });
 }
 function StatusBar({ status }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$1.status, children: status || "🛡️ Tony Browser" });
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.status, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "privacy", size: 11, title: "shield" }),
+    status || "Tony Browser"
+  ] });
 }
 function useFeedback() {
   const [toasts, setToasts] = reactExports.useState([]);
@@ -13569,9 +13638,9 @@ function useTabs() {
   return { tabs, activeId, ready, open, openInContainer, close, activate };
 }
 const styles = {
-  app: { display: "flex", flexDirection: "column", height: "100vh", background: "#000" },
+  app: { display: "flex", flexDirection: "column", height: "100vh", background: "#121212" },
   body: { display: "flex", flex: 1, overflow: "hidden" },
-  content: { flex: 1, position: "relative", background: "#000" }
+  content: { flex: 1, position: "relative", background: "#121212" }
 };
 function App() {
   const { tabs, activeId, open, close, activate } = useTabs();
@@ -13684,7 +13753,7 @@ function App() {
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 21, fontWeight: 600, color: "#fff", marginTop: 6, letterSpacing: "-0.28px" }, children: active.title }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 12, color: "rgba(255,255,255,0.64)", marginTop: 8 }, children: active.url })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBar, { status: `${status}${status ? " · " : ""}🛡️ Đã chặn ${privacy.blocked} request · ${privacy.listSize} miền` })
+        /* @__PURE__ */ jsxRuntimeExports.jsx(StatusBar, { status: `${status}${status ? " · " : ""}Đã chặn ${privacy.blocked} request · ${privacy.listSize} miền` })
       ] })
     ] }),
     containerMenu && /* @__PURE__ */ jsxRuntimeExports.jsx(

@@ -21,7 +21,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#fff' },
   warn: { color: '#ff9f0a' },
-  label: { fontSize: 11, color: 'rgba(255,255,255,0.48)', marginLeft: 'auto', letterSpacing: '-0.08px' },
+  brand: {
+    marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
+    fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.2px',
+    padding: '3px 10px', borderRadius: 980, background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.08)', userSelect: 'none',
+  },
+  brandDot: {
+    width: 8, height: 8, borderRadius: '50%',
+    background: 'linear-gradient(135deg, #2997ff, #0071e3)',
+    boxShadow: '0 0 8px rgba(0,113,227,0.6)',
+  },
+  brandVer: { fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 2 },
 }
 
 export default function FeatureBar({ layout, onToggleLayout }: {
@@ -55,11 +66,14 @@ export default function FeatureBar({ layout, onToggleLayout }: {
         <UIcon name="focus" size={13} /> {focusOn ? 'Focus Bật' : 'Focus Tắt'}
       </button>
       <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tab ngủ</span>
-      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}>⚠️ {warnings.length} nặng RAM</span>}
+      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnings.length} nặng RAM</span>}
       <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Chuyển layout tab">
         <UIcon name="layout" size={13} /> {layout === 'side' ? 'Dọc' : 'Ngang'}
       </button>
-      <span style={styles.label}>tony-browser v0.11</span>
+      <span style={styles.brand} title="Tony Browser">
+        <span style={styles.brandDot} />
+        Tony Browser<span style={styles.brandVer}>v0.11</span>
+      </span>
     </div>
   )
 }

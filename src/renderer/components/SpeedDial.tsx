@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
+import UIcon from './UIcon'
+import { CONTAINER_COLORS } from '../../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    height: '100%', background: 'radial-gradient(ellipse at top, rgba(0,113,227,0.08), transparent 55%)',
+    height: '100%', background: 'radial-gradient(ellipse at top, rgba(0,113,227,0.10), transparent 55%)',
     padding: 40,
   },
-  greeting: { fontSize: 40, fontWeight: 700, letterSpacing: '-0.8px', marginBottom: 4, background: 'linear-gradient(180deg,#fff, rgba(255,255,255,0.7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+  greetingWrap: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 },
+  greeting: { fontSize: 40, fontWeight: 700, letterSpacing: '-0.8px', background: 'linear-gradient(180deg,#fff, rgba(255,255,255,0.7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+  wave: { color: 'var(--apple-blue)', display: 'flex' },
   sub: { fontSize: 14, color: 'var(--apple-text-tertiary)', marginBottom: 40, letterSpacing: '-0.2px' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 16, width: '100%', maxWidth: 720 },
+  grid: {
+    display: 'grid', gridTemplateColumns: 'repeat(4, 104px)', gap: 16,
+    justifyContent: 'center', width: '100%', maxWidth: 720,
+  },
   tile: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '18px 8px 14px',
     borderRadius: 'var(--apple-radius-xl)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)',
@@ -23,6 +30,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 22, fontWeight: 700, color: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12), 0 4px 12px rgba(0,0,0,0.3)',
   },
   name: { fontSize: 12, color: 'var(--apple-text-secondary)', textAlign: 'center', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  tip: { marginTop: 48, fontSize: 12, color: 'var(--apple-text-tertiary)', letterSpacing: '-0.1px', display: 'flex', alignItems: 'center', gap: 6 },
 }
 
 const SITES = [
@@ -41,7 +49,10 @@ export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) =>
 
   return (
     <div style={styles.wrap}>
-      <div style={styles.greeting}>Chào Đại ca 👋</div>
+      <div style={styles.greetingWrap}>
+        <div style={styles.greeting}>Chào Đại ca</div>
+        <span style={styles.wave}><UIcon name="waving" size={32} title="waving hand" /></span>
+      </div>
       <div style={styles.sub}>Hôm nay muốn làm gì? Hãy chọn trang yêu thích hoặc nhập địa chỉ.</div>
       <div style={styles.grid}>
         {SITES.map(s => (
@@ -54,8 +65,9 @@ export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) =>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 48, fontSize: 12, color: 'var(--apple-text-tertiary)', letterSpacing: '-0.1px' }}>
-        <span style={{ color: 'var(--apple-text-secondary)' }}>💡 Mẹo:</span> Ctrl+K mở lệnh nhanh · Ctrl+Shift+F tìm tab
+      <div style={styles.tip}>
+        <span style={{ color: 'var(--apple-text-secondary)', display: 'flex' }}><UIcon name="lightbulb" size={14} /></span>
+        Mẹo: Ctrl+K mở lệnh nhanh · Ctrl+Shift+F tìm tab
       </div>
     </div>
   )

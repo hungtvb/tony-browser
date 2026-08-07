@@ -15,9 +15,9 @@ import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
-  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' },
+  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#121212' },
   body: { display: 'flex', flex: 1, overflow: 'hidden' },
-  content: { flex: 1, position: 'relative', background: '#000' },
+  content: { flex: 1, position: 'relative', background: '#121212' },
 }
 
 export default function App() {
@@ -123,7 +123,7 @@ export default function App() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.64)', marginTop: 8 }}>{active.url}</div>
             </div>
           )}
-          <StatusBar status={`${status}${status ? ' · ' : ''}🛡️ Đã chặn ${privacy.blocked} request · ${privacy.listSize} miền`} />
+          <StatusBar status={`${status}${status ? ' · ' : ''}Đã chặn ${privacy.blocked} request · ${privacy.listSize} miền`} />
         </div>
       </div>
       {containerMenu && (

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   status: {
@@ -6,6 +7,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--apple-text-tertiary)', letterSpacing: '-0.08px',
     pointerEvents: 'none', transition: 'color 0.2s ease', maxWidth: '60%',
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+    display: 'flex', alignItems: 'center', gap: 5,
   },
   toastWrap: {
     position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
@@ -19,7 +21,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-export function ToastStack({ toasts }: { toasts: { id: number; text: string; type?: string }[] }) {
+export function ToastStack({ toasts }: { toasts: { id: number; msg: string; type?: string }[] }) {
   return (
     <div style={styles.toastWrap}>
       {toasts.map(t => (
@@ -35,7 +37,8 @@ export function ToastStack({ toasts }: { toasts: { id: number; text: string; typ
 export function StatusBar({ status }: { status: string }) {
   return (
     <div style={styles.status}>
-      {status || '🛡️ Tony Browser'}
+      <UIcon name="privacy" size={11} title="shield" />
+      {status || 'Tony Browser'}
     </div>
   )
 }

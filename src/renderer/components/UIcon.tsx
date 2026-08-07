@@ -18,6 +18,13 @@ import undoIcon from '../icons/undo.svg?raw'
 import layoutIcon from '../icons/layout.svg?raw'
 import sendIcon from '../icons/send.svg?raw'
 import lockIcon from '../icons/lock.svg?raw'
+import lightbulbIcon from '../icons/lightbulb.svg?raw'
+import wavingIcon from '../icons/waving.svg?raw'
+import sparkleIcon from '../icons/sparkle.svg?raw'
+import openInNewIcon from '../icons/open_in_new.svg?raw'
+import gridIcon from '../icons/grid.svg?raw'
+import menuIcon from '../icons/menu.svg?raw'
+import arrowIcon from '../icons/arrow.svg?raw'
 
 // Gói icon UI — Material Symbols Rounded (Google, miễn phí)
 // Inline SVG component (React.createElement từ string path)
@@ -28,6 +35,8 @@ export const ICONS: Record<string, string> = {
   search: searchIcon, tab: tabIcon, close: closeIcon, plus: plusIcon,
   settings: settingsIcon, save: saveIcon, undo: undoIcon, layout: layoutIcon,
   send: sendIcon, lock: lockIcon,
+  lightbulb: lightbulbIcon, waving: wavingIcon, sparkle: sparkleIcon,
+  'open-in-new': openInNewIcon, grid: gridIcon, menu: menuIcon, arrow: arrowIcon,
 }
 
 function extractPath(svg: string): string {
