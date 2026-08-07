@@ -56,7 +56,7 @@ export default function FeatureBar({ layout, onToggleLayout }: {
       <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Chuyển layout tab">
         {layout === 'side' ? '📐 Dọc' : '↕️ Ngang'}
       </button>
-      <span style={styles.label}>tony-browser v0.7</span>
+      <span style={styles.label}>tony-browser v0.8</span>
     </div>
   )
 }

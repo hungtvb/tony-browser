@@ -13,6 +13,12 @@ const api = {
     close: (id) => electron.ipcRenderer.invoke("tabs:close", id),
     activate: (id) => electron.ipcRenderer.invoke("tabs:activate", id),
     list: () => electron.ipcRenderer.invoke("tabs:list"),
+    stacks: () => electron.ipcRenderer.invoke("tabs:stacks"),
+    search: (q) => electron.ipcRenderer.invoke("tabs:search", q),
+    split: (aId, bId) => electron.ipcRenderer.invoke("tabs:split", aId, bId),
+    splitState: () => electron.ipcRenderer.invoke("tabs:splitState"),
+    undoClose: () => electron.ipcRenderer.invoke("tabs:undoClose"),
+    closedCount: () => electron.ipcRenderer.invoke("tabs:closedCount"),
     onChange: (cb) => {
       electron.ipcRenderer.on("tabs:changed", (_e, tabs) => cb(tabs));
     }
@@ -49,6 +55,10 @@ const api = {
   pip: {
     start: (tabId) => electron.ipcRenderer.invoke("pip:start", tabId),
     stop: (tabId) => electron.ipcRenderer.invoke("pip:stop", tabId)
+  },
+  tts: {
+    speak: (tabId) => electron.ipcRenderer.invoke("tts:speak", tabId),
+    stop: () => electron.ipcRenderer.invoke("tts:stop")
   }
 };
 electron.contextBridge.exposeInMainWorld("tony", api);

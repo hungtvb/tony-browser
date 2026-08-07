@@ -22,11 +22,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip }: {
+export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }: {
   onNavigate: (url: string) => void
   onOpenAI: () => void
   onReader?: () => void
   onPip?: () => void
+  onSplit?: () => void
+  onTts?: () => void
 }) {
   const [value, setValue] = useState('')
 
@@ -50,6 +52,8 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip }: {
       <button className="apple-focus" style={styles.btn} onClick={go}>Đi</button>
       {onReader && <button className="apple-focus" style={styles.ai} title="Reader Mode" onClick={onReader}>📖</button>}
       {onPip && <button className="apple-focus" style={styles.ai} title="Picture-in-Picture" onClick={onPip}>🎬</button>}
+      {onSplit && <button className="apple-focus" style={styles.ai} title="Split View" onClick={onSplit}>▭</button>}
+      {onTts && <button className="apple-focus" style={styles.ai} title="Đọc bài / Lưu trang" onClick={onTts}>🔊</button>}
       <button className="apple-focus" style={styles.ai} title="Trợ lý AI" onClick={onOpenAI}>🪄</button>
     </div>
   )

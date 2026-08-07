@@ -888,6 +888,7 @@ function registerIpc(deps2) {
   });
   electron.ipcMain.handle("tabs:close", (_e, id) => {
     const view = deps2.getActiveView(id);
+    const tabBefore = tm2.get(id);
     if (view) {
       const w = win();
       if (w) detachView(w, view);
@@ -895,6 +896,12 @@ function registerIpc(deps2) {
       deps2.trackView(id, null);
     }
     tm2.close(id);
+    if (tabBefore) {
+      try {
+        session.recordClosed({ id: tabBefore.id, url: tabBefore.url, title: tabBefore.title, container: tabBefore.container });
+      } catch {
+      }
+    }
     broadcastTabs();
     return true;
   });
@@ -949,6 +956,65 @@ function registerIpc(deps2) {
     broadcastTabs();
     return true;
   });
+  electron.ipcMain.handle("tabs:stacks", () => {
+    const { createTabStacker } = require("./tabs/stacker");
+    return createTabStacker().group(tm2.list());
+  });
+  electron.ipcMain.handle("tabs:search", (_e, query) => {
+    const { searchTabs } = require("./tabs/stacker");
+    return searchTabs(tm2.list(), query);
+  });
+  let splitIds = [];
+  electron.ipcMain.handle("tabs:split", (_e, aId, bId) => {
+    const w = win();
+    if (!w) return { ok: false };
+    if (!bId) {
+      splitIds = [];
+      const a = deps2.getActiveView(aId);
+      if (a) a.setBounds({ x: 0, y: TOOLBAR_HEIGHT, width: w.getContentSize()[0], height: Math.max(w.getContentSize()[1] - TOOLBAR_HEIGHT, 0) });
+      return { ok: true };
+    }
+    splitIds = [aId, bId];
+    const { computeSplitBounds } = require("./tabs/split");
+    const [wB, hB] = w.getContentSize();
+    const [ba, bb] = computeSplitBounds(wB, hB, TOOLBAR_HEIGHT);
+    const va = deps2.getActiveView(aId);
+    const vb = deps2.getActiveView(bId);
+    if (va) va.setBounds(ba);
+    if (vb) {
+      vb.setBounds(bb);
+      vb.setVisible(true);
+    }
+    return { ok: true };
+  });
+  electron.ipcMain.handle("tabs:splitState", () => splitIds);
+  electron.ipcMain.handle("tts:speak", async (_e, tabId) => {
+    const view = tabId ? deps2.getActiveView(tabId) : void 0;
+    if (!view) return { ok: false, error: "Không có tab" };
+    try {
+      const text = await view.webContents.executeJavaScript(`
+        (() => { const s = document.body ? document.body.innerText.slice(0, 4000) : ''; return s })()
+      `);
+      if (!text.trim()) return { ok: false, error: "Trang không có nội dung đọc" };
+      return { ok: true, text: text.trim() };
+    } catch (e) {
+      return { ok: false, error: e?.message ?? "Lỗi TTS" };
+    }
+  });
+  electron.ipcMain.handle("tts:stop", () => ({ ok: true }));
+  const { createSessionStore } = require("./save/session-store");
+  const session = createSessionStore();
+  electron.ipcMain.handle("tabs:recordClosed", (_e, tab) => {
+    session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container });
+    return session.closedCount();
+  });
+  electron.ipcMain.handle("tabs:undoClose", () => session.popClosed());
+  electron.ipcMain.handle("tabs:closedCount", () => session.closedCount());
+  electron.ipcMain.handle("session:save", () => {
+    session.saveSession(tm2.list().map((t) => ({ id: t.id, url: t.url, title: t.title, container: t.container })));
+    return true;
+  });
+  electron.ipcMain.handle("session:restore", () => session.restoreSession());
   electron.ipcMain.handle("privacy:stats", () => ({ blocked: blockedCount, listSize }));
   electron.ipcMain.handle("privacy:toggle", (_e, on) => {
     privacyFilterOn = on;
@@ -1008,6 +1074,22 @@ function registerIpc(deps2) {
 }
 let mainWindow = null;
 const viewByTab = /* @__PURE__ */ new Map();
+function sessionFile() {
+  return path__namespace.join(electron.app.getPath("userData"), "session.json");
+}
+function saveSessionToDisk(tabs) {
+  try {
+    fs__namespace.writeFileSync(sessionFile(), JSON.stringify(tabs), "utf-8");
+  } catch {
+  }
+}
+function loadSessionFromDisk() {
+  try {
+    return JSON.parse(fs__namespace.readFileSync(sessionFile(), "utf-8"));
+  } catch {
+    return [];
+  }
+}
 const tm = createTabManager(() => ({
   id: "",
   loadURL: () => {
@@ -1040,9 +1122,40 @@ electron.app.whenReady().then(() => {
   mainWindow = createMainWindow();
   attachPrivacy(mainWindow);
   registerIpc(deps);
+  const saved = loadSessionFromDisk();
+  if (saved.length > 0) {
+    for (const s of saved.slice(0, 10)) {
+      const tab = tm.open(s.url, s.container ?? "default");
+      const view = createTabView(s.url, s.container ?? "default");
+      viewByTab.set(tab.id, view);
+      view.webContents.on("page-title-updated", (_e, title) => {
+        const t = tm.get(tab.id);
+        if (t) {
+          t.title = title;
+          tm.broadcast();
+        }
+      });
+    }
+    const w = electron.BrowserWindow.getAllWindows()[0];
+    if (w) {
+      const first = tm.list()[0];
+      if (first) {
+        const v = viewByTab.get(first.id);
+        if (v) {
+          const [cw, ch] = w.getContentSize();
+          v.setBounds({ x: 0, y: 92, width: cw, height: Math.max(ch - 92, 0) });
+          w.contentView.addChildView(v);
+        }
+      }
+    }
+    tm.broadcast();
+  }
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow();
   });
+});
+electron.app.on("before-quit", () => {
+  saveSessionToDisk(tm.list().map((t) => ({ url: t.url, title: t.title, container: t.container })));
 });
 electron.app.on("window-all-closed", () => {
   if (process.platform !== "darwin") electron.app.quit();

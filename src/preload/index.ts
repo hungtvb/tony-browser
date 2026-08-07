@@ -15,6 +15,12 @@ const api: TonyAPI = {
     close: (id: string) => ipcRenderer.invoke('tabs:close', id),
     activate: (id: string) => ipcRenderer.invoke('tabs:activate', id),
     list: () => ipcRenderer.invoke('tabs:list'),
+    stacks: () => ipcRenderer.invoke('tabs:stacks'),
+    search: (q: string) => ipcRenderer.invoke('tabs:search', q),
+    split: (aId: string, bId: string | null) => ipcRenderer.invoke('tabs:split', aId, bId),
+    splitState: () => ipcRenderer.invoke('tabs:splitState'),
+    undoClose: () => ipcRenderer.invoke('tabs:undoClose'),
+    closedCount: () => ipcRenderer.invoke('tabs:closedCount'),
     onChange: (cb: (tabs: TabState[]) => void) => {
       ipcRenderer.on('tabs:changed', (_e, tabs: TabState[]) => cb(tabs))
     },
@@ -51,6 +57,10 @@ const api: TonyAPI = {
   pip: {
     start: (tabId?: string) => ipcRenderer.invoke('pip:start', tabId) as Promise<any>,
     stop: (tabId?: string) => ipcRenderer.invoke('pip:stop', tabId) as Promise<any>,
+  },
+  tts: {
+    speak: (tabId?: string) => ipcRenderer.invoke('tts:speak', tabId) as Promise<any>,
+    stop: () => ipcRenderer.invoke('tts:stop') as Promise<any>,
   },
 }
 

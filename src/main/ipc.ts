@@ -88,6 +88,7 @@ export function registerIpc(deps: IpcDeps) {
 
   ipcMain.handle('tabs:close', (_e, id: string) => {
     const view = deps.getActiveView(id)
+    const tabBefore = tm.get(id)
     if (view) {
       const w = win()
       if (w) detachView(w, view)
@@ -95,6 +96,9 @@ export function registerIpc(deps: IpcDeps) {
       deps.trackView(id, null)
     }
     tm.close(id)
+    if (tabBefore) {
+      try { session.recordClosed({ id: tabBefore.id, url: tabBefore.url, title: tabBefore.title, container: tabBefore.container }) } catch {}
+    }
     broadcastTabs()
     return true
   })
@@ -154,6 +158,74 @@ export function registerIpc(deps: IpcDeps) {
     broadcastTabs()
     return true
   })
+
+  // ─── stacker/search ───
+  ipcMain.handle('tabs:stacks', () => {
+    const { createTabStacker } = require('./tabs/stacker')
+    return createTabStacker().group(tm.list())
+  })
+  ipcMain.handle('tabs:search', (_e, query: string) => {
+    const { searchTabs } = require('./tabs/stacker')
+    return searchTabs(tm.list(), query)
+  })
+
+  // ─── split view ───
+  let splitIds: string[] = []
+  ipcMain.handle('tabs:split', (_e, aId: string, bId: string | null) => {
+    const w = win()
+    if (!w) return { ok: false }
+    if (!bId) {
+      // thoát split — hiện lại full view active
+      splitIds = []
+      const a = deps.getActiveView(aId)
+      if (a) a.setBounds({ x: 0, y: TOOLBAR_HEIGHT, width: w.getContentSize()[0], height: Math.max(w.getContentSize()[1] - TOOLBAR_HEIGHT, 0) })
+      return { ok: true }
+    }
+    splitIds = [aId, bId]
+    const { computeSplitBounds } = require('./tabs/split')
+    const [wB, hB] = w.getContentSize()
+    const [ba, bb] = computeSplitBounds(wB, hB, TOOLBAR_HEIGHT)
+    const va = deps.getActiveView(aId)
+    const vb = deps.getActiveView(bId)
+    if (va) va.setBounds(ba)
+    if (vb) { vb.setBounds(bb!); vb.setVisible(true) }
+    return { ok: true }
+  })
+  ipcMain.handle('tabs:splitState', () => splitIds)
+
+  // ─── save page + tts ───
+  ipcMain.handle('tts:speak', async (_e, tabId?: string) => {
+    const view = tabId ? deps.getActiveView(tabId) : undefined
+    if (!view) return { ok: false, error: 'Không có tab' }
+    try {
+      const text = (await view.webContents.executeJavaScript(`
+        (() => { const s = document.body ? document.body.innerText.slice(0, 4000) : ''; return s })()
+      `)) as string
+      if (!text.trim()) return { ok: false, error: 'Trang không có nội dung đọc' }
+      return { ok: true, text: text.trim() }
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? 'Lỗi TTS' }
+    }
+  })
+  ipcMain.handle('tts:stop', () => ({ ok: true }))
+
+  // ─── session restore ───
+  const { createSessionStore } = require('./save/session-store')
+  const session = createSessionStore()
+
+  // record tab bị đóng để undo
+  ipcMain.handle('tabs:recordClosed', (_e, tab: any) => {
+    session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container })
+    return session.closedCount()
+  })
+  ipcMain.handle('tabs:undoClose', () => session.popClosed())
+  ipcMain.handle('tabs:closedCount', () => session.closedCount())
+  // snapshot session hiện tại
+  ipcMain.handle('session:save', () => {
+    session.saveSession(tm.list().map(t => ({ id: t.id, url: t.url, title: t.title, container: t.container })))
+    return true
+  })
+  ipcMain.handle('session:restore', () => session.restoreSession())
 
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))

@@ -7,6 +7,8 @@ import FeatureBar from './components/FeatureBar'
 import ContainerMenu from './components/ContainerMenu'
 import ReaderView from './components/ReaderView'
 import CommandPalette from './components/CommandPalette'
+import SearchOverlay from './components/SearchOverlay'
+import TtsPanel from './components/TtsPanel'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -25,13 +27,25 @@ export default function App() {
   const [layout, setLayout] = useState<'top' | 'side'>('top')
   const [reader, setReader] = useState<{ title: string; content: string } | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [ttsOpen, setTtsOpen] = useState(false)
+  const [savedNotice, setSavedNotice] = useState('')
 
-  // Ctrl+K / Cmd+K mở command palette
+  // Ctrl+K / Cmd+K mở command palette; Ctrl+Shift+F mở search tab
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen(o => !o)
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setSearchOpen(o => !o)
+      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 't') {
+        e.preventDefault()
+        // undo đóng tab — mở lại tab vừa đóng
+        window.tony?.tabs.undoClose().then(t => {
+          if (t) open(t.url, t.container)
+        }).catch(() => {})
       }
     }
     window.addEventListener('keydown', onKey)
@@ -61,7 +75,14 @@ export default function App() {
             if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })
           }).catch(() => {})
         }}
-        onPip={() => window.tony?.pip.start(activeId)} />
+        onPip={() => window.tony?.pip.start(activeId)}
+        onSplit={() => {
+          // split với tab liền kề (hoặc tự mở tab mới bên cạnh)
+          const others = tabs.filter(t => t.id !== activeId)
+          const b = others[others.length - 1]?.id ?? null
+          window.tony?.tabs.split(activeId, b)
+        }}
+        onTts={() => setTtsOpen(true)} />
       <div style={styles.body}>
         {layout === 'side' && (
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
@@ -95,6 +116,7 @@ export default function App() {
         <CommandPalette
           commands={[
             { id: 'newtab', icon: '➕', label: 'Tab mới', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
+            { id: 'search', icon: '🔍', label: 'Tìm tab đang mở', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
             { id: 'focus', icon: '🧘', label: 'Bật/tắt Focus Mode', run: () => { const el = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('Focus')); el?.click() } },
             { id: 'reader', icon: '📖', label: 'Reader Mode', run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })) },
             { id: 'ai', icon: '🪄', label: 'Mở Trợ lý AI', hint: 'Ctrl+K', run: () => setAiOpen(true) },
@@ -103,6 +125,22 @@ export default function App() {
           ]}
           onClose={() => setPaletteOpen(false)}
         />
+      )}
+      {searchOpen && <SearchOverlay onSelect={activate} onClose={() => setSearchOpen(false)} />}
+      {ttsOpen && (
+        <TtsPanel tab={active} onClose={() => setTtsOpen(false)}
+          onSave={() => {
+            if (active) {
+              setSavedNotice('✅ Đã lưu: ' + (active.title || active.url))
+              setTimeout(() => setSavedNotice(''), 2000)
+            }
+            setTtsOpen(false)
+          }} />
+      )}
+      {savedNotice && (
+        <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--apple-blue)', color: '#fff', padding: '8px 16px', borderRadius: 980, fontSize: 13, zIndex: 400 }}>
+          {savedNotice}
+        </div>
       )}
     </div>
   )

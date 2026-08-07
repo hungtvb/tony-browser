@@ -88,6 +88,12 @@ export interface TonyAPI {
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
     list: () => Promise<TabState[]>
+    stacks: () => Promise<{ label: string; tabs: TabState[] }[]>
+    search: (q: string) => Promise<TabState[]>
+    split: (aId: string, bId: string | null) => Promise<{ ok: boolean }>
+    splitState: () => Promise<string[]>
+    undoClose: () => Promise<{ id: string; url: string; title: string; container?: string } | null>
+    closedCount: () => Promise<number>
     onChange: (cb: (tabs: TabState[]) => void) => void
   }
   privacy: {
@@ -122,5 +128,9 @@ export interface TonyAPI {
   pip: {
     start: (tabId?: string) => Promise<{ ok: boolean; error?: string }>
     stop: (tabId?: string) => Promise<{ ok: boolean; error?: string }>
+  }
+  tts: {
+    speak: (tabId?: string) => Promise<{ ok: boolean; error?: string; text?: string }>
+    stop: () => Promise<{ ok: boolean }>
   }
 }
