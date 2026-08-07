@@ -34,16 +34,38 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
   const { session } = win.webContents
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
+  const { isYouTubeAdRequest, stripPlayerResponse } = require('./privacy/youtube')
   listSize = bl.size
 
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
-    if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url))) {
+    if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
       callback({ cancel: true })
     } else {
       callback({})
     }
   })
+
+  // Bóc ads khỏi YouTube player response (filterResponseData sửa nội dung)
+  session.webRequest.onBeforeRequest(
+    { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
+    (details, callback) => {
+      if (!privacyFilterOn) { callback({}); return }
+      const filter = session.webRequest.filterResponseData(details.id)
+      const chunks: Buffer[] = []
+      filter.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
+      filter.on('end', () => {
+        try {
+          const body = Buffer.concat(chunks).toString('utf-8')
+          const stripped = stripPlayerResponse(body)
+          filter.write(stripped ?? body)
+        } catch { /* nếu lỗi giữ nguyên */ }
+        filter.end()
+      })
+      filter.on('error', () => { try { filter.end() } catch { /* ignore */ } })
+      callback({})
+    },
+  )
 }
 
 // Injectable cosmetic filter dùng trong trackView (mỗi tab mới)

@@ -38,6 +38,11 @@ const COSMETIC_RULES = [
   '[class*="popup"]', '[class*="sticky-ads"]', '[data-ad]', '[data-ad-slot]',
   'iframe[src*="doubleclick"]', 'iframe[src*="googleadservices"]',
   'iframe[src*="amazon-adsystem"]',
+  // YouTube ads (ytd polymer elements)
+  'ytd-ad-slot-renderer', 'ytd-display-ad-renderer', 'ytd-in-feed-ad-layout-renderer',
+  'ytd-banner-promo-renderer', 'ytd-statement-banner-renderer',
+  '#masthead-ad', '#player-ads', '#video-masthead', '#related ytd-ad-slot-renderer',
+  '[class*="ytd-ad-slot"]', '[class*="ad-container"]', '[class*="ytp-ad"]',
 ]
 
 export function createCosmeticFilter() {
