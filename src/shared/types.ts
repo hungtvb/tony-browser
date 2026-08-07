@@ -37,7 +37,7 @@ export interface AIConfig {
 export interface AIAskParams {
   text: string
   tabId?: string // nếu có → đọc nội dung tab đó
-  mode: 'chat' | 'summarizePage' | 'summarizeAll'
+  mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act'
 }
 
 export interface AIStatus {

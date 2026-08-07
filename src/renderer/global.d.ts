@@ -15,13 +15,5 @@ declare module '*.png' {
   export default content
 }
 
-declare global {
-  interface Window {
-    tony?: {
-      version: string
-      platform: string
-      getAppInfo: () => { electron: string; chrome: string }
-    }
-  }
-}
+// window.tony global type được khai báo ở src/preload/index.d.ts (TonyAPI)
 export {}
