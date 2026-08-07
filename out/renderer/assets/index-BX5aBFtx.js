@@ -12641,10 +12641,69 @@ function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }) {
     ))
   ] });
 }
+const focusIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M600.5-379.62q49.5-49.62 49.5-120.5T600.38-620.5Q550.76-670 479.88-670T359.5-620.38Q310-570.76 310-499.88t49.62 120.38q49.62 49.5 120.5 49.5t120.38-49.62Zm-200-41.12q-32.5-32.73-32.5-79.5 0-46.76 32.74-79.26 32.73-32.5 79.5-32.5 46.76 0 79.26 32.74 32.5 32.73 32.5 79.5 0 46.76-32.74 79.26-32.73 32.5-79.5 32.5-46.76 0-79.26-32.74ZM234.5-276Q124-352 57-470q-4-7.13-6-14.65-2-7.52-2-15.43 0-7.92 2-15.38 2-7.47 6-14.54 67-118 177.5-194T480-800q135 0 245.5 76T903-530q4 7.12 6 14.65 2 7.52 2 15.43 0 7.92-2 15.38-2 7.47-6 14.54-67 118-177.5 194T480-200q-135 0-245.5-76ZM480-500Zm222.5 174.5Q804-391 857-500q-53-109-154.33-174.5Q601.34-740 480.17-740T257.5-674.5Q156-609 102-500q54 109 155.33 174.5Q358.66-260 479.83-260t222.67-65.5Z"/></svg>';
+const readerIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M248-300q53.57 0 104.28 12.5Q403-275 452-250v-427q-45-30-97.62-46.5Q301.76-740 248-740q-38 0-74.5 9.5T100-707v434q31-14 70.5-20.5T248-300Zm264 50q50-25 98-37.5T712-300q38 0 78.5 6t69.5 16v-429q-34-17-71.82-25-37.82-8-76.18-8-54 0-104.5 16.5T512-677v427Zm-44.5 77.5Q461-174 456-178q-47-29-99.85-45-52.84-16-108.15-16-36.54 0-71.77 9T106-208q-23.1 11-44.55-3Q40-225 40-251v-463q0-15 7-27.5T68-761q42-20 87.39-29.5 45.4-9.5 92.61-9.5 63 0 122.5 17T482-731q51-35 109.5-52T712-800q46.87 0 91.93 9.5Q849-781 891-761q14 7 21.5 19.5T920-714v463q0 27.89-22.5 42.45Q875-194 853-208q-34-14-69.23-22.5Q748.54-239 712-239q-54.27 0-106.14 16Q554-207 508-178q-5 4-11.5 5.5T482-171q-8 0-14.5-1.5ZM276-489Zm284-119q0-5.52 4.02-11.34 4.03-5.82 8.98-7.66 30-11 61.34-17 31.33-6 65.91-6 21.61 0 42.68 2.5T784-640q6 2 11 7.4 5 5.39 5 12.13 0 11.47-7.5 17.47-7.5 6-18.5 3-16.8-5-35.4-7.5Q720-610 700-610q-29 0-56 5.5T591-588q-14 5-22.5-.5T560-608Zm0 220q0-5.81 4.02-11.94 4.03-6.12 8.98-8.06 30-11 61.34-16.5 31.33-5.5 65.91-5.5 21.61 0 42.68 2.5T784-420q6 2 11 7.4 5 5.39 5 12.13 0 11.47-7.5 17.47-7.5 6-18.5 3-16.8-5-35.4-7.5Q720-390 700-390q-29 0-56 5t-53 16q-14 5-22.5 0t-8.5-19Zm0-110q0-5.52 4.02-11.34 4.03-5.82 8.98-7.66 30-11 61.34-17 31.33-6 65.91-6 21.61 0 42.68 2.5T784-530q6 2 11 7.4 5 5.39 5 12.13 0 11.47-7.5 17.47-7.5 6-18.5 3-16.8-5-35.4-7.5Q720-500 700-500q-29 0-56 5.5T591-478q-14 5-22.5-.5T560-498Z"/></svg>';
+const pipIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm0-60h680v-520H140v520Zm0 0v-520 520Zm336-45h275q12.75 0 21.38-8.63Q781-282.25 781-295v-197q0-12.75-8.62-21.38Q763.75-522 751-522H476q-12.75 0-21.37 8.62Q446-504.75 446-492v197q0 12.75 8.63 21.37Q463.25-265 476-265Zm30-60v-137h215v137H506Z"/></svg>';
+const splitIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M120-260v-440q0-24.75 17.63-42.38Q155.25-760 180-760h600q24.75 0 42.38 17.62Q840-724.75 840-700v440q0 24.75-17.62 42.37Q804.75-200 780-200H180q-24.75 0-42.37-17.63Q120-235.25 120-260Zm60 0h160v-440H180v440Zm220 0h160v-440H400v440Zm220 0h160v-440H620v440Z"/></svg>';
+const ttsIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M780-481q0-94-52.5-169T590-759q-12-5-17-16t0-22q5-12 17.5-16.5t25.5.5q101 41 162.5 131T840-481q0 111-61.5 201T616-149q-13 5-25.5.5T573-165q-5-11 0-22t17-16q85-34 137.5-109T780-481ZM280-360H150q-13 0-21.5-8.5T120-390v-180q0-13 8.5-21.5T150-600h130l149-149q14-14 32.5-6.5T480-728v496q0 20-18.5 27.5T429-211L280-360Zm380-120q0 52-26 94t-73 64q-8 4-14.5-1t-6.5-13v-289q0-8 6.5-13t14.5-1q47 22 73 65t26 94ZM420-648 307-540H180v120h127l113 109v-337ZM298-480Z"/></svg>';
+const aiIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="m726-728-72-32q-5-2-7-5t-2-8q0-5 2-8.5t7-5.5l72-31 29-69q2-5 5.5-7.5t8.5-2.5q5 0 8.5 2.5t5.5 7.5l29 69 72 31q5 2 7 5.5t2 8.5q0 5-2 8t-7 5l-72 32-29 65q-2 5-5.5 7t-8.5 2q-5 0-8.5-2t-5.5-7l-29-65ZM240-391 85-460q-7-3-10.5-9T71-481q0-6 3.5-12t10.5-9l155-69 72-153q3-7 8.5-10t11.5-3q6 0 11.5 2.5t8.5 9.5l73 154 155 69q7 3 10.5 9t3.5 12q0 6-3.5 12t-10.5 9l-155 69-73 154q-3 7-8.5 10t-11.5 3q-6 0-11.5-3t-8.5-10l-72-154Zm92 49 48-96 98-43-98-43-48-96-47 96-99 43 99 43 47 96Zm397 206-72-31q-5-2-7-5.5t-2-8.5q0-5 2-8.5t7-5.5l72-31 29-69q2-5 5.5-7t8.5-2q5 0 8.5 2t5.5 7l29 69 72 31q5 2 7 5.5t2 8.5q0 5-2 8.5t-7 5.5l-72 31-29 66q-2 5-5.5 7t-8.5 2q-5 0-8.5-2t-5.5-7l-29-66ZM332-481Z"/></svg>';
+const privacyIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M470.12-85q-4.56-1-9.12-3-139-47-220-168.5t-81-266.61V-719q0-19.26 10.88-34.66Q181.75-769.07 199-776l260-97q11-4 21-4t21 4l260 97q17.25 6.93 28.13 22.34Q800-738.26 800-719v195.89Q800-378 719-256.5T499-88q-4.56 2-9.12 3T480-84q-5.32 0-9.88-1Zm9.88-58q115-38 187.5-143.5T740-523v-196l-260-98-260 98v196q0 131 72.5 236.5T480-143Zm0-337Z"/></svg>';
+const sleepIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-132 77.5-238T361-868q17-5 31 5t12 27q-7 88 23.5 169.5T521-522q63 63 145 94t170 24q17-2 26.5 13t4.5 32q-40 125-145.5 202T484-80Zm0-60q100 0 182-57t132-145q-90-8-173-41.5T478.5-480Q415-543 382-625.5T341-797q-88 48-144.5 130.5T140-484q0 143.33 100.33 243.67Q340.67-140 484-140Zm-6-340Z"/></svg>';
+const searchIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M378-329q-108.16 0-183.08-75Q120-479 120-585t75-181q75-75 181.5-75t181 75Q632-691 632-584.85 632-542 618-502q-14 40-42 75l242 240q9 8.56 9 21.78T818-143q-9 9-22.22 9-13.22 0-21.78-9L533-384q-30 26-69.96 40.5Q423.08-329 378-329Zm-1-60q81.25 0 138.13-57.5Q572-504 572-585t-56.87-138.5Q458.25-781 377-781q-82.08 0-139.54 57.5Q180-666 180-585t57.46 138.5Q294.92-389 377-389Z"/></svg>';
+const tabIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M140-220h680v-347H554q-12.75 0-21.37-8.63Q524-584.25 524-597v-143H140v520Zm0 60q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm0-60v-520 520Z"/></svg>';
+const closeIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M480-438 270-228q-9 9-21 9t-21-9q-9-9-9-21t9-21l210-210-210-210q-9-9-9-21t9-21q9-9 21-9t21 9l210 210 210-210q9-9 21-9t21 9q9 9 9 21t-9 21L522-480l210 210q9 9 9 21t-9 21q-9 9-21 9t-21-9L480-438Z"/></svg>';
+const plusIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M450-450H230q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h220v-220q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v220h220q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H510v220q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-220Z"/></svg>';
+const settingsIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M421-80q-14 0-25-9t-13-23l-15-94q-19-7-40-19t-37-25l-86 40q-14 6-28 1.5T155-226L97-330q-8-13-4.5-27t15.5-23l80-59q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521l-80-59q-12-9-15.5-23t4.5-27l58-104q8-13 22-17.5t28 1.5l86 40q16-13 37-25t40-18l15-95q2-14 13-23t25-9h118q14 0 25 9t13 23l15 94q19 7 40.5 18.5T669-710l86-40q14-6 27.5-1.5T804-734l59 104q8 13 4.5 27.5T852-580l-80 57q2 10 2.5 21.5t.5 21.5q0 10-.5 21t-2.5 21l80 58q12 8 15.5 22.5T863-330l-58 104q-8 13-22 17.5t-28-1.5l-86-40q-16 13-36.5 25.5T592-206l-15 94q-2 14-13 23t-25 9H421Zm15-60h88l14-112q33-8 62.5-25t53.5-41l106 46 40-72-94-69q4-17 6.5-33.5T715-480q0-17-2-33.5t-7-33.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14-112h-88l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17 2.5 33.5T254-413l-94 69 40 72 106-46q24 24 53.5 41t62.5 25l14 112Zm44-210q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm0-130Z"/></svg>';
+const saveIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="m480-240-196 84q-30 13-57-4.76-27-17.75-27-50.24v-574q0-24 18-42t42-18h260q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H260v574l220-93 220 93v-304q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v304q0 32.49-27 50.24Q706-143 676-156l-196-84Zm0-545H260h290-70Zm220 90h-60q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h60v-60q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v60h60q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5h-60v60q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63-8.5-8.62-8.5-21.37v-60Z"/></svg>';
+const undoIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M289-200q-13 0-21.5-8.5T259-230q0-13 8.5-21.5T289-260h280q70 0 120.5-46.5T740-422q0-69-50.5-115.5T569-584H274l93 93q9 9 9 21t-9 21q-9 9-21 9t-21-9L181-593q-5-5-7-10t-2-11q0-6 2-11t7-10l144-144q9-9 21-9t21 9q9 9 9 21t-9 21l-93 93h294q95 0 163.5 64T800-422q0 94-68.5 158T568-200H289Z"/></svg>';
+const layoutIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M180-510q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0 450q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0-600v210-210Zm0 390v210-210Z"/></svg>';
+const sendIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M814-452 162-178q-15 6-28.5-2.5T120-205v-550q0-16 13.5-24.5T162-782l652 274q18 8 18 28t-18 28ZM180-253l544-227-544-230v168l242 62-242 60v167Zm0 0v-457 457Z"/></svg>';
+const lockIcon = '<svg xmlns="http://www.w3.org/2000/svg" height="48" viewBox="0 -960 960 960" width="48"><path d="M220-80q-24.75 0-42.37-17.63Q160-115.25 160-140v-434q0-24.75 17.63-42.38Q195.25-634 220-634h70v-96q0-78.85 55.61-134.42Q401.21-920 480.11-920q78.89 0 134.39 55.58Q670-808.85 670-730v96h70q24.75 0 42.38 17.62Q800-598.75 800-574v434q0 24.75-17.62 42.37Q764.75-80 740-80H220Zm0-60h520v-434H220v434Zm314.5-162.03Q557-324.06 557-355q0-30-22.67-54.5t-54.5-24.5q-31.83 0-54.33 24.5t-22.5 55q0 30.5 22.67 52.5t54.5 22q31.83 0 54.33-22.03ZM350-634h260v-96q0-54.17-37.88-92.08-37.88-37.92-92-37.92T388-822.08q-38 37.91-38 92.08v96ZM220-140v-434 434Z"/></svg>';
+const ICONS = {
+  focus: focusIcon,
+  reader: readerIcon,
+  pip: pipIcon,
+  split: splitIcon,
+  tts: ttsIcon,
+  ai: aiIcon,
+  privacy: privacyIcon,
+  sleep: sleepIcon,
+  search: searchIcon,
+  tab: tabIcon,
+  close: closeIcon,
+  plus: plusIcon,
+  settings: settingsIcon,
+  save: saveIcon,
+  undo: undoIcon,
+  layout: layoutIcon,
+  send: sendIcon,
+  lock: lockIcon
+};
+function extractPath(svg) {
+  const m = svg.match(/<path[^>]*d="([^"]+)"/);
+  return m ? m[1] : "";
+}
+function UIcon({ name, size = 18, title }) {
+  const d = extractPath(ICONS[name] || aiIcon);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "svg",
+    {
+      width: size,
+      height: size,
+      viewBox: "0 -960 960 960",
+      fill: "#fff",
+      xmlns: "http://www.w3.org/2000/svg",
+      style: { display: "block", flexShrink: 0 },
+      "aria-label": title || name,
+      role: "img",
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d })
+    }
+  );
+}
 const styles$a = {
   bar: {
     display: "flex",
-    gap: 8,
+    gap: 6,
     padding: "8px 14px",
     background: "rgba(28,28,30,0.85)",
     backdropFilter: "saturate(180%) blur(20px)",
@@ -12676,12 +12735,16 @@ const styles$a = {
     letterSpacing: "-0.12px"
   },
   ai: {
-    padding: "7px 14px",
+    padding: "7px 10px",
     borderRadius: 980,
     border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(255,255,255,0.08)",
     cursor: "pointer",
-    fontSize: 15
+    fontSize: 15,
+    color: "#fff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center"
   }
 };
 function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }) {
@@ -12705,11 +12768,11 @@ function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }) {
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.btn, onClick: go, children: "Đi" }),
-    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Reader Mode", onClick: onReader, children: "📖" }),
-    onPip && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Picture-in-Picture", onClick: onPip, children: "🎬" }),
-    onSplit && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Split View", onClick: onSplit, children: "▭" }),
-    onTts && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Đọc bài / Lưu trang", onClick: onTts, children: "🔊" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Trợ lý AI", onClick: onOpenAI, children: "🪄" })
+    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Reader Mode", onClick: onReader, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "reader", size: 18 }) }),
+    onPip && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Picture-in-Picture", onClick: onPip, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "pip", size: 18 }) }),
+    onSplit && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Split View", onClick: onSplit, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "split", size: 18 }) }),
+    onTts && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Đọc bài / Lưu trang", onClick: onTts, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "tts", size: 18 }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$a.ai, title: "Trợ lý AI", onClick: onOpenAI, children: /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "ai", size: 18 }) })
   ] });
 }
 const styles$9 = {
@@ -12882,7 +12945,7 @@ const styles$8 = {
     WebkitBackdropFilter: "saturate(180%) blur(12px)"
   },
   chip: {
-    padding: "3px 11px",
+    padding: "4px 11px",
     borderRadius: 980,
     fontSize: 11,
     cursor: "pointer",
@@ -12890,16 +12953,22 @@ const styles$8 = {
     background: "rgba(255,255,255,0.06)",
     color: "rgba(255,255,255,0.8)",
     letterSpacing: "-0.08px",
-    transition: "all 0.15s ease"
+    transition: "all 0.15s ease",
+    display: "flex",
+    alignItems: "center",
+    gap: 4
   },
   chipStatic: {
-    padding: "3px 11px",
+    padding: "4px 11px",
     borderRadius: 980,
     fontSize: 11,
     border: "1px solid rgba(255,255,255,0.1)",
     background: "rgba(255,255,255,0.05)",
     color: "rgba(255,255,255,0.64)",
-    letterSpacing: "-0.08px"
+    letterSpacing: "-0.08px",
+    display: "flex",
+    alignItems: "center",
+    gap: 4
   },
   active: { background: "var(--apple-blue)", borderColor: "var(--apple-blue)", color: "#fff" },
   warn: { color: "#ff9f0a" },
@@ -12927,9 +12996,14 @@ function FeatureBar({ layout, onToggleLayout }) {
     window.tony?.focus.toggle(next);
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$8.bar, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$8.chip, ...focusOn ? styles$8.active : {} }, onClick: toggleFocus, children: focusOn ? "🧘 Focus Bật" : "🧘 Focus Tắt" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "apple-focus", style: { ...styles$8.chip, ...focusOn ? styles$8.active : {} }, onClick: toggleFocus, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "focus", size: 13 }),
+      " ",
+      focusOn ? "Focus Bật" : "Focus Tắt"
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$8.chipStatic, children: [
-      "💤 ",
+      /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "sleep", size: 13 }),
+      " ",
       sleeping,
       " tab ngủ"
     ] }),
@@ -12938,7 +13012,11 @@ function FeatureBar({ layout, onToggleLayout }) {
       warnings.length,
       " nặng RAM"
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$8.chip, onClick: onToggleLayout, title: "Chuyển layout tab", children: layout === "side" ? "📐 Dọc" : "↕️ Ngang" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "apple-focus", style: styles$8.chip, onClick: onToggleLayout, title: "Chuyển layout tab", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(UIcon, { name: "layout", size: 13 }),
+      " ",
+      layout === "side" ? "Dọc" : "Ngang"
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$8.label, children: "tony-browser v0.11" })
   ] });
 }

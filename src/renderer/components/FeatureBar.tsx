@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -8,13 +9,15 @@ const styles: Record<string, React.CSSProperties> = {
     WebkitBackdropFilter: 'saturate(180%) blur(12px)',
   },
   chip: {
-    padding: '3px 11px', borderRadius: 980, fontSize: 11, cursor: 'pointer',
+    padding: '4px 11px', borderRadius: 980, fontSize: 11, cursor: 'pointer',
     border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)',
     color: 'rgba(255,255,255,0.8)', letterSpacing: '-0.08px', transition: 'all 0.15s ease',
+    display: 'flex', alignItems: 'center', gap: 4,
   },
   chipStatic: {
-    padding: '3px 11px', borderRadius: 980, fontSize: 11, border: '1px solid rgba(255,255,255,0.1)',
+    padding: '4px 11px', borderRadius: 980, fontSize: 11, border: '1px solid rgba(255,255,255,0.1)',
     background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.64)', letterSpacing: '-0.08px',
+    display: 'flex', alignItems: 'center', gap: 4,
   },
   active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#fff' },
   warn: { color: '#ff9f0a' },
@@ -49,12 +52,12 @@ export default function FeatureBar({ layout, onToggleLayout }: {
   return (
     <div style={styles.bar}>
       <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
-        {focusOn ? '🧘 Focus Bật' : '🧘 Focus Tắt'}
+        <UIcon name="focus" size={13} /> {focusOn ? 'Focus Bật' : 'Focus Tắt'}
       </button>
-      <span style={styles.chipStatic}>💤 {sleeping} tab ngủ</span>
+      <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tab ngủ</span>
       {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}>⚠️ {warnings.length} nặng RAM</span>}
       <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Chuyển layout tab">
-        {layout === 'side' ? '📐 Dọc' : '↕️ Ngang'}
+        <UIcon name="layout" size={13} /> {layout === 'side' ? 'Dọc' : 'Ngang'}
       </button>
       <span style={styles.label}>tony-browser v0.11</span>
     </div>
