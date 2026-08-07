@@ -436,6 +436,229 @@ ${text.slice(0, 8e3)}`);
     return this.service.ask(params, pageText);
   }
 }
+function createFocusEngine(opts) {
+  let enabled = false;
+  let blocklist = opts.blocklist.map(normalizeDomain);
+  let whitelist = opts.whitelist.map(normalizePattern);
+  function normalizeDomain(d) {
+    return d.trim().toLowerCase().replace(/^\./, "").replace(/\/+$/, "");
+  }
+  function normalizePattern(p) {
+    return p.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  }
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+  function check(url) {
+    if (!enabled) return { blocked: false };
+    const host = hostOf(url);
+    if (!host) return { blocked: false };
+    for (const w of whitelist) {
+      const wHost = w.split("/")[0];
+      const wPath = w.includes("/") ? w.slice(w.indexOf("/") + 1) : "";
+      if (host === wHost || host.endsWith("." + wHost)) {
+        if (!wPath) return { blocked: false };
+        const urlPath = url.split("#")[0].split("?")[0].replace(/^https?:\/\//, "").replace(/^[^/]+/, "");
+        if (urlPath.startsWith("/" + wPath)) return { blocked: false };
+      }
+    }
+    for (const d of blocklist) {
+      if (host === d || host.endsWith("." + d)) return { blocked: true, reason: "focus" };
+    }
+    return { blocked: false };
+  }
+  return {
+    get enabled() {
+      return enabled;
+    },
+    setEnabled(on) {
+      enabled = on;
+    },
+    setBlocklist(list) {
+      blocklist = list.map(normalizeDomain);
+    },
+    setWhitelist(list) {
+      whitelist = list.map(normalizePattern);
+    },
+    check
+  };
+}
+const DEFAULT_BLOCKLIST = ["facebook.com", "youtube.com", "tiktok.com", "instagram.com", "news.vn", "zingnews.vn", "dantri.com.vn", "vnexpress.net", "tuoitre.vn"];
+class FocusController {
+  engine;
+  _enabled = false;
+  blocklist = DEFAULT_BLOCKLIST;
+  whitelist = [];
+  constructor() {
+    this.engine = createFocusEngine({ blocklist: this.blocklist, whitelist: this.whitelist });
+  }
+  getState() {
+    return { enabled: this.enabled, blocklist: [...this.blocklist], whitelist: [...this.whitelist] };
+  }
+  get enabled() {
+    return this._enabled;
+  }
+  setEnabled(on) {
+    this._enabled = on;
+    this.engine.setEnabled(on);
+  }
+  setBlocklist(list) {
+    this.blocklist = list;
+    this.engine.setBlocklist(list);
+  }
+  setWhitelist(list) {
+    this.whitelist = list;
+    this.engine.setWhitelist(list);
+  }
+  check(url) {
+    return this.engine.check(url);
+  }
+}
+const THEME_KEYWORDS = {
+  "💻 Code & Dev": ["github.com", "gitlab.com", "stackoverflow", "npm", "jsfiddle", "codesandbox"],
+  "📄 Docs & Văn phòng": ["docs.google", "sheets", "slides", "notion", "office.com", "dropbox"],
+  "🎬 Giải trí": ["youtube", "netflix", "spotify", "tiktok", "twitch"],
+  "📧 Email": ["mail.", "gmail", "outlook", "yahoo.com/mail"],
+  "🛒 Mua sắm": ["shopee", "lazada", "tiki", "amazon", "shopify"],
+  "📰 Tin tức": ["news", "vnexpress", "dantri", "tuoitre", "zalo", "vlog"]
+};
+function createSmartTab() {
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+  function groupByDomain(tabs) {
+    const map = /* @__PURE__ */ new Map();
+    for (const t of tabs) {
+      const host = hostOf(t.url) || "khác";
+      const list = map.get(host) ?? [];
+      list.push(t);
+      map.set(host, list);
+    }
+    return [...map.entries()].map(([label, t]) => ({ label, tabs: t }));
+  }
+  function classify(url) {
+    const host = hostOf(url);
+    const full = (host + " " + url).toLowerCase();
+    for (const [theme, kws] of Object.entries(THEME_KEYWORDS)) {
+      if (kws.some((k) => full.includes(k))) return theme;
+    }
+    return "🌐 Khác";
+  }
+  function groupByTheme(tabs) {
+    const map = /* @__PURE__ */ new Map();
+    for (const t of tabs) {
+      const theme = classify(t.url);
+      const list = map.get(theme) ?? [];
+      list.push(t);
+      map.set(theme, list);
+    }
+    return [...map.entries()].map(([label, t]) => ({ label, tabs: t }));
+  }
+  function saveSession(tabs, name) {
+    return {
+      name: name ?? `Phiên ${(/* @__PURE__ */ new Date()).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`,
+      createdAt: Date.now(),
+      tabs: tabs.map((t) => ({ url: t.url, title: t.title || t.url }))
+    };
+  }
+  function restoreSession(session) {
+    return session.tabs;
+  }
+  return { groupByDomain, groupByTheme, saveSession, restoreSession };
+}
+class SmartTabController {
+  smart = createSmartTab();
+  sessions = [];
+  get sessionsList() {
+    return [...this.sessions];
+  }
+  groupByDomain(tabs) {
+    const states = tabs.map((t) => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }));
+    return this.smart.groupByDomain(states);
+  }
+  groupByTheme(tabs) {
+    const states = tabs.map((t) => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }));
+    return this.smart.groupByTheme(states);
+  }
+  saveSession(tabs, name) {
+    const states = tabs.map((t) => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }));
+    const session = this.smart.saveSession(states, name);
+    const info = { name: session.name, createdAt: session.createdAt, tabs: session.tabs };
+    this.sessions.unshift(info);
+    if (this.sessions.length > 10) this.sessions.length = 10;
+    return info;
+  }
+  restoreSession(name) {
+    const s = this.sessions.find((x) => x.name === name);
+    if (!s) return [];
+    return s.tabs;
+  }
+  listSessions() {
+    return this.sessions;
+  }
+}
+function createTabSleeper(opts = {}) {
+  const idleMs = opts.idleMs ?? 10 * 60 * 1e3;
+  const heavyMemoryMB = opts.heavyMemoryMB ?? 500;
+  const lastActiveMap = /* @__PURE__ */ new Map();
+  function effectiveLastActive(tab) {
+    const tracked = lastActiveMap.get(tab.id);
+    if (tracked !== void 0) return tracked;
+    return tab.lastActive ?? Date.now();
+  }
+  function evaluate(tabs, activeTabId, whitelist = []) {
+    const now = Date.now();
+    const toSleep = [];
+    const warnings = [];
+    for (const tab of tabs) {
+      if ((tab.memoryMB ?? 0) > heavyMemoryMB) warnings.push(tab.id);
+      if (tab.id === activeTabId) continue;
+      if (whitelist.includes(tab.id)) continue;
+      const last = effectiveLastActive(tab);
+      if (now - last > idleMs) toSleep.push(tab.id);
+    }
+    return { toSleep, warnings };
+  }
+  function recordActivity(id) {
+    lastActiveMap.set(id, Date.now());
+  }
+  return { evaluate, recordActivity };
+}
+class SleeperController {
+  sleeper = createTabSleeper({ idleMs: 10 * 60 * 1e3 });
+  sleepingIds = /* @__PURE__ */ new Set();
+  evaluate(tabs, activeId, whitelist = [], views, onSleep) {
+    const infos = tabs.map((t) => ({
+      id: t.id,
+      url: t.url,
+      memoryMB: views?.find((v) => v.id === t.id)?.memoryMB ?? 0
+    }));
+    const result = this.sleeper.evaluate(infos, activeId, whitelist);
+    for (const id of result.toSleep) {
+      this.sleepingIds.add(id);
+      onSleep?.(id);
+    }
+    const ids = new Set(tabs.map((t) => t.id));
+    for (const id of [...this.sleepingIds]) {
+      if (!ids.has(id)) this.sleepingIds.delete(id);
+    }
+    return { sleeping: this.sleepingIds.size, warnings: result.warnings };
+  }
+  recordActivity(id) {
+    this.sleeper.recordActivity(id);
+  }
+  isSleeping(id) {
+    return this.sleepingIds.has(id);
+  }
+}
 let privacyFilterOn = true;
 let blockedCount = 0;
 let listSize = 0;
@@ -504,6 +727,41 @@ function registerIpc(deps2) {
     const text = await ai.ask(params);
     return { text };
   });
+  const focus = new FocusController();
+  electron.ipcMain.handle("focus:state", () => focus.getState());
+  electron.ipcMain.handle("focus:toggle", (_e, on) => {
+    focus.setEnabled(on);
+    return focus.getState();
+  });
+  electron.ipcMain.handle("focus:setBlocklist", (_e, list) => {
+    focus.setBlocklist(list);
+    return focus.getState();
+  });
+  electron.ipcMain.handle("focus:setWhitelist", (_e, list) => {
+    focus.setWhitelist(list);
+    return focus.getState();
+  });
+  const smart = new SmartTabController();
+  electron.ipcMain.handle("smarttab:groups", (_e, mode) => {
+    const tabs = tm2.list();
+    return mode === "theme" ? smart.groupByTheme(tabs) : smart.groupByDomain(tabs);
+  });
+  electron.ipcMain.handle("smarttab:saveSession", (_e, name) => smart.saveSession(tm2.list(), name));
+  electron.ipcMain.handle("smarttab:sessions", () => smart.listSessions());
+  electron.ipcMain.handle("smarttab:restoreSession", (_e, name) => smart.restoreSession(name));
+  const sleeper = new SleeperController();
+  electron.ipcMain.handle("sleeper:evaluate", () => {
+    return sleeper.evaluate(tm2.list(), tm2.activeId, [], void 0, (id) => {
+      const view = deps2.getActiveView(id);
+      if (view && !view.webContents.isDestroyed()) {
+        try {
+          view.webContents.setBackgroundThrottling(true);
+        } catch {
+        }
+      }
+    });
+  });
+  electron.ipcMain.handle("sleeper:activity", (_e, id) => sleeper.recordActivity(id));
   function broadcastTabs() {
     const w = win();
     if (w && !w.webContents.isDestroyed()) {

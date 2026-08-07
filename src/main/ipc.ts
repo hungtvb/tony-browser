@@ -6,6 +6,9 @@ import blocklistDomains from './privacy/blocklist.json'
 import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
 import { AIController } from './ai/controller'
+import { FocusController } from './focus/controller'
+import { SmartTabController } from './smarttab/controller'
+import { SleeperController } from './perf/controller'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -98,6 +101,35 @@ export function registerIpc(deps: IpcDeps) {
     const text = await ai.ask(params)
     return { text }
   })
+
+  // ─── focus ───
+  const focus = new FocusController()
+  ipcMain.handle('focus:state', () => focus.getState())
+  ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return focus.getState() })
+  ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return focus.getState() })
+  ipcMain.handle('focus:setWhitelist', (_e, list: string[]) => { focus.setWhitelist(list); return focus.getState() })
+
+  // ─── smarttab ───
+  const smart = new SmartTabController()
+  ipcMain.handle('smarttab:groups', (_e, mode: 'domain' | 'theme') => {
+    const tabs = tm.list()
+    return mode === 'theme' ? smart.groupByTheme(tabs) : smart.groupByDomain(tabs)
+  })
+  ipcMain.handle('smarttab:saveSession', (_e, name?: string) => smart.saveSession(tm.list(), name))
+  ipcMain.handle('smarttab:sessions', () => smart.listSessions())
+  ipcMain.handle('smarttab:restoreSession', (_e, name: string) => smart.restoreSession(name))
+
+  // ─── sleeper ───
+  const sleeper = new SleeperController()
+  ipcMain.handle('sleeper:evaluate', () => {
+    return sleeper.evaluate(tm.list(), tm.activeId, [], undefined, (id) => {
+      const view = deps.getActiveView(id)
+      if (view && !view.webContents.isDestroyed()) {
+        try { view.webContents.setBackgroundThrottling(true) } catch {}
+      }
+    })
+  })
+  ipcMain.handle('sleeper:activity', (_e, id: string) => sleeper.recordActivity(id))
 
   // helper broadcast — dùng webContents send của window
   function broadcastTabs() {

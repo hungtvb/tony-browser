@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import TabBar from './components/TabBar'
 import AddressBar from './components/AddressBar'
 import AIPanel from './components/AIPanel'
+import FeatureBar from './components/FeatureBar'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <div style={styles.app}>
       <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close} />
+      <FeatureBar />
       <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)} />
       <div style={styles.content}>
         {active && (

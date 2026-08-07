@@ -28,6 +28,22 @@ const api: TonyAPI = {
     ask: (params: AIRequestParams) => ipcRenderer.invoke('ai:ask', params) as Promise<{ text: string }>,
     status: () => ipcRenderer.invoke('ai:status') as Promise<AIStatus>,
   },
+  focus: {
+    state: () => ipcRenderer.invoke('focus:state') as Promise<any>,
+    toggle: (on: boolean) => ipcRenderer.invoke('focus:toggle', on) as Promise<any>,
+    setBlocklist: (list: string[]) => ipcRenderer.invoke('focus:setBlocklist', list) as Promise<any>,
+    setWhitelist: (list: string[]) => ipcRenderer.invoke('focus:setWhitelist', list) as Promise<any>,
+  },
+  smarttab: {
+    groups: (mode: 'domain' | 'theme') => ipcRenderer.invoke('smarttab:groups', mode) as Promise<any[]>,
+    saveSession: (name?: string) => ipcRenderer.invoke('smarttab:saveSession', name) as Promise<any>,
+    sessions: () => ipcRenderer.invoke('smarttab:sessions') as Promise<any[]>,
+    restoreSession: (name: string) => ipcRenderer.invoke('smarttab:restoreSession', name) as Promise<any[]>,
+  },
+  sleeper: {
+    evaluate: () => ipcRenderer.invoke('sleeper:evaluate') as Promise<any>,
+    activity: (id: string) => ipcRenderer.invoke('sleeper:activity', id) as Promise<void>,
+  },
 }
 
 contextBridge.exposeInMainWorld('tony', api)

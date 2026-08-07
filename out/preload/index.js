@@ -25,6 +25,22 @@ const api = {
     saveConfig: (cfg) => electron.ipcRenderer.invoke("ai:saveConfig", cfg),
     ask: (params) => electron.ipcRenderer.invoke("ai:ask", params),
     status: () => electron.ipcRenderer.invoke("ai:status")
+  },
+  focus: {
+    state: () => electron.ipcRenderer.invoke("focus:state"),
+    toggle: (on) => electron.ipcRenderer.invoke("focus:toggle", on),
+    setBlocklist: (list) => electron.ipcRenderer.invoke("focus:setBlocklist", list),
+    setWhitelist: (list) => electron.ipcRenderer.invoke("focus:setWhitelist", list)
+  },
+  smarttab: {
+    groups: (mode) => electron.ipcRenderer.invoke("smarttab:groups", mode),
+    saveSession: (name) => electron.ipcRenderer.invoke("smarttab:saveSession", name),
+    sessions: () => electron.ipcRenderer.invoke("smarttab:sessions"),
+    restoreSession: (name) => electron.ipcRenderer.invoke("smarttab:restoreSession", name)
+  },
+  sleeper: {
+    evaluate: () => electron.ipcRenderer.invoke("sleeper:evaluate"),
+    activity: (id) => electron.ipcRenderer.invoke("sleeper:activity", id)
   }
 };
 electron.contextBridge.exposeInMainWorld("tony", api);

@@ -1,0 +1,41 @@
+// Focus Mode — controller: giữ engine + state, expose qua IPC
+import { createFocusEngine, type FocusEngine } from '../focus/engine'
+import type { FocusState } from '../../shared/types'
+
+const DEFAULT_BLOCKLIST = ['facebook.com', 'youtube.com', 'tiktok.com', 'instagram.com', 'news.vn', 'zingnews.vn', 'dantri.com.vn', 'vnexpress.net', 'tuoitre.vn']
+
+export class FocusController {
+  private engine: FocusEngine
+  private _enabled = false
+  private blocklist: string[] = DEFAULT_BLOCKLIST
+  private whitelist: string[] = []
+
+  constructor() {
+    this.engine = createFocusEngine({ blocklist: this.blocklist, whitelist: this.whitelist })
+  }
+
+  getState(): FocusState {
+    return { enabled: this.enabled, blocklist: [...this.blocklist], whitelist: [...this.whitelist] }
+  }
+
+  get enabled() { return this._enabled }
+
+  setEnabled(on: boolean) {
+    this._enabled = on
+    this.engine.setEnabled(on)
+  }
+
+  setBlocklist(list: string[]) {
+    this.blocklist = list
+    this.engine.setBlocklist(list)
+  }
+
+  setWhitelist(list: string[]) {
+    this.whitelist = list
+    this.engine.setWhitelist(list)
+  }
+
+  check(url: string) {
+    return this.engine.check(url)
+  }
+}

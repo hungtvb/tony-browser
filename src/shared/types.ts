@@ -46,6 +46,28 @@ export interface AIStatus {
 
 export type AIRequestParams = AIAskParams
 
+export interface FocusState {
+  enabled: boolean
+  blocklist: string[]
+  whitelist: string[]
+}
+
+export interface GroupedTabInfo {
+  label: string
+  tabs: TabState[]
+}
+
+export interface TabSessionInfo {
+  name: string
+  createdAt: number
+  tabs: { url: string; title: string }[]
+}
+
+export interface SleeperStats {
+  sleeping: number
+  warnings: string[]
+}
+
 export interface TonyAPI {
   version: string
   platform: string
@@ -62,9 +84,25 @@ export interface TonyAPI {
     toggle: (on: boolean) => Promise<boolean>
   }
   ai: {
-    config: () => Promise<AIConfig>
+    config: () => Promise<AIConfig | null>
     saveConfig: (c: AIConfig) => Promise<boolean>
     ask: (params: AIRequestParams) => Promise<{ text: string }>
     status: () => Promise<AIStatus>
+  }
+  focus: {
+    state: () => Promise<FocusState>
+    toggle: (on: boolean) => Promise<FocusState>
+    setBlocklist: (list: string[]) => Promise<FocusState>
+    setWhitelist: (list: string[]) => Promise<FocusState>
+  }
+  smarttab: {
+    groups: (mode: 'domain' | 'theme') => Promise<GroupedTabInfo[]>
+    saveSession: (name?: string) => Promise<TabSessionInfo>
+    sessions: () => Promise<TabSessionInfo[]>
+    restoreSession: (name: string) => Promise<{ url: string; title: string }[]>
+  }
+  sleeper: {
+    evaluate: () => Promise<SleeperStats>
+    activity: (id: string) => Promise<void>
   }
 }
