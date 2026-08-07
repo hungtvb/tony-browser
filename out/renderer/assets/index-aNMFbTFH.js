@@ -12453,7 +12453,7 @@ function requireClient() {
   return client.exports;
 }
 var clientExports = requireClient();
-const styles$2 = {
+const styles$3 = {
   bar: {
     display: "flex",
     gap: 6,
@@ -12481,15 +12481,15 @@ const styles$2 = {
   plus: { padding: "6px 12px", background: "transparent", border: "1px solid #2a2e38", borderRadius: 8, cursor: "pointer", color: "#9aa1ad" }
 };
 function TabBar({ tabs, activeId, onSelect, onClose }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.bar, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$3.bar, children: [
     tabs.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "div",
       {
-        style: { ...styles$2.tab, ...t.id === activeId ? styles$2.active : {} },
+        style: { ...styles$3.tab, ...t.id === activeId ? styles$3.active : {} },
         onClick: () => onSelect(t.id),
         children: [
           t.title,
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$2.close, onClick: (e) => {
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$3.close, onClick: (e) => {
             e.stopPropagation();
             onClose(t.id);
           }, children: "✕" })
@@ -12497,16 +12497,16 @@ function TabBar({ tabs, activeId, onSelect, onClose }) {
       },
       t.id
     )),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$2.plus, onClick: () => onSelect("new-tab"), children: "+" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$3.plus, onClick: () => onSelect("new-tab"), children: "+" })
   ] });
 }
-const styles$1 = {
+const styles$2 = {
   bar: { display: "flex", gap: 8, padding: "8px 10px", background: "#14161c", borderBottom: "1px solid #2a2e39" },
   input: { flex: 1, padding: "8px 14px", borderRadius: 20, border: "1px solid #2a2e39", background: "#1a1d24", color: "#e5e7eb", fontSize: 14, outline: "none" },
   btn: { padding: "8px 16px", borderRadius: 20, border: "none", background: "#3b5bdb", color: "#fff", cursor: "pointer", fontWeight: 600 },
   ai: { padding: "8px 14px", borderRadius: 20, border: "1px solid #2a2e39", background: "#1a1d24", cursor: "pointer", fontSize: 16 }
 };
-function AddressBar({ onNavigate }) {
+function AddressBar({ onNavigate, onOpenAI }) {
   const [value, setValue] = reactExports.useState("");
   function go() {
     const v = value.trim();
@@ -12514,19 +12514,127 @@ function AddressBar({ onNavigate }) {
     const url = /^https?:\/\//i.test(v) ? v : `https://${v}`;
     onNavigate(url);
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.bar, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.bar, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
       {
-        style: styles$1.input,
+        style: styles$2.input,
         placeholder: "Nhập địa chỉ web hoặc tìm kiếm...",
         value,
         onChange: (e) => setValue(e.target.value),
         onKeyDown: (e) => e.key === "Enter" && go()
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.btn, onClick: go, children: "Đi" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.ai, title: "Trợ lý AI", children: "🪄" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$2.btn, onClick: go, children: "Đi" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$2.ai, title: "Trợ lý AI", onClick: onOpenAI, children: "🪄" })
+  ] });
+}
+const styles$1 = {
+  panel: {
+    position: "fixed",
+    top: 92,
+    right: 0,
+    bottom: 0,
+    width: 380,
+    zIndex: 100,
+    background: "#1a1d24",
+    borderLeft: "1px solid #2a2e39",
+    display: "flex",
+    flexDirection: "column"
+  },
+  header: { padding: "10px 14px", borderBottom: "1px solid #2a2e39", fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" },
+  body: { flex: 1, overflow: "auto", padding: 12, fontSize: 13, lineHeight: 1.6 },
+  inputRow: { display: "flex", gap: 6, padding: 10, borderTop: "1px solid #2a2e39" },
+  input: { flex: 1, padding: 8, borderRadius: 8, border: "1px solid #2a2e39", background: "#111318", color: "#e5e7eb", outline: "none" },
+  btn: { padding: "8px 12px", borderRadius: 8, border: "none", background: "#3b5bdb", color: "#fff", cursor: "pointer" },
+  actions: { display: "flex", gap: 6, padding: "6px 10px" },
+  chip: { padding: "5px 10px", borderRadius: 12, background: "#2a2e39", color: "#c9ced8", fontSize: 12, cursor: "pointer", border: "none" },
+  settings: { background: "#111318", borderRadius: 8, padding: 10, marginBottom: 10 },
+  config: { width: "100%", marginBottom: 6, padding: 6, borderRadius: 6, border: "1px solid #2a2e39", background: "#1a1d24", color: "#e5e7eb", fontSize: 12 }
+};
+function AIPanel({ onClose, activeTabId }) {
+  const [msg, setMsg] = reactExports.useState("");
+  const [out, setOut] = reactExports.useState("");
+  const [busy, setBusy] = reactExports.useState(false);
+  const [showSettings, setShowSettings] = reactExports.useState(false);
+  const [config, setConfig] = reactExports.useState({ baseUrl: "", apiKey: "", model: "" });
+  reactExports.useEffect(() => {
+    window.tony?.ai.config().then((c) => c && setConfig(c));
+  }, []);
+  async function run(mode, text) {
+    if (busy) return;
+    setBusy(true);
+    setOut("Đang xử lý...");
+    try {
+      const params = { mode, text: text ?? (msg || ""), tabId: activeTabId };
+      const res = await window.tony.ai.ask(params);
+      setOut(res.text || "(trống)");
+    } catch (e) {
+      setOut("⚠️ " + (e?.message || String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+  function saveCfg() {
+    window.tony?.ai.saveConfig(config).then(() => setShowSettings(false));
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.panel, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.header, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "🪄 Trợ lý AI" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 6 }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.chip, onClick: () => setShowSettings((s) => !s), children: "⚙️" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.chip, onClick: onClose, children: "✕" })
+      ] })
+    ] }),
+    showSettings && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.settings, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          style: styles$1.config,
+          placeholder: "Base URL (vd: https://api.openai.com/v1)",
+          value: config.baseUrl,
+          onChange: (e) => setConfig({ ...config, baseUrl: e.target.value })
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          style: styles$1.config,
+          placeholder: "API key",
+          type: "password",
+          value: config.apiKey,
+          onChange: (e) => setConfig({ ...config, apiKey: e.target.value })
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          style: styles$1.config,
+          placeholder: "Model (vd: gpt-4o-mini)",
+          value: config.model,
+          onChange: (e) => setConfig({ ...config, model: e.target.value })
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.btn, onClick: saveCfg, children: "Lưu" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.actions, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.chip, onClick: () => run("summarizePage"), children: "📄 Tóm tắt trang" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.chip, onClick: () => run("summarizeAll"), children: "📚 Tổng hợp tab" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$1.body, className: "ai-output", children: /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { style: { whiteSpace: "pre-wrap", fontFamily: "inherit" }, children: out }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.inputRow, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          style: styles$1.input,
+          placeholder: "Hỏi gì về trang này?",
+          value: msg,
+          onChange: (e) => setMsg(e.target.value),
+          onKeyDown: (e) => e.key === "Enter" && run("chat", msg)
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.btn, onClick: () => run("chat", msg), children: "Gửi" })
+    ] })
   ] });
 }
 function useTabs() {
@@ -12566,6 +12674,7 @@ const styles = {
 function App() {
   const { tabs, activeId, open, close, activate } = useTabs();
   const [privacy, setPrivacy] = reactExports.useState({ blocked: 0, listSize: 0 });
+  const [aiOpen, setAiOpen] = reactExports.useState(false);
   reactExports.useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {
     });
@@ -12578,7 +12687,7 @@ function App() {
   const active = tabs.find((t) => t.id === activeId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.app, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(TabBar, { tabs, activeId, onSelect: activate, onClose: close }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: open }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: open, onOpenAI: () => setAiOpen(true) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.content, children: [
       active && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { style: { textAlign: "center", marginTop: 40, color: "#6b7280" }, children: [
         "🌐 Đang xem: ",
@@ -12593,7 +12702,8 @@ function App() {
         privacy.listSize,
         " miền)"
       ] })
-    ] })
+    ] }),
+    aiOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(AIPanel, { activeTabId: activeId, onClose: () => setAiOpen(false) })
   ] });
 }
 clientExports.createRoot(document.getElementById("root")).render(

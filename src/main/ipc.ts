@@ -3,8 +3,9 @@ import { ipcMain, BrowserWindow, WebContentsView } from 'electron'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
 import blocklistDomains from './privacy/blocklist.json'
-import type { TabState, PrivacyStats } from '../shared/types'
+import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
+import { AIController } from './ai/controller'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -87,6 +88,16 @@ export function registerIpc(deps: IpcDeps) {
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))
   ipcMain.handle('privacy:toggle', (_e, on: boolean) => { privacyFilterOn = on; return on })
+
+  // ─── ai ───
+  const ai = new AIController(deps)
+  ipcMain.handle('ai:config', () => ai.getConfig())
+  ipcMain.handle('ai:saveConfig', (_e, cfg: AIConfig) => ai.saveConfig(cfg))
+  ipcMain.handle('ai:status', (): AIStatus => ai.status())
+  ipcMain.handle('ai:ask', async (_e, params: AIRequestParams) => {
+    const text = await ai.ask(params)
+    return { text }
+  })
 
   // helper broadcast — dùng webContents send của window
   function broadcastTabs() {

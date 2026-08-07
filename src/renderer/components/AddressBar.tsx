@@ -7,7 +7,7 @@ const styles: Record<string, React.CSSProperties> = {
   ai: { padding: '8px 14px', borderRadius: 20, border: '1px solid #2a2e39', background: '#1a1d24', cursor: 'pointer', fontSize: 16 },
 }
 
-export default function AddressBar({ onNavigate }: { onNavigate: (url: string) => void }) {
+export default function AddressBar({ onNavigate, onOpenAI }: { onNavigate: (url: string) => void; onOpenAI: () => void }) {
   const [value, setValue] = useState('')
 
   function go() {
@@ -22,7 +22,7 @@ export default function AddressBar({ onNavigate }: { onNavigate: (url: string) =
       <input style={styles.input} placeholder="Nhập địa chỉ web hoặc tìm kiếm..." value={value}
         onChange={e => setValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && go()} />
       <button style={styles.btn} onClick={go}>Đi</button>
-      <button style={styles.ai} title="Trợ lý AI">🪄</button>
+      <button style={styles.ai} title="Trợ lý AI" onClick={onOpenAI}>🪄</button>
     </div>
   )
 }

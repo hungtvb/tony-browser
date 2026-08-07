@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import TabBar from './components/TabBar'
 import AddressBar from './components/AddressBar'
+import AIPanel from './components/AIPanel'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -13,6 +14,7 @@ const styles: Record<string, React.CSSProperties> = {
 export default function App() {
   const { tabs, activeId, open, close, activate } = useTabs()
   const [privacy, setPrivacy] = useState<PrivacyStats>({ blocked: 0, listSize: 0 })
+  const [aiOpen, setAiOpen] = useState(false)
 
   useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
@@ -27,7 +29,7 @@ export default function App() {
   return (
     <div style={styles.app}>
       <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close} />
-      <AddressBar onNavigate={open} />
+      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)} />
       <div style={styles.content}>
         {active && (
           <p style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>
@@ -38,6 +40,7 @@ export default function App() {
         )}
         <div style={styles.status}>🛡️ Đã chặn {privacy.blocked} request (danh sách {privacy.listSize} miền)</div>
       </div>
+      {aiOpen && <AIPanel activeTabId={activeId} onClose={() => setAiOpen(false)} />}
     </div>
   )
 }

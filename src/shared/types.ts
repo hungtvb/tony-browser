@@ -27,6 +27,25 @@ export interface PrivacyStats {
   listSize: number
 }
 
+export interface AIConfig {
+  baseUrl: string
+  apiKey: string
+  model: string
+}
+
+export interface AIAskParams {
+  text: string
+  tabId?: string // nếu có → đọc nội dung tab đó
+  mode: 'chat' | 'summarizePage' | 'summarizeAll'
+}
+
+export interface AIStatus {
+  configured: boolean
+  busy: boolean
+}
+
+export type AIRequestParams = AIAskParams
+
 export interface TonyAPI {
   version: string
   platform: string
@@ -41,5 +60,11 @@ export interface TonyAPI {
   privacy: {
     stats: () => Promise<PrivacyStats>
     toggle: (on: boolean) => Promise<boolean>
+  }
+  ai: {
+    config: () => Promise<AIConfig>
+    saveConfig: (c: AIConfig) => Promise<boolean>
+    ask: (params: AIRequestParams) => Promise<{ text: string }>
+    status: () => Promise<AIStatus>
   }
 }

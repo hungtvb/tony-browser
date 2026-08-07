@@ -2,6 +2,25 @@
 const electron = require("electron");
 const path = require("path");
 const events = require("events");
+const fs = require("fs");
+function _interopNamespaceDefault(e) {
+  const n = Object.create(null, { [Symbol.toStringTag]: { value: "Module" } });
+  if (e) {
+    for (const k in e) {
+      if (k !== "default") {
+        const d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: () => e[k]
+        });
+      }
+    }
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path);
+const fs__namespace = /* @__PURE__ */ _interopNamespaceDefault(fs);
 const TOOLBAR_HEIGHT = 92;
 function createMainWindow() {
   const win = new electron.BrowserWindow({
@@ -231,6 +250,192 @@ const blocklistDomains = [
   "ytimg.com/ads",
   "gravatar.com"
 ];
+class AIService {
+  config = null;
+  _busy = false;
+  setConfig(cfg) {
+    this.config = cfg;
+  }
+  getConfig() {
+    return this.config;
+  }
+  get configured() {
+    return !!this.config?.baseUrl && !!this.config?.apiKey && !!this.config?.model;
+  }
+  get busy() {
+    return this._busy;
+  }
+  /** Gọi LLM chat completions, trả text cuối */
+  async ask(params, pageText) {
+    const cfg = this.config;
+    if (!cfg) throw new Error("AI chưa được cấu hình");
+    if (!this.configured) throw new Error("Thiếu baseUrl/apiKey/model");
+    this._busy = true;
+    try {
+      const system = this.systemPrompt();
+      const user = this.buildUserMessage(params, pageText);
+      const body = {
+        model: cfg.model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user }
+        ],
+        temperature: 0.3
+      };
+      const endpoint = cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${cfg.apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const errText = (await res.text()).slice(0, 200);
+        throw new Error(`LLM API lỗi ${res.status}: ${errText}`);
+      }
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content ?? "";
+      return content.trim();
+    } finally {
+      this._busy = false;
+    }
+  }
+  systemPrompt() {
+    return `Bạn là Kenzo, trợ lý AI trong "Tony Browser". Trả lời ngắn gọn, súc tích, đúng trọng tâm.
+Khi được yêu cầu tóm tắt trang web, hãy đưa ra bản tóm tắt mạch lạc bằng tiếng Việt (hoặc ngôn ngữ người dùng dùng), nếu trang là tiếng Anh thì tóm tắt bằng tiếng Việt có giữ nguyên thuật ngữ chuyên môn quan trọng. Không bịa thông tin không có trong nội dung cung cấp.`;
+  }
+  buildUserMessage(params, pageText) {
+    const { mode, text } = params;
+    if (mode === "summarizePage") {
+      return `Tóm tắt trang web sau (title/url và nội dung):
+—— NỘI DUNG TRANG ——
+${pageText || "(không đọc được nội dung)"}
+—— HẾT ——
+Yêu cầu: đưa tóm tắt rõ ràng (3-6 gạch đầu dòng) bằng tiếng Việt.`;
+    }
+    if (mode === "summarizeAll") {
+      return `Đây là nội dung nhiều tab đang mở trong trình duyệt. Tổng hợp thành 1 báo cáo gọn theo từng tab, bằng tiếng Việt:
+${pageText || "(không có nội dung)"}`;
+    }
+    return pageText ? `Người dùng hỏi: """${text}"""
+
+Dưới đây là nội dung trang hiện tại (có thể liên quan câu hỏi):
+"""
+${pageText}
+"""
+
+Trả lời giúp người dùng.` : text;
+  }
+}
+const MAX_PAGE_CHARS = 3e4;
+async function extractPageText(wc, maxChars = MAX_PAGE_CHARS) {
+  try {
+    const script = `
+      (() => {
+        const MAX = ${maxChars};
+        // Ưu tiên main content nếu có
+        const main = document.querySelector('main, article, [role="main"]');
+        const source = main || document.body;
+        const text = (source ? source.innerText : '').replace(/\\s+/g, ' ').trim();
+        const title = document.title || '';
+        const url = location.href;
+        return JSON.stringify({ title, url, text: text.slice(0, MAX) });
+      })()
+    `;
+    const result = await wc.executeJavaScript(script, true);
+    const parsed = typeof result === "string" ? JSON.parse(result) : result;
+    return parsed?.text ?? "";
+  } catch {
+    return "";
+  }
+}
+async function extractPageMeta(wc) {
+  try {
+    const title = wc.getTitle() || "";
+    const url = wc.getURL() || "";
+    return { title, url };
+  } catch {
+    return { title: "", url: "" };
+  }
+}
+function configPath() {
+  return path__namespace.join(electron.app.getPath("userData"), "tony-config.json");
+}
+function loadAIConfig() {
+  try {
+    const p = configPath();
+    if (!fs__namespace.existsSync(p)) return null;
+    const data = JSON.parse(fs__namespace.readFileSync(p, "utf-8"));
+    return data?.aiConfig ?? null;
+  } catch {
+    return null;
+  }
+}
+function saveAIConfig(cfg) {
+  try {
+    const p = configPath();
+    const existing = loadAIConfig();
+    const payload = { ...existing ? { aiConfig: existing } : {}, aiConfig: cfg };
+    fs__namespace.mkdirSync(path__namespace.dirname(p), { recursive: true });
+    fs__namespace.writeFileSync(p, JSON.stringify(payload, null, 2));
+  } catch (e) {
+    console.error("Không lưu được config:", e);
+  }
+}
+class AIController {
+  constructor(deps2) {
+    this.deps = deps2;
+    const cfg = loadAIConfig();
+    if (cfg) this.service.setConfig(cfg);
+  }
+  deps;
+  service = new AIService();
+  getConfig() {
+    return this.service.getConfig();
+  }
+  saveConfig(cfg) {
+    this.service.setConfig(cfg);
+    saveAIConfig(cfg);
+    return true;
+  }
+  status() {
+    return { configured: this.service.configured, busy: this.service.busy };
+  }
+  async ask(params) {
+    const tabId = params.tabId;
+    const view = tabId ? this.deps.getActiveView(tabId) : void 0;
+    const wc = view?.webContents;
+    let pageText;
+    if (params.mode === "summarizePage" && wc) {
+      const [text, meta] = await Promise.all([
+        extractPageText(wc),
+        extractPageMeta(wc)
+      ]);
+      pageText = `Title: ${meta.title}
+URL: ${meta.url}
+
+${text}`;
+    }
+    if (params.mode === "summarizeAll") {
+      const tm2 = this.deps.getTabManager();
+      const parts = [];
+      for (const tab of tm2.list()) {
+        const v = this.deps.getActiveView(tab.id);
+        if (!v) continue;
+        const [text, meta] = await Promise.all([
+          extractPageText(v.webContents, 8e3),
+          extractPageMeta(v.webContents)
+        ]);
+        parts.push(`### ${meta.title || tab.title} (${meta.url})
+${text.slice(0, 8e3)}`);
+      }
+      pageText = parts.join("\n\n");
+    }
+    return this.service.ask(params, pageText);
+  }
+}
 let privacyFilterOn = true;
 let blockedCount = 0;
 let listSize = 0;
@@ -290,6 +495,14 @@ function registerIpc(deps2) {
   electron.ipcMain.handle("privacy:toggle", (_e, on) => {
     privacyFilterOn = on;
     return on;
+  });
+  const ai = new AIController(deps2);
+  electron.ipcMain.handle("ai:config", () => ai.getConfig());
+  electron.ipcMain.handle("ai:saveConfig", (_e, cfg) => ai.saveConfig(cfg));
+  electron.ipcMain.handle("ai:status", () => ai.status());
+  electron.ipcMain.handle("ai:ask", async (_e, params) => {
+    const text = await ai.ask(params);
+    return { text };
   });
   function broadcastTabs() {
     const w = win();

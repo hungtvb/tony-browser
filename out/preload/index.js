@@ -19,6 +19,12 @@ const api = {
   privacy: {
     stats: () => electron.ipcRenderer.invoke("privacy:stats"),
     toggle: (on) => electron.ipcRenderer.invoke("privacy:toggle", on)
+  },
+  ai: {
+    config: () => electron.ipcRenderer.invoke("ai:config"),
+    saveConfig: (cfg) => electron.ipcRenderer.invoke("ai:saveConfig", cfg),
+    ask: (params) => electron.ipcRenderer.invoke("ai:ask", params),
+    status: () => electron.ipcRenderer.invoke("ai:status")
   }
 };
 electron.contextBridge.exposeInMainWorld("tony", api);
