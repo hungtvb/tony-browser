@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import UIcon from './UIcon'
-import { CONTAINER_COLORS } from '../../shared/types'
+import { BrandIcon } from './BrandIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: {
@@ -27,21 +27,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   icon: {
     width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 22, fontWeight: 700, color: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12), 0 4px 12px rgba(0,0,0,0.3)',
+    color: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.12), 0 4px 12px rgba(0,0,0,0.3)',
   },
   name: { fontSize: 12, color: 'var(--apple-text-secondary)', textAlign: 'center', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   tip: { marginTop: 48, fontSize: 12, color: 'var(--apple-text-tertiary)', letterSpacing: '-0.1px', display: 'flex', alignItems: 'center', gap: 6 },
 }
 
 const SITES = [
-  { name: 'Google', url: 'https://google.com', icon: 'G', color: '#4285f4' },
-  { name: 'YouTube', url: 'https://youtube.com', icon: '▶', color: '#ff0000' },
-  { name: 'Facebook', url: 'https://facebook.com', icon: 'f', color: '#1877f2' },
-  { name: 'Gmail', url: 'https://mail.google.com', icon: '✉', color: '#ea4335' },
-  { name: 'GitHub', url: 'https://github.com', icon: '⌥', color: '#6e5494' },
-  { name: 'X', url: 'https://x.com', icon: '𝕏', color: '#1da1f2' },
-  { name: 'ChatGPT', url: 'https://chatgpt.com', icon: '◉', color: '#10a37f' },
-  { name: 'Zalo', url: 'https://chat.zalo.me', icon: 'Z', color: '#0068ff' },
+  { name: 'Google', url: 'https://google.com', brand: 'google', color: '#4285f4' },
+  { name: 'YouTube', url: 'https://youtube.com', brand: 'youtube', color: '#ff0000' },
+  { name: 'Facebook', url: 'https://facebook.com', brand: 'facebook', color: '#1877f2' },
+  { name: 'Gmail', url: 'https://mail.google.com', brand: 'gmail', color: '#ea4335' },
+  { name: 'GitHub', url: 'https://github.com', brand: 'github', color: '#6e5494' },
+  { name: 'X', url: 'https://x.com', brand: 'x', color: '#000000' },
+  { name: 'ChatGPT', url: 'https://chatgpt.com', brand: 'chatgpt', color: '#10a37f' },
+  { name: 'Zalo', url: 'https://chat.zalo.me', brand: 'zalo', color: '#0068ff' },
 ]
 
 export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) => void }) {
@@ -60,7 +60,9 @@ export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) =>
             style={{ ...styles.tile, ...(hover === s.url ? styles.tileHover : {}) }}
             onMouseEnter={() => setHover(s.url)} onMouseLeave={() => setHover(null)}
             onClick={() => onNavigate(s.url)}>
-            <div style={{ ...styles.icon, background: `linear-gradient(135deg, ${s.color}, ${s.color}cc)` }}>{s.icon}</div>
+            <div style={{ ...styles.icon, background: 'rgba(255,255,255,0.92)' }}>
+              <BrandIcon name={s.brand} size={30} />
+            </div>
             <div style={styles.name}>{s.name}</div>
           </div>
         ))}
