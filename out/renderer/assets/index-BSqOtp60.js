@@ -12529,34 +12529,71 @@ function AddressBar({ onNavigate }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("button", { style: styles$1.ai, title: "Trợ lý AI", children: "🪄" })
   ] });
 }
-const styles = {
-  app: { display: "flex", flexDirection: "column", height: "100vh" },
-  content: { flex: 1, position: "relative", background: "#0f1115" }
-};
-function App() {
+function useTabs() {
   const [tabs, setTabs] = reactExports.useState([]);
   const [activeId, setActiveId] = reactExports.useState("");
-  function openTab(url) {
-    const id = `tab-${Date.now()}`;
-    setTabs((t) => [...t, { id, title: url, url }]);
-    setActiveId(id);
+  const [ready, setReady] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    const tony = window.tony;
+    if (!tony) return;
+    tony.tabs.list().then((list) => {
+      setTabs(list);
+      setActiveId(list.length ? list[list.length - 1].id : "");
+      setReady(true);
+    });
+    tony.tabs.onChange((list) => {
+      setTabs(list);
+      setActiveId((prev) => list.some((t) => t.id === prev) ? prev : list[list.length - 1]?.id ?? "");
+    });
+  }, []);
+  function open(url) {
+    window.tony?.tabs.open(url).then((t) => setActiveId(t.id));
   }
+  function close(id) {
+    window.tony?.tabs.close(id);
+  }
+  function activate(id) {
+    setActiveId(id);
+    window.tony?.tabs.activate(id);
+  }
+  return { tabs, activeId, ready, open, close, activate };
+}
+const styles = {
+  app: { display: "flex", flexDirection: "column", height: "100vh" },
+  content: { flex: 1, position: "relative", background: "#0f1115" },
+  status: { position: "absolute", bottom: 8, right: 10, fontSize: 12, color: "#6b7280" }
+};
+function App() {
+  const { tabs, activeId, open, close, activate } = useTabs();
+  const [privacy, setPrivacy] = reactExports.useState({ blocked: 0, listSize: 0 });
+  reactExports.useEffect(() => {
+    window.tony?.privacy.stats().then(setPrivacy).catch(() => {
+    });
+    const iv = setInterval(() => {
+      window.tony?.privacy.stats().then(setPrivacy).catch(() => {
+      });
+    }, 3e3);
+    return () => clearInterval(iv);
+  }, []);
+  const active = tabs.find((t) => t.id === activeId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.app, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      TabBar,
-      {
-        tabs,
-        activeId,
-        onSelect: setActiveId,
-        onClose: (id) => setTabs((t) => t.filter((x) => x.id !== id))
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: openTab }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles.content, children: activeId && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { style: { textAlign: "center", marginTop: 40, color: "#6b7280" }, children: [
-      "🌐 Đang xem tab ",
-      tabs.find((t) => t.id === activeId)?.title,
-      " (view do main process quản lý)"
-    ] }) })
+    /* @__PURE__ */ jsxRuntimeExports.jsx(TabBar, { tabs, activeId, onSelect: activate, onClose: close }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: open }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.content, children: [
+      active && /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { style: { textAlign: "center", marginTop: 40, color: "#6b7280" }, children: [
+        "🌐 Đang xem: ",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { style: { color: "#e5e7eb" }, children: active.title }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 12 }, children: active.url })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.status, children: [
+        "🛡️ Đã chặn ",
+        privacy.blocked,
+        " request (danh sách ",
+        privacy.listSize,
+        " miền)"
+      ] })
+    ] })
   ] });
 }
 clientExports.createRoot(document.getElementById("root")).render(

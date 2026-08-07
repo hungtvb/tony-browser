@@ -57,8 +57,17 @@ export function createTabManager(factory: ViewFactory) {
     return [...tabs.values()]
   }
 
+  function get(id: string): Tab | undefined {
+    return tabs.get(id)
+  }
+
   function getActive(): Tab | undefined {
     return tabs.get(activeId)
+  }
+
+  /** Phát event changed + gọi callback broadcast (renderer sync) */
+  function broadcast() {
+    emitter.emit('changed', { type: 'sync', id: activeId })
   }
 
   return {
@@ -66,7 +75,9 @@ export function createTabManager(factory: ViewFactory) {
     close,
     activate,
     list,
+    get,
     getActive,
+    broadcast,
     on: emitter.on.bind(emitter),
     get activeId() { return activeId },
   }

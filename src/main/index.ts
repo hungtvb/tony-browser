@@ -1,36 +1,41 @@
 // Tony Browser — Electron main process
-import { app, BrowserWindow } from 'electron'
-import path from 'path'
+import { app, BrowserWindow, WebContentsView } from 'electron'
+import { createMainWindow, ensureSession, createTabView } from './window'
+import { createTabManager } from './tabs/TabManager'
+import { registerIpc, attachPrivacy, type IpcDeps } from './ipc'
 
 let mainWindow: BrowserWindow | null = null
+const viewByTab = new Map<string, WebContentsView>()
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    title: 'Tony Browser',
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/index.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  })
+const tm = createTabManager(() => ({
+  id: '',
+  loadURL: () => {},
+  destroy: () => {},
+}))
 
-  // electron-vite: dev dùng process.env['ELECTRON_RENDERER_URL'], prod load file
-  const devUrl = process.env['ELECTRON_RENDERER_URL']
-  if (devUrl) {
-    mainWindow.loadURL(devUrl)
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
-  }
-
-  mainWindow.on('closed', () => { mainWindow = null })
+const deps: IpcDeps = {
+  getWindow: () => mainWindow,
+  getTabManager: () => tm,
+  trackView: (tabId: string, view: WebContentsView | null) => {
+    if (!view) { viewByTab.delete(tabId); return }
+    viewByTab.set(tabId, view)
+    view.webContents.on('page-title-updated', (_e, title) => {
+      const t = tm.get(tabId)
+      if (t) { t.title = title; tm.broadcast() }
+    })
+  },
+  getActiveView: (tabId: string) => viewByTab.get(tabId),
+  createRealView: (url: string) => createTabView(url),
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  ensureSession()
+  mainWindow = createMainWindow()
+  attachPrivacy(mainWindow, deps)
+  registerIpc(deps)
+
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow()
   })
 })
 
