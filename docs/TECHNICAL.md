@@ -136,7 +136,17 @@ tony-browser/
 └── tests/                          # vitest unit tests
 ```
 
-## 6. Rủi ro & Quyết định
+## 6. Quyết định Engine (đã duyệt 07/08/2026)
+
+**Chọn: Electron + Chromium/Blink. KHÔNG đổi sang Tauri.**
+
+Lý do:
+1. Tính năng chủ lực #1 (AI thao tác trang) cần kiểm soát sâu từng trang — `executeJavaScript`, `webRequest`, CDP. Tauri/WebView hệ thống không hỗ trợ mức này.
+2. Privacy (#4), Focus (#2), Smart Tabs (#5) đều xây trên API Chromium.
+3. Điểm yếu RAM của Electron được giải quyết bằng chính tính năng #7 (TabSleeper) — biến thành điểm bán.
+4. **Playwright = thư viện phụ trợ** cho AI agent (phase 4), không phải thay thế shell.
+
+## 7. Rủi ro & Quyết định
 
 | Rủi ro | Ảnh hưởng | Giảm thiểu |
 |---|---|---|
