@@ -384,6 +384,140 @@ function saveAIConfig(cfg) {
     console.error("Không lưu được config:", e);
   }
 }
+const ACTION_TYPES = /* @__PURE__ */ new Set(["click", "type", "scroll", "navigate", "wait"]);
+function createAgentCore(adapter) {
+  function parseActions(actionsJson) {
+    const parsed = [];
+    for (const raw of actionsJson) {
+      const json = raw.trim();
+      if (!json) continue;
+      const match = json.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const body = match ? match[1] : json;
+      try {
+        const obj = JSON.parse(body);
+        const list = Array.isArray(obj) ? obj : [obj];
+        for (const a of list) {
+          if (a && typeof a.type === "string" && ACTION_TYPES.has(a.type)) {
+            parsed.push({ type: a.type, selector: a.selector, value: a.value });
+          }
+        }
+      } catch {
+      }
+    }
+    return parsed;
+  }
+  async function run(actionsJson) {
+    const actions = parseActions(actionsJson);
+    if (actions.length === 0) {
+      return { summary: 'Không tìm thấy thao tác hợp lệ (cần JSON như {"type":"click","selector":"..."})', actionsTaken: [] };
+    }
+    const taken = [];
+    for (const a of actions) {
+      if (a.type === "navigate" && a.value) {
+        await adapter.exec("navigate", "", a.value);
+        taken.push(`navigate ${a.value}`);
+        continue;
+      }
+      if (a.type === "wait") {
+        taken.push("wait");
+        continue;
+      }
+      const res = await adapter.exec(a.type, a.selector ?? "", a.value);
+      taken.push(`${a.type} ${a.selector ?? ""}`);
+      if (!res.ok) {
+        return { summary: `Lỗi khi thực hiện ${a.type} ${a.selector}: ${res.error ?? "không rõ"}`, actionsTaken: taken };
+      }
+    }
+    return { summary: `Đã thực hiện ${taken.length} thao tác: ${taken.join(" → ")}`, actionsTaken: taken };
+  }
+  async function plan(goal) {
+    const snap = await adapter.snapshot();
+    return snap;
+  }
+  return { run, parseActions, plan };
+}
+function escapeSelector(sel) {
+  return sel.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+function createWebContentsAdapter(wc) {
+  async function snapshot() {
+    const w = wc();
+    if (!w || w.isDestroyed()) return "(không có tab)";
+    try {
+      const text = await w.executeJavaScript(`
+        (() => {
+          const getText = () => {
+            const clone = document.body ? document.body.cloneNode(true) : null
+            if (!clone) return ''
+            clone.querySelectorAll('script,style,noscript,svg,canvas').forEach(n => n.remove())
+            return (clone.innerText || '').slice(0, 20000)
+          }
+          const title = document.title || ''
+          const url = location.href
+          const inputs = [...document.querySelectorAll('input,button,textarea,[role="button"],[role="link"]')]
+            .slice(0, 40)
+            .map((el, i) => {
+              const tag = el.tagName.toLowerCase()
+              const id = el.id ? '#' + el.id : ''
+              const cls = typeof el.className === 'string' && el.className ? '.' + el.className.split(/\\s+/)[0] : ''
+              const label = (el.getAttribute('aria-label') || el.textContent || el.placeholder || '').trim().slice(0, 40)
+              return i + ': <' + tag + id + cls + '> ' + label
+            })
+            .join('\\n')
+          return JSON.stringify({ title, url, inputs, text: getText() })
+        })()
+      `);
+      return text || "(trống)";
+    } catch (e) {
+      return "(lỗi đọc trang: " + (e?.message ?? "unknown") + ")";
+    }
+  }
+  async function exec(action, selector, value) {
+    const w = wc();
+    if (!w || w.isDestroyed()) return { ok: false, error: "Không có tab hoạt động" };
+    const s = escapeSelector(selector);
+    let js = "";
+    switch (action) {
+      case "click":
+        js = `(() => { const el = document.querySelector('${s}'); if (!el) return {ok:false,error:'Không tìm thấy ${s}'}; el.click(); return {ok:true} })()`;
+        break;
+      case "type":
+        js = `(() => {
+          const el = document.querySelector('${s}');
+          if (!el) return {ok:false,error:'Không tìm thấy ${s}'};
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
+            || Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+          if (setter) setter.call(el, ${JSON.stringify(value ?? "")});
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          return {ok:true};
+        })()`;
+        break;
+      case "scroll":
+        js = `(() => { window.scrollBy(0, ${Math.round(Number(value) || 400)}); return {ok:true} })()`;
+        break;
+      case "navigate":
+        js = "";
+        break;
+      case "wait":
+        await new Promise((r) => setTimeout(r, Math.min(Number(value) || 1e3, 5e3)));
+        return { ok: true };
+      default:
+        return { ok: false, error: "Thao tác không hỗ trợ: " + action };
+    }
+    try {
+      if (action === "navigate") {
+        await w.loadURL(value ?? "");
+        return { ok: true };
+      }
+      const res = await w.executeJavaScript(js);
+      return res;
+    } catch (e) {
+      return { ok: false, error: e?.message ?? "lỗi thực thi" };
+    }
+  }
+  return { snapshot, exec };
+}
 class AIController {
   constructor(deps2) {
     this.deps = deps2;
@@ -407,6 +541,25 @@ class AIController {
     const tabId = params.tabId;
     const view = tabId ? this.deps.getActiveView(tabId) : void 0;
     const wc = view?.webContents;
+    if (params.mode === "act") {
+      if (!wc) throw new Error("Không có tab hoạt động để thao tác");
+      const adapter = createWebContentsAdapter(() => wc);
+      const agent = createAgentCore(adapter);
+      const snap = await adapter.snapshot();
+      const goal = params.text || "";
+      const planText = await this.service.ask(
+        { mode: "chat", text: `Bạn là AI điều khiển trình duyệt. Trang hiện tại:
+${snap}
+
+Nhiệm vụ: ${goal}
+Hãy trả về JSON array các hành động: [{"type":"click","selector":"#id"},{"type":"type","selector":"#id","value":"..."},{"type":"scroll","value":400}]. Chỉ dùng selector có trong trang.` },
+        void 0
+      );
+      const actions = this.extractJsonArray(planText);
+      if (actions.length === 0) return `Không xác định được hành động. AI trả: ${planText.slice(0, 300)}`;
+      const result = await agent.run(actions.map((a) => JSON.stringify(a)));
+      return result.summary;
+    }
     let pageText;
     if (params.mode === "summarizePage" && wc) {
       const [text, meta] = await Promise.all([
@@ -434,6 +587,17 @@ ${text.slice(0, 8e3)}`);
       pageText = parts.join("\n\n");
     }
     return this.service.ask(params, pageText);
+  }
+  /** Trích JSON array từ chuỗi LLM trả về (có thể bọc trong code block) */
+  extractJsonArray(text) {
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) return [];
+    try {
+      const arr = JSON.parse(match[0]);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
   }
 }
 function createFocusEngine(opts) {

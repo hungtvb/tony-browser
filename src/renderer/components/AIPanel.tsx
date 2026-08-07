@@ -40,15 +40,16 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   const [out, setOut] = useState('')
   const [busy, setBusy] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [manualActCommand, setManualActCommand] = useState('')
   const [config, setConfig] = useState<AIConfig>({ baseUrl: '', apiKey: '', model: '' })
 
   useEffect(() => { window.tony?.ai.config().then(c => c && setConfig(c)) }, [])
 
-  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll', text?: string) {
+  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act', text?: string) {
     if (busy) return
     setBusy(true); setOut('Đang xử lý...')
     try {
-      const params: any = { mode, text: text ?? (msg || ''), tabId: activeTabId }
+      const params: any = { mode, text: text ?? (mode === 'act' ? manualActCommand : msg || ''), tabId: activeTabId }
       const res = await window.tony!.ai.ask(params)
       setOut(res.text || '(trống)')
     } catch (e: any) {
@@ -85,6 +86,13 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       <div style={styles.actions}>
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Tóm tắt trang</button>
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Tổng hợp tab</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('act')}>🤖 Thao tác web</button>
+      </div>
+
+      <div style={{ padding: '6px 14px', display: 'flex', gap: 6 }}>
+        <input style={styles.input} placeholder='VD: "Click nút Mua ngay"' value={manualActCommand}
+          onChange={e => setManualActCommand(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && run('act')} />
       </div>
 
       <div style={styles.body}>

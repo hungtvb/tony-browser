@@ -1,8 +1,10 @@
-// AI — Controller: phối hợp reader + service + store, expose qua IPC
+// AI — Controller: phối hợp reader + service + store + agent, expose qua IPC
 import type { IpcDeps } from '../ipc'
 import { AIService } from './service'
 import { extractPageText, extractPageMeta } from './reader'
 import { loadAIConfig, saveAIConfig } from './store'
+import { createAgentCore } from './agent'
+import { createWebContentsAdapter } from './agent-adapter'
 import type { AIConfig, AIRequestParams, AIStatus } from '../../shared/types'
 
 export class AIController {
@@ -32,6 +34,26 @@ export class AIController {
     const view = tabId ? this.deps.getActiveView(tabId) : undefined
     const wc = view?.webContents
 
+    // ─── AI Actions: thao tác trang thật ───
+    if (params.mode === 'act') {
+      if (!wc) throw new Error('Không có tab hoạt động để thao tác')
+      const adapter = createWebContentsAdapter(() => wc)
+      const agent = createAgentCore(adapter)
+      // snapshot trang để AI "nhìn"
+      const snap = await adapter.snapshot()
+      const goal = params.text || ''
+      // dùng LLM để quyết định hành động từ snapshot
+      const planText = await this.service.ask(
+        { mode: 'chat', text: `Bạn là AI điều khiển trình duyệt. Trang hiện tại:\n${snap}\n\nNhiệm vụ: ${goal}\nHãy trả về JSON array các hành động: [{"type":"click","selector":"#id"},{"type":"type","selector":"#id","value":"..."},{"type":"scroll","value":400}]. Chỉ dùng selector có trong trang.` },
+        undefined,
+      )
+      // parse JSON từ LLM response
+      const actions = this.extractJsonArray(planText)
+      if (actions.length === 0) return `Không xác định được hành động. AI trả: ${planText.slice(0, 300)}`
+      const result = await agent.run(actions.map(a => JSON.stringify(a)))
+      return result.summary
+    }
+
     let pageText: string | undefined
 
     if (params.mode === 'summarizePage' && wc) {
@@ -43,7 +65,6 @@ export class AIController {
     }
 
     if (params.mode === 'summarizeAll') {
-      // Gom nội dung tất cả tab
       const tm = this.deps.getTabManager()
       const parts: string[] = []
       for (const tab of tm.list()) {
@@ -59,5 +80,17 @@ export class AIController {
     }
 
     return this.service.ask(params, pageText)
+  }
+
+  /** Trích JSON array từ chuỗi LLM trả về (có thể bọc trong code block) */
+  private extractJsonArray(text: string): any[] {
+    const match = text.match(/\[[\s\S]*\]/)
+    if (!match) return []
+    try {
+      const arr = JSON.parse(match[0])
+      return Array.isArray(arr) ? arr : []
+    } catch {
+      return []
+    }
   }
 }

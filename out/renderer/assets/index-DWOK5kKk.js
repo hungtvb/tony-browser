@@ -12651,6 +12651,7 @@ function AIPanel({ onClose, activeTabId }) {
   const [out, setOut] = reactExports.useState("");
   const [busy, setBusy] = reactExports.useState(false);
   const [showSettings, setShowSettings] = reactExports.useState(false);
+  const [manualActCommand, setManualActCommand] = reactExports.useState("");
   const [config, setConfig] = reactExports.useState({ baseUrl: "", apiKey: "", model: "" });
   reactExports.useEffect(() => {
     window.tony?.ai.config().then((c) => c && setConfig(c));
@@ -12660,7 +12661,7 @@ function AIPanel({ onClose, activeTabId }) {
     setBusy(true);
     setOut("Đang xử lý...");
     try {
-      const params = { mode, text: text ?? (msg || ""), tabId: activeTabId };
+      const params = { mode, text: text ?? (mode === "act" ? manualActCommand : msg || ""), tabId: activeTabId };
       const res = await window.tony.ai.ask(params);
       setOut(res.text || "(trống)");
     } catch (e) {
@@ -12713,8 +12714,19 @@ function AIPanel({ onClose, activeTabId }) {
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.actions, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.chip, onClick: () => run("summarizePage"), children: "📄 Tóm tắt trang" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.chip, onClick: () => run("summarizeAll"), children: "📚 Tổng hợp tab" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.chip, onClick: () => run("summarizeAll"), children: "📚 Tổng hợp tab" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.chip, onClick: () => run("act"), children: "🤖 Thao tác web" })
     ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: "6px 14px", display: "flex", gap: 6 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "input",
+      {
+        style: styles$2.input,
+        placeholder: 'VD: "Click nút Mua ngay"',
+        value: manualActCommand,
+        onChange: (e) => setManualActCommand(e.target.value),
+        onKeyDown: (e) => e.key === "Enter" && run("act")
+      }
+    ) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.body, children: /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { style: { whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }, children: out }) }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.inputRow, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
