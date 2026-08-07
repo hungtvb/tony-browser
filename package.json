@@ -1,6 +1,6 @@
 {
   "name": "tony-browser",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "description": "Tony Browser — trình duyệt web thông minh có trợ lý AI",
   "main": "out/main/index.js",
   "build": {
@@ -22,7 +22,8 @@
       "icon": "build/icon.png"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "compression": "store"
     },
     "mac": {
       "target": "dmg",
