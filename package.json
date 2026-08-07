@@ -37,7 +37,10 @@
     "test": "vitest run",
     "dist": "electron-vite build && electron-builder --linux"
   },
-  "author": "hungtvb",
+  "author": {
+    "name": "hungvt",
+    "email": "hungtvb@users.noreply.github.com"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/react": "^19.2.18",
