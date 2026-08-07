@@ -5,28 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tony Browser</title>
     <style>
-      /* ─── Apple Design Tokens ─── */
+      /* ─── Apple Design Tokens v2 ─── */
       :root {
         --apple-bg: #000000;
         --apple-bg-light: #1d1d1f;
-        --apple-surface: #272729;
+        --apple-surface: #1c1c1e;
         --apple-surface2: #2a2a2d;
+        --apple-surface3: #323236;
         --apple-text: #ffffff;
         --apple-text-secondary: rgba(255, 255, 255, 0.64);
         --apple-text-tertiary: rgba(255, 255, 255, 0.48);
         --apple-blue: #0071e3;
         --apple-blue-bright: #2997ff;
+        --apple-green: #34c759;
+        --apple-orange: #ff9f0a;
+        --apple-red: #ff453a;
         --apple-gray-1: #f5f5f7;
         --apple-gray-text: #1d1d1f;
         --apple-glass: rgba(22, 22, 24, 0.72);
+        --apple-glass-strong: rgba(28, 28, 30, 0.85);
         --apple-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+        --apple-shadow-lg: rgba(0, 0, 0, 0.5) 0 20px 60px;
         --apple-radius-sm: 5px;
         --apple-radius: 8px;
         --apple-radius-lg: 12px;
+        --apple-radius-xl: 16px;
         --apple-radius-pill: 980px;
         --apple-space: 8px;
         --apple-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         --apple-font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -50,6 +59,50 @@
         outline: 2px solid var(--apple-blue);
         outline-offset: 2px;
         border-radius: var(--apple-radius);
+      }
+
+      /* ─── Motion tokens ─── */
+      @keyframes tony-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes tony-slide-up {
+        from { opacity: 0; transform: translateY(12px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes tony-slide-right {
+        from { opacity: 0; transform: translateX(-16px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes tony-pop {
+        0% { opacity: 0; transform: scale(0.9); }
+        60% { transform: scale(1.03); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes tony-toast-in {
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes tony-spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .anim-fade { animation: tony-fade-in 0.25s var(--ease-out) both; }
+      .anim-slide-up { animation: tony-slide-up 0.3s var(--ease-out) both; }
+      .anim-slide-right { animation: tony-slide-right 0.25s var(--ease-out) both; }
+      .anim-pop { animation: tony-pop 0.25s var(--ease-out) both; }
+      .anim-toast { animation: tony-toast-in 0.3s var(--ease-out) both; }
+
+      /* Glass surface chuẩn */
+      .glass {
+        background: var(--apple-glass-strong);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+      }
+      .glass-light {
+        background: var(--apple-glass);
+        backdrop-filter: saturate(180%) blur(12px);
+        -webkit-backdrop-filter: saturate(180%) blur(12px);
       }
     </style>
   </head>

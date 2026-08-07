@@ -9,6 +9,8 @@ import ReaderView from './components/ReaderView'
 import CommandPalette from './components/CommandPalette'
 import SearchOverlay from './components/SearchOverlay'
 import TtsPanel from './components/TtsPanel'
+import SpeedDial from './components/SpeedDial'
+import { ToastStack, StatusBar, useFeedback } from './components/Feedback'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -16,7 +18,6 @@ const styles: Record<string, React.CSSProperties> = {
   app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' },
   body: { display: 'flex', flex: 1, overflow: 'hidden' },
   content: { flex: 1, position: 'relative', background: '#000' },
-  status: { position: 'absolute', bottom: 10, right: 14, fontSize: 11, color: 'rgba(255,255,255,0.48)', letterSpacing: '-0.08px' },
 }
 
 export default function App() {
@@ -29,28 +30,48 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
-  const [savedNotice, setSavedNotice] = useState('')
+  const { toasts, status, toast, setStatus } = useFeedback()
 
-  // Ctrl+K / Cmd+K mở command palette; Ctrl+Shift+F mở search tab
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      const k = e.key.toLowerCase()
+      // Ctrl/Cmd+K command palette
+      if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); setPaletteOpen(o => !o) }
+      // Ctrl/Cmd+Shift+F search tabs
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'f') { e.preventDefault(); setSearchOpen(o => !o) }
+      // Ctrl/Cmd+Shift+T undo close
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 't') {
         e.preventDefault()
-        setPaletteOpen(o => !o)
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
-        e.preventDefault()
-        setSearchOpen(o => !o)
-      } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 't') {
-        e.preventDefault()
-        // undo đóng tab — mở lại tab vừa đóng
         window.tony?.tabs.undoClose().then(t => {
-          if (t) open(t.url, t.container)
+          if (t) { open(t.url, t.container); toast('Đã khôi phục tab: ' + t.title, 'success') }
         }).catch(() => {})
+      }
+      // Ctrl/Cmd+W đóng tab
+      else if ((e.ctrlKey || e.metaKey) && k === 'w') { e.preventDefault(); if (activeId) close(activeId) }
+      // Ctrl/Cmd+L focus address bar
+      else if ((e.ctrlKey || e.metaKey) && k === 'l') {
+        e.preventDefault()
+        const input = document.querySelector('input[type="text"], input:not([type])') as HTMLInputElement | null
+        input?.focus(); input?.select()
+      }
+      // Ctrl+Tab chuyển tab kế
+      else if (e.ctrlKey && k === 'tab') {
+        e.preventDefault()
+        const idx = tabs.findIndex(t => t.id === activeId)
+        const next = tabs[(idx + 1) % tabs.length]
+        if (next) activate(next.id)
+      }
+      // Alt+1..9 chuyển tab
+      else if (e.altKey && !e.ctrlKey && /^[1-9]$/.test(e.key)) {
+        e.preventDefault()
+        const t = tabs[Number(e.key) - 1]
+        if (t) activate(t.id)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [tabs, activeId])
 
   useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
@@ -61,6 +82,7 @@ export default function App() {
   }, [])
 
   const active = tabs.find(t => t.id === activeId)
+  const showSpeedDial = !active || !active.url || active.url === 'about:blank' || active.url.includes('google.com') && active.title === 'New Tab'
 
   return (
     <div style={styles.app}>
@@ -77,7 +99,6 @@ export default function App() {
         }}
         onPip={() => window.tony?.pip.start(activeId)}
         onSplit={() => {
-          // split với tab liền kề (hoặc tự mở tab mới bên cạnh)
           const others = tabs.filter(t => t.id !== activeId)
           const b = others[others.length - 1]?.id ?? null
           window.tony?.tabs.split(activeId, b)
@@ -89,8 +110,12 @@ export default function App() {
             onNewTab={() => setContainerMenu(true)} />
         )}
         <div style={styles.content}>
-          {active && (
-            <div style={{ textAlign: 'center', paddingTop: 64, color: 'rgba(255,255,255,0.48)' }}>
+          {showSpeedDial ? (
+            <div className="anim-fade" style={{ height: '100%' }}>
+              <SpeedDial onNavigate={(url) => open(url)} />
+            </div>
+          ) : active && (
+            <div style={{ textAlign: 'center', paddingTop: 64, color: 'rgba(255,255,255,0.48)' }} className="anim-fade">
               <div style={{ fontSize: 13 }}>🌐 Đang xem</div>
               <div style={{ fontSize: 21, fontWeight: 600, color: '#fff', marginTop: 6, letterSpacing: '-0.28px' }}>
                 {active.title}
@@ -98,7 +123,7 @@ export default function App() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.64)', marginTop: 8 }}>{active.url}</div>
             </div>
           )}
-          <div style={styles.status}>🛡️ Đã chặn {privacy.blocked} request · {privacy.listSize} miền</div>
+          <StatusBar status={`${status}${status ? ' · ' : ''}🛡️ Đã chặn ${privacy.blocked} request · ${privacy.listSize} miền`} />
         </div>
       </div>
       {containerMenu && (
@@ -131,17 +156,12 @@ export default function App() {
         <TtsPanel tab={active} onClose={() => setTtsOpen(false)}
           onSave={() => {
             if (active) {
-              setSavedNotice('✅ Đã lưu: ' + (active.title || active.url))
-              setTimeout(() => setSavedNotice(''), 2000)
+              toast('✅ Đã lưu: ' + (active.title || active.url), 'success')
             }
             setTtsOpen(false)
           }} />
       )}
-      {savedNotice && (
-        <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--apple-blue)', color: '#fff', padding: '8px 16px', borderRadius: 980, fontSize: 13, zIndex: 400 }}>
-          {savedNotice}
-        </div>
-      )}
+      <ToastStack toasts={toasts} />
     </div>
   )
 }

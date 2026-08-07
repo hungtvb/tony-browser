@@ -62,8 +62,8 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   }
 
   return (
-    <div style={styles.panel}>
-      <div style={styles.header}>
+    <div style={styles.panel} className="anim-slide-right">
+          <div style={styles.header}>
         <span>🪄 Trợ lý AI</span>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)}>⚙️</button>
