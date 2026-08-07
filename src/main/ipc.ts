@@ -2,7 +2,11 @@
 import { ipcMain, BrowserWindow, WebContentsView } from 'electron'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
-import { createUrlFilter } from './privacy/filters'
+import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
+import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
+import { createTabStacker, searchTabs } from './tabs/stacker'
+import { computeSplitBounds } from './tabs/split'
+import { createSessionStore } from './save/session-store'
 import blocklistDomains from './privacy/blocklist.json'
 import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
@@ -34,7 +38,6 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
   const { session } = win.webContents
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
-  const { isYouTubeAdRequest, stripPlayerResponse } = require('./privacy/youtube')
   listSize = bl.size
 
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
@@ -70,7 +73,6 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
 
 // Injectable cosmetic filter dùng trong trackView (mỗi tab mới)
 export function createCosmeticInjector() {
-  const { createCosmeticFilter } = require('./privacy/filters')
   const cosmetic = createCosmeticFilter()
   return function attachToWebContents(wc: any) {
     if (!privacyFilterOn) return
@@ -197,11 +199,9 @@ export function registerIpc(deps: IpcDeps) {
 
   // ─── stacker/search ───
   ipcMain.handle('tabs:stacks', () => {
-    const { createTabStacker } = require('./tabs/stacker')
     return createTabStacker().group(tm.list())
   })
   ipcMain.handle('tabs:search', (_e, query: string) => {
-    const { searchTabs } = require('./tabs/stacker')
     return searchTabs(tm.list(), query)
   })
 
@@ -218,7 +218,6 @@ export function registerIpc(deps: IpcDeps) {
       return { ok: true }
     }
     splitIds = [aId, bId]
-    const { computeSplitBounds } = require('./tabs/split')
     const [wB, hB] = w.getContentSize()
     const [ba, bb] = computeSplitBounds(wB, hB, TOOLBAR_HEIGHT)
     const va = deps.getActiveView(aId)
@@ -246,7 +245,6 @@ export function registerIpc(deps: IpcDeps) {
   ipcMain.handle('tts:stop', () => ({ ok: true }))
 
   // ─── session restore ───
-  const { createSessionStore } = require('./save/session-store')
   const session = createSessionStore()
 
   // record tab bị đóng để undo
