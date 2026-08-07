@@ -45,6 +45,9 @@ const api: TonyAPI = {
     evaluate: () => ipcRenderer.invoke('sleeper:evaluate') as Promise<any>,
     activity: (id: string) => ipcRenderer.invoke('sleeper:activity', id) as Promise<void>,
   },
+  reader: {
+    extract: (tabId?: string) => ipcRenderer.invoke('reader:extract', tabId) as Promise<any>,
+  },
 }
 
 contextBridge.exposeInMainWorld('tony', api)

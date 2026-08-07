@@ -72,6 +72,20 @@ export function registerIpc(deps: IpcDeps) {
     return tabToState(tab)
   })
 
+  // ─── reader ───
+  ipcMain.handle('reader:extract', async (_e, tabId?: string) => {
+    const view = tabId ? deps.getActiveView(tabId) : undefined
+    if (!view) return { ok: false, error: 'Không có tab' }
+    try {
+      const html = (await view.webContents.executeJavaScript('document.documentElement.outerHTML')) as string
+      const { extractArticle } = await import('./reader/extract')
+      const article = extractArticle(html)
+      return { ok: true, article }
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? 'Lỗi trích xuất' }
+    }
+  })
+
   ipcMain.handle('tabs:close', (_e, id: string) => {
     const view = deps.getActiveView(id)
     if (view) {

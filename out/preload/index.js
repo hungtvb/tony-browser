@@ -42,6 +42,9 @@ const api = {
   sleeper: {
     evaluate: () => electron.ipcRenderer.invoke("sleeper:evaluate"),
     activity: (id) => electron.ipcRenderer.invoke("sleeper:activity", id)
+  },
+  reader: {
+    extract: (tabId) => electron.ipcRenderer.invoke("reader:extract", tabId)
   }
 };
 electron.contextBridge.exposeInMainWorld("tony", api);

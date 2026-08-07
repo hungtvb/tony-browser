@@ -874,6 +874,18 @@ function registerIpc(deps2) {
     broadcastTabs();
     return tabToState(tab);
   });
+  electron.ipcMain.handle("reader:extract", async (_e, tabId) => {
+    const view = tabId ? deps2.getActiveView(tabId) : void 0;
+    if (!view) return { ok: false, error: "Không có tab" };
+    try {
+      const html = await view.webContents.executeJavaScript("document.documentElement.outerHTML");
+      const { extractArticle } = await Promise.resolve().then(() => require("./extract-Bm0jRlyv.js"));
+      const article = extractArticle(html);
+      return { ok: true, article };
+    } catch (e) {
+      return { ok: false, error: e?.message ?? "Lỗi trích xuất" };
+    }
+  });
   electron.ipcMain.handle("tabs:close", (_e, id) => {
     const view = deps2.getActiveView(id);
     if (view) {

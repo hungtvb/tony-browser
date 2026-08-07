@@ -116,4 +116,7 @@ export interface TonyAPI {
     evaluate: () => Promise<SleeperStats>
     activity: (id: string) => Promise<void>
   }
+  reader: {
+    extract: (tabId?: string) => Promise<{ ok: boolean; error?: string; article?: { title: string; content: string; length: number } }>
+  }
 }

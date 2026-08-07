@@ -5,6 +5,7 @@ import AddressBar from './components/AddressBar'
 import AIPanel from './components/AIPanel'
 import FeatureBar from './components/FeatureBar'
 import ContainerMenu from './components/ContainerMenu'
+import ReaderView from './components/ReaderView'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -21,6 +22,7 @@ export default function App() {
   const [aiOpen, setAiOpen] = useState(false)
   const [containerMenu, setContainerMenu] = useState(false)
   const [layout, setLayout] = useState<'top' | 'side'>('top')
+  const [reader, setReader] = useState<{ title: string; content: string } | null>(null)
 
   useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
@@ -39,7 +41,12 @@ export default function App() {
           onNewTab={() => setContainerMenu(true)} />
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
-      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)} />
+      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)}
+        onReader={() => {
+          window.tony?.reader.extract(activeId).then(r => {
+            if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })
+          }).catch(() => {})
+        }} />
       <div style={styles.body}>
         {layout === 'side' && (
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
@@ -68,6 +75,7 @@ export default function App() {
         />
       )}
       {aiOpen && <AIPanel activeTabId={activeId} onClose={() => setAiOpen(false)} />}
+      {reader && <ReaderView title={reader.title} content={reader.content} onClose={() => setReader(null)} />}
     </div>
   )
 }
