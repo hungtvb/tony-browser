@@ -12459,7 +12459,7 @@ const CONTAINER_COLORS = {
   personal: "#34c759",
   social: "#af52de"
 };
-const styles$7 = {
+const styles$8 = {
   bar: {
     display: "flex",
     gap: 6,
@@ -12507,19 +12507,19 @@ const styles$7 = {
   }
 };
 function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$7.bar, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$7.plus, title: "Tab mới", onClick: () => onNewTab?.(), children: "+" }),
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$8.bar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$8.plus, title: "Tab mới", onClick: () => onNewTab?.(), children: "+" }),
     tabs.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "button",
       {
         className: "apple-focus",
-        style: { ...styles$7.tab, ...t.id === activeId ? styles$7.active : {} },
+        style: { ...styles$8.tab, ...t.id === activeId ? styles$8.active : {} },
         onClick: () => onSelect(t.id),
         title: t.url,
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$7.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$8.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
           t.title,
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$7.close, onClick: (e) => {
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$8.close, onClick: (e) => {
             e.stopPropagation();
             onClose(t.id);
           }, children: "✕" })
@@ -12529,7 +12529,7 @@ function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }) {
     ))
   ] });
 }
-const styles$6 = {
+const styles$7 = {
   sidebar: {
     display: "flex",
     flexDirection: "column",
@@ -12587,23 +12587,23 @@ const styles$6 = {
   close: { opacity: 0.4, cursor: "pointer", fontSize: 11, flexShrink: 0, color: "rgba(255,255,255,0.8)" }
 };
 function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$6.sidebar, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$6.header, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$7.sidebar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$7.header, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "☰ Spaces" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.newBtn, onClick: onNewTab, title: "Tab mới", children: "+" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$7.newBtn, onClick: onNewTab, title: "Tab mới", children: "+" })
     ] }),
     tabs.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: "rgba(255,255,255,0.4)", fontSize: 12, padding: "12px 10px" }, children: "Chưa có tab" }),
     tabs.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "button",
       {
         className: "apple-focus",
-        style: { ...styles$6.tab, ...t.id === activeId ? styles$6.active : {} },
+        style: { ...styles$7.tab, ...t.id === activeId ? styles$7.active : {} },
         onClick: () => onSelect(t.id),
         title: t.url,
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$6.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$6.title, children: t.title }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$6.close, onClick: (e) => {
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$7.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$7.title, children: t.title }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$7.close, onClick: (e) => {
             e.stopPropagation();
             onClose(t.id);
           }, children: "✕" })
@@ -12613,7 +12613,7 @@ function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }) {
     ))
   ] });
 }
-const styles$5 = {
+const styles$6 = {
   bar: {
     display: "flex",
     gap: 8,
@@ -12656,7 +12656,7 @@ const styles$5 = {
     fontSize: 15
   }
 };
-function AddressBar({ onNavigate, onOpenAI, onReader }) {
+function AddressBar({ onNavigate, onOpenAI, onReader, onPip }) {
   const [value, setValue] = reactExports.useState("");
   function go() {
     const v = value.trim();
@@ -12664,24 +12664,25 @@ function AddressBar({ onNavigate, onOpenAI, onReader }) {
     const url = /^https?:\/\//i.test(v) ? v : `https://${v}`;
     onNavigate(url);
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.bar, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$6.bar, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
       {
         className: "apple-focus",
-        style: styles$5.input,
+        style: styles$6.input,
         placeholder: "Nhập địa chỉ web hoặc tìm kiếm...",
         value,
         onChange: (e) => setValue(e.target.value),
         onKeyDown: (e) => e.key === "Enter" && go()
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.btn, onClick: go, children: "Đi" }),
-    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.ai, title: "Reader Mode", onClick: onReader, children: "📖" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.ai, title: "Trợ lý AI", onClick: onOpenAI, children: "🪄" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.btn, onClick: go, children: "Đi" }),
+    onReader && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.ai, title: "Reader Mode", onClick: onReader, children: "📖" }),
+    onPip && /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.ai, title: "Picture-in-Picture", onClick: onPip, children: "🎬" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.ai, title: "Trợ lý AI", onClick: onOpenAI, children: "🪄" })
   ] });
 }
-const styles$4 = {
+const styles$5 = {
   panel: {
     position: "fixed",
     top: 0,
@@ -12769,19 +12770,19 @@ function AIPanel({ onClose, activeTabId }) {
   function saveCfg() {
     window.tony?.ai.saveConfig(config).then(() => setShowSettings(false));
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.panel, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.header, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.panel, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.header, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "🪄 Trợ lý AI" }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 6 }, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: () => setShowSettings((s) => !s), children: "⚙️" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: onClose, children: "✕" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.chip, onClick: () => setShowSettings((s) => !s), children: "⚙️" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.chip, onClick: onClose, children: "✕" })
       ] })
     ] }),
-    showSettings && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.settings, children: [
+    showSettings && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.settings, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
         {
-          style: styles$4.config,
+          style: styles$5.config,
           placeholder: "Base URL (vd: https://api.openai.com/v1)",
           value: config.baseUrl,
           onChange: (e) => setConfig({ ...config, baseUrl: e.target.value })
@@ -12790,7 +12791,7 @@ function AIPanel({ onClose, activeTabId }) {
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
         {
-          style: styles$4.config,
+          style: styles$5.config,
           placeholder: "API key",
           type: "password",
           value: config.apiKey,
@@ -12800,46 +12801,46 @@ function AIPanel({ onClose, activeTabId }) {
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
         {
-          style: styles$4.config,
+          style: styles$5.config,
           placeholder: "Model (vd: gpt-4o-mini)",
           value: config.model,
           onChange: (e) => setConfig({ ...config, model: e.target.value })
         }
       ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$4.btn, width: "100%" }, onClick: saveCfg, children: "Lưu cấu hình" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$5.btn, width: "100%" }, onClick: saveCfg, children: "Lưu cấu hình" })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.actions, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: () => run("summarizePage"), children: "📄 Tóm tắt trang" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: () => run("summarizeAll"), children: "📚 Tổng hợp tab" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: () => run("act"), children: "🤖 Thao tác web" })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.actions, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.chip, onClick: () => run("summarizePage"), children: "📄 Tóm tắt trang" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.chip, onClick: () => run("summarizeAll"), children: "📚 Tổng hợp tab" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.chip, onClick: () => run("act"), children: "🤖 Thao tác web" })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: "6px 14px", display: "flex", gap: 6 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
       {
-        style: styles$4.input,
+        style: styles$5.input,
         placeholder: 'VD: "Click nút Mua ngay"',
         value: manualActCommand,
         onChange: (e) => setManualActCommand(e.target.value),
         onKeyDown: (e) => e.key === "Enter" && run("act")
       }
     ) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$4.body, children: /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { style: { whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }, children: out }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.inputRow, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$5.body, children: /* @__PURE__ */ jsxRuntimeExports.jsx("pre", { style: { whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }, children: out }) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.inputRow, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
         {
-          style: styles$4.input,
+          style: styles$5.input,
           placeholder: "Hỏi gì về trang này?",
           value: msg,
           onChange: (e) => setMsg(e.target.value),
           onKeyDown: (e) => e.key === "Enter" && run("chat", msg)
         }
       ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.btn, onClick: () => run("chat", msg), children: "Gửi" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.btn, onClick: () => run("chat", msg), children: "Gửi" })
     ] })
   ] });
 }
-const styles$3 = {
+const styles$4 = {
   bar: {
     display: "flex",
     gap: 6,
@@ -12895,23 +12896,23 @@ function FeatureBar({ layout, onToggleLayout }) {
     setFocusOn(next);
     window.tony?.focus.toggle(next);
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$3.bar, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$3.chip, ...focusOn ? styles$3.active : {} }, onClick: toggleFocus, children: focusOn ? "🧘 Focus Bật" : "🧘 Focus Tắt" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$3.chipStatic, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$4.bar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: { ...styles$4.chip, ...focusOn ? styles$4.active : {} }, onClick: toggleFocus, children: focusOn ? "🧘 Focus Bật" : "🧘 Focus Tắt" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$4.chipStatic, children: [
       "💤 ",
       sleeping,
       " tab ngủ"
     ] }),
-    warnings.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { ...styles$3.chipStatic, ...styles$3.warn }, children: [
+    warnings.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: { ...styles$4.chipStatic, ...styles$4.warn }, children: [
       "⚠️ ",
       warnings.length,
       " nặng RAM"
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$3.chip, onClick: onToggleLayout, title: "Chuyển layout tab", children: layout === "side" ? "📐 Dọc" : "↕️ Ngang" }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$3.label, children: "tony-browser v0.7" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$4.chip, onClick: onToggleLayout, title: "Chuyển layout tab", children: layout === "side" ? "📐 Dọc" : "↕️ Ngang" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$4.label, children: "tony-browser v0.7" })
   ] });
 }
-const styles$2 = {
+const styles$3 = {
   overlay: { position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", display: "flex", justifyContent: "center", paddingTop: 60 },
   menu: {
     background: "rgba(30,30,32,0.98)",
@@ -12943,15 +12944,15 @@ const ITEMS = [
   { id: "social", label: "Mạng xã hội" }
 ];
 function ContainerMenu({ onPick, onClose }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.overlay, onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.menu, onClick: (e) => e.stopPropagation(), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.title, children: "Mở tab mới trong container" }),
-    ITEMS.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.item, onClick: () => onPick("", i.id), children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$2.dot, background: CONTAINER_COLORS[i.id] ?? "#6b7280" } }),
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$3.overlay, onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$3.menu, onClick: (e) => e.stopPropagation(), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$3.title, children: "Mở tab mới trong container" }),
+    ITEMS.map((i) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$3.item, onClick: () => onPick("", i.id), children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$3.dot, background: CONTAINER_COLORS[i.id] ?? "#6b7280" } }),
       i.label
     ] }, i.id))
   ] }) });
 }
-const styles$1 = {
+const styles$2 = {
   overlay: {
     position: "fixed",
     inset: 0,
@@ -12988,19 +12989,117 @@ const styles$1 = {
   text: { fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.374px", color: "rgba(0,0,0,0.8)" }
 };
 function ReaderView({ title, content, onClose }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.overlay, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.bar, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$1.title, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.overlay, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.bar, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { style: styles$2.title, children: [
         "📖 ",
         title || "Reader Mode"
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$1.btn, onClick: onClose, children: "✕ Đóng" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.btn, onClick: onClose, children: "✕ Đóng" })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.body, children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { style: styles$1.h1, children: title }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$1.text, children: content })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$2.body, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { style: styles$2.h1, children: title }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$2.text, children: content })
     ] })
   ] });
+}
+const styles$1 = {
+  overlay: { position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", paddingTop: "12vh" },
+  palette: {
+    width: 560,
+    background: "rgba(28,28,30,0.98)",
+    borderRadius: 16,
+    boxShadow: "rgba(0,0,0,0.5) 0 20px 60px",
+    border: "1px solid rgba(255,255,255,0.1)",
+    overflow: "hidden",
+    backdropFilter: "saturate(180%) blur(30px)"
+  },
+  input: {
+    width: "100%",
+    padding: "16px 20px",
+    background: "transparent",
+    border: "none",
+    color: "#fff",
+    fontSize: 16,
+    outline: "none",
+    letterSpacing: "-0.12px",
+    borderBottom: "1px solid rgba(255,255,255,0.08)"
+  },
+  hint: { padding: "6px 20px", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "-0.08px" },
+  list: { maxHeight: 340, overflow: "auto", padding: 6 },
+  item: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 14px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)"
+  },
+  itemActive: { background: "var(--apple-blue)", color: "#fff" },
+  icon: { fontSize: 15, width: 22, textAlign: "center" },
+  kbd: { marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 4, padding: "1px 5px" }
+};
+function CommandPalette({ commands, onClose }) {
+  const [query, setQuery] = reactExports.useState("");
+  const [idx, setIdx] = reactExports.useState(0);
+  const inputRef = reactExports.useRef(null);
+  reactExports.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+  const filtered = commands.filter(
+    (c) => c.label.toLowerCase().includes(query.toLowerCase()) || (c.hint ?? "").toLowerCase().includes(query.toLowerCase())
+  );
+  reactExports.useEffect(() => {
+    setIdx(0);
+  }, [query]);
+  function onKey(e) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setIdx((i) => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && filtered[idx]) {
+      filtered[idx].run();
+      onClose();
+    } else if (e.key === "Escape") onClose();
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$1.overlay, onClick: onClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.palette, onClick: (e) => e.stopPropagation(), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "input",
+      {
+        ref: inputRef,
+        style: styles$1.input,
+        placeholder: "Gõ lệnh hoặc hỏi AI...",
+        value: query,
+        onChange: (e) => setQuery(e.target.value),
+        onKeyDown: onKey
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: styles$1.hint, children: "↑↓ chọn · Enter thực thi · Esc đóng" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$1.list, children: [
+      filtered.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: 20, textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: 13 }, children: "Không có lệnh phù hợp" }),
+      filtered.map((c, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          style: { ...styles$1.item, ...i === idx ? styles$1.itemActive : {} },
+          onMouseEnter: () => setIdx(i),
+          onClick: () => {
+            c.run();
+            onClose();
+          },
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$1.icon, children: c.icon }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: c.label }),
+            c.hint && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$1.kbd, ...i === idx ? { color: "rgba(255,255,255,0.7)", borderColor: "rgba(255,255,255,0.3)" } : {} }, children: c.hint })
+          ]
+        },
+        c.id
+      ))
+    ] })
+  ] }) });
 }
 function useTabs() {
   const [tabs, setTabs] = reactExports.useState([]);
@@ -13047,6 +13146,17 @@ function App() {
   const [containerMenu, setContainerMenu] = reactExports.useState(false);
   const [layout, setLayout] = reactExports.useState("top");
   const [reader, setReader] = reactExports.useState(null);
+  const [paletteOpen, setPaletteOpen] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   reactExports.useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {
     });
@@ -13079,7 +13189,8 @@ function App() {
             if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content });
           }).catch(() => {
           });
-        }
+        },
+        onPip: () => window.tony?.pip.start(activeId)
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.body, children: [
@@ -13119,7 +13230,24 @@ function App() {
       }
     ),
     aiOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(AIPanel, { activeTabId: activeId, onClose: () => setAiOpen(false) }),
-    reader && /* @__PURE__ */ jsxRuntimeExports.jsx(ReaderView, { title: reader.title, content: reader.content, onClose: () => setReader(null) })
+    reader && /* @__PURE__ */ jsxRuntimeExports.jsx(ReaderView, { title: reader.title, content: reader.content, onClose: () => setReader(null) }),
+    paletteOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CommandPalette,
+      {
+        commands: [
+          { id: "newtab", icon: "➕", label: "Tab mới", hint: "Ctrl+T", run: () => setContainerMenu(true) },
+          { id: "focus", icon: "🧘", label: "Bật/tắt Focus Mode", run: () => {
+            const el = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Focus"));
+            el?.click();
+          } },
+          { id: "reader", icon: "📖", label: "Reader Mode", run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent("click", { bubbles: true })) },
+          { id: "ai", icon: "🪄", label: "Mở Trợ lý AI", hint: "Ctrl+K", run: () => setAiOpen(true) },
+          { id: "pip", icon: "🎬", label: "Picture-in-Picture", run: () => window.tony?.pip.start(activeId) },
+          { id: "layout", icon: "📐", label: `Đổi layout: ${layout === "side" ? "Ngang" : "Dọc"}`, run: () => setLayout((l) => l === "top" ? "side" : "top") }
+        ],
+        onClose: () => setPaletteOpen(false)
+      }
+    )
   ] });
 }
 clientExports.createRoot(document.getElementById("root")).render(

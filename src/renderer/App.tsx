@@ -6,6 +6,7 @@ import AIPanel from './components/AIPanel'
 import FeatureBar from './components/FeatureBar'
 import ContainerMenu from './components/ContainerMenu'
 import ReaderView from './components/ReaderView'
+import CommandPalette from './components/CommandPalette'
 import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
@@ -23,6 +24,19 @@ export default function App() {
   const [containerMenu, setContainerMenu] = useState(false)
   const [layout, setLayout] = useState<'top' | 'side'>('top')
   const [reader, setReader] = useState<{ title: string; content: string } | null>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  // Ctrl+K / Cmd+K mở command palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen(o => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
@@ -46,7 +60,8 @@ export default function App() {
           window.tony?.reader.extract(activeId).then(r => {
             if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })
           }).catch(() => {})
-        }} />
+        }}
+        onPip={() => window.tony?.pip.start(activeId)} />
       <div style={styles.body}>
         {layout === 'side' && (
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
@@ -76,6 +91,19 @@ export default function App() {
       )}
       {aiOpen && <AIPanel activeTabId={activeId} onClose={() => setAiOpen(false)} />}
       {reader && <ReaderView title={reader.title} content={reader.content} onClose={() => setReader(null)} />}
+      {paletteOpen && (
+        <CommandPalette
+          commands={[
+            { id: 'newtab', icon: '➕', label: 'Tab mới', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
+            { id: 'focus', icon: '🧘', label: 'Bật/tắt Focus Mode', run: () => { const el = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('Focus')); el?.click() } },
+            { id: 'reader', icon: '📖', label: 'Reader Mode', run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })) },
+            { id: 'ai', icon: '🪄', label: 'Mở Trợ lý AI', hint: 'Ctrl+K', run: () => setAiOpen(true) },
+            { id: 'pip', icon: '🎬', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
+            { id: 'layout', icon: '📐', label: `Đổi layout: ${layout === 'side' ? 'Ngang' : 'Dọc'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
+          ]}
+          onClose={() => setPaletteOpen(false)}
+        />
+      )}
     </div>
   )
 }

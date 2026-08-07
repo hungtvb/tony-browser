@@ -99,6 +99,48 @@ export function registerIpc(deps: IpcDeps) {
     return true
   })
 
+  // ─── pip ───
+  ipcMain.handle('pip:start', async (_e, tabId?: string) => {
+    const view = tabId ? deps.getActiveView(tabId) : undefined
+    if (!view) return { ok: false, error: 'Không có tab' }
+    try {
+      const res = (await view.webContents.executeJavaScript(`
+        (() => {
+          const v = document.querySelector('video');
+          if (!v) return { ok: false, error: 'Không tìm thấy video' };
+          if (!('requestPictureInPicture' in v)) return { ok: false, error: 'Trình duyệt không hỗ trợ PiP' };
+          v.requestPictureInPicture().then(() => {
+            // xoá class khi video thoát PiP để tránh video ẩn
+            v.removeAttribute('webkit-playsinline');
+          }).catch(e => {});
+          return { ok: true };
+        })()
+      `)) as { ok: boolean; error?: string }
+      return res
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? 'Lỗi PiP' }
+    }
+  })
+
+  ipcMain.handle('pip:stop', async (_e, tabId?: string) => {
+    const view = tabId ? deps.getActiveView(tabId) : undefined
+    if (!view) return { ok: false, error: 'Không có tab' }
+    try {
+      await view.webContents.executeJavaScript(`
+        (() => {
+          if (document.pictureInPictureElement) {
+            document.exitPictureInPicture().catch(e => {});
+            return { ok: true };
+          }
+          return { ok: false, error: 'Không có video PiP' };
+        })()
+      `)
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e?.message ?? 'Lỗi thoát PiP' }
+    }
+  })
+
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
     // ẩn/hiện view theo active

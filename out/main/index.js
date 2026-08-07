@@ -898,6 +898,45 @@ function registerIpc(deps2) {
     broadcastTabs();
     return true;
   });
+  electron.ipcMain.handle("pip:start", async (_e, tabId) => {
+    const view = tabId ? deps2.getActiveView(tabId) : void 0;
+    if (!view) return { ok: false, error: "Không có tab" };
+    try {
+      const res = await view.webContents.executeJavaScript(`
+        (() => {
+          const v = document.querySelector('video');
+          if (!v) return { ok: false, error: 'Không tìm thấy video' };
+          if (!('requestPictureInPicture' in v)) return { ok: false, error: 'Trình duyệt không hỗ trợ PiP' };
+          v.requestPictureInPicture().then(() => {
+            // xoá class khi video thoát PiP để tránh video ẩn
+            v.removeAttribute('webkit-playsinline');
+          }).catch(e => {});
+          return { ok: true };
+        })()
+      `);
+      return res;
+    } catch (e) {
+      return { ok: false, error: e?.message ?? "Lỗi PiP" };
+    }
+  });
+  electron.ipcMain.handle("pip:stop", async (_e, tabId) => {
+    const view = tabId ? deps2.getActiveView(tabId) : void 0;
+    if (!view) return { ok: false, error: "Không có tab" };
+    try {
+      await view.webContents.executeJavaScript(`
+        (() => {
+          if (document.pictureInPictureElement) {
+            document.exitPictureInPicture().catch(e => {});
+            return { ok: true };
+          }
+          return { ok: false, error: 'Không có video PiP' };
+        })()
+      `);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e?.message ?? "Lỗi thoát PiP" };
+    }
+  });
   electron.ipcMain.handle("tabs:activate", (_e, id) => {
     tm2.activate(id);
     const w = win();

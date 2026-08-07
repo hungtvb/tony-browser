@@ -48,6 +48,10 @@ const api: TonyAPI = {
   reader: {
     extract: (tabId?: string) => ipcRenderer.invoke('reader:extract', tabId) as Promise<any>,
   },
+  pip: {
+    start: (tabId?: string) => ipcRenderer.invoke('pip:start', tabId) as Promise<any>,
+    stop: (tabId?: string) => ipcRenderer.invoke('pip:stop', tabId) as Promise<any>,
+  },
 }
 
 contextBridge.exposeInMainWorld('tony', api)

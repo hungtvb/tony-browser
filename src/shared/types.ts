@@ -119,4 +119,8 @@ export interface TonyAPI {
   reader: {
     extract: (tabId?: string) => Promise<{ ok: boolean; error?: string; article?: { title: string; content: string; length: number } }>
   }
+  pip: {
+    start: (tabId?: string) => Promise<{ ok: boolean; error?: string }>
+    stop: (tabId?: string) => Promise<{ ok: boolean; error?: string }>
+  }
 }

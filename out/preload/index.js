@@ -45,6 +45,10 @@ const api = {
   },
   reader: {
     extract: (tabId) => electron.ipcRenderer.invoke("reader:extract", tabId)
+  },
+  pip: {
+    start: (tabId) => electron.ipcRenderer.invoke("pip:start", tabId),
+    stop: (tabId) => electron.ipcRenderer.invoke("pip:stop", tabId)
   }
 };
 electron.contextBridge.exposeInMainWorld("tony", api);

@@ -22,10 +22,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-export default function AddressBar({ onNavigate, onOpenAI, onReader }: {
+export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip }: {
   onNavigate: (url: string) => void
   onOpenAI: () => void
   onReader?: () => void
+  onPip?: () => void
 }) {
   const [value, setValue] = useState('')
 
@@ -48,6 +49,7 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader }: {
       />
       <button className="apple-focus" style={styles.btn} onClick={go}>Đi</button>
       {onReader && <button className="apple-focus" style={styles.ai} title="Reader Mode" onClick={onReader}>📖</button>}
+      {onPip && <button className="apple-focus" style={styles.ai} title="Picture-in-Picture" onClick={onPip}>🎬</button>}
       <button className="apple-focus" style={styles.ai} title="Trợ lý AI" onClick={onOpenAI}>🪄</button>
     </div>
   )
