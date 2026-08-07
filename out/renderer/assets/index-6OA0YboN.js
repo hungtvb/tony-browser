@@ -12459,7 +12459,7 @@ const CONTAINER_COLORS = {
   personal: "#34c759",
   social: "#af52de"
 };
-const styles$5 = {
+const styles$6 = {
   bar: {
     display: "flex",
     gap: 6,
@@ -12507,8 +12507,92 @@ const styles$5 = {
   }
 };
 function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.bar, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.plus, title: "Tab mới", onClick: () => onNewTab?.(), children: "+" }),
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$6.bar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$6.plus, title: "Tab mới", onClick: () => onNewTab?.(), children: "+" }),
+    tabs.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "button",
+      {
+        className: "apple-focus",
+        style: { ...styles$6.tab, ...t.id === activeId ? styles$6.active : {} },
+        onClick: () => onSelect(t.id),
+        title: t.url,
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$6.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
+          t.title,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$6.close, onClick: (e) => {
+            e.stopPropagation();
+            onClose(t.id);
+          }, children: "✕" })
+        ]
+      },
+      t.id
+    ))
+  ] });
+}
+const styles$5 = {
+  sidebar: {
+    display: "flex",
+    flexDirection: "column",
+    width: 220,
+    background: "rgba(20,20,22,0.95)",
+    backdropFilter: "saturate(180%) blur(20px)",
+    WebkitBackdropFilter: "saturate(180%) blur(20px)",
+    borderRight: "1px solid rgba(255,255,255,0.08)",
+    padding: "8px 8px 0",
+    gap: 2,
+    overflowY: "auto",
+    flexShrink: 0
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "6px 10px 10px",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.6)",
+    letterSpacing: "-0.12px"
+  },
+  newBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    border: "none",
+    background: "rgba(255,255,255,0.1)",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 15,
+    lineHeight: 1
+  },
+  tab: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 10px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontSize: 12,
+    color: "rgba(255,255,255,0.75)",
+    overflow: "hidden",
+    letterSpacing: "-0.08px",
+    transition: "background 0.12s",
+    border: "none",
+    background: "transparent",
+    textAlign: "left",
+    width: "100%"
+  },
+  active: { background: "rgba(255,255,255,0.14)", color: "#fff" },
+  dot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
+  title: { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  close: { opacity: 0.4, cursor: "pointer", fontSize: 11, flexShrink: 0, color: "rgba(255,255,255,0.8)" }
+};
+function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.sidebar, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles$5.header, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "☰ Spaces" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$5.newBtn, onClick: onNewTab, title: "Tab mới", children: "+" })
+    ] }),
+    tabs.length === 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: "rgba(255,255,255,0.4)", fontSize: 12, padding: "12px 10px" }, children: "Chưa có tab" }),
     tabs.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "button",
       {
@@ -12518,7 +12602,7 @@ function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }) {
         title: t.url,
         children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { ...styles$5.dot, background: CONTAINER_COLORS[t.container ?? "default"] ?? "#6b7280" } }),
-          t.title,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$5.title, children: t.title }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$5.close, onClick: (e) => {
             e.stopPropagation();
             onClose(t.id);
@@ -12789,7 +12873,7 @@ const styles$2 = {
   warn: { color: "#ff9f0a" },
   label: { fontSize: 11, color: "rgba(255,255,255,0.48)", marginLeft: "auto", letterSpacing: "-0.08px" }
 };
-function FeatureBar() {
+function FeatureBar({ layout, onToggleLayout }) {
   const [focusOn, setFocusOn] = reactExports.useState(false);
   const [sleeping, setSleeping] = reactExports.useState(0);
   const [warnings, setWarnings] = reactExports.useState([]);
@@ -12822,7 +12906,8 @@ function FeatureBar() {
       warnings.length,
       " nặng RAM"
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$2.label, children: "tony-browser v0.4" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("button", { className: "apple-focus", style: styles$2.chip, onClick: onToggleLayout, title: "Chuyển layout tab", children: layout === "side" ? "📐 Dọc" : "↕️ Ngang" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: styles$2.label, children: "tony-browser v0.7" })
   ] });
 }
 const styles$1 = {
@@ -12899,6 +12984,7 @@ function useTabs() {
 }
 const styles = {
   app: { display: "flex", flexDirection: "column", height: "100vh", background: "#000" },
+  body: { display: "flex", flex: 1, overflow: "hidden" },
   content: { flex: 1, position: "relative", background: "#000" },
   status: { position: "absolute", bottom: 10, right: 14, fontSize: 11, color: "rgba(255,255,255,0.48)", letterSpacing: "-0.08px" }
 };
@@ -12907,6 +12993,7 @@ function App() {
   const [privacy, setPrivacy] = reactExports.useState({ blocked: 0, listSize: 0 });
   const [aiOpen, setAiOpen] = reactExports.useState(false);
   const [containerMenu, setContainerMenu] = reactExports.useState(false);
+  const [layout, setLayout] = reactExports.useState("top");
   reactExports.useEffect(() => {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {
     });
@@ -12918,7 +13005,7 @@ function App() {
   }, []);
   const active = tabs.find((t) => t.id === activeId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.app, children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+    layout === "top" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       TabBar,
       {
         tabs,
@@ -12928,6 +13015,34 @@ function App() {
         onNewTab: () => setContainerMenu(true)
       }
     ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(FeatureBar, { layout, onToggleLayout: () => setLayout((l) => l === "top" ? "side" : "top") }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: open, onOpenAI: () => setAiOpen(true) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.body, children: [
+      layout === "side" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Sidebar,
+        {
+          tabs,
+          activeId,
+          onSelect: activate,
+          onClose: close,
+          onNewTab: () => setContainerMenu(true)
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.content, children: [
+        active && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { textAlign: "center", paddingTop: 64, color: "rgba(255,255,255,0.48)" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 13 }, children: "🌐 Đang xem" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 21, fontWeight: 600, color: "#fff", marginTop: 6, letterSpacing: "-0.28px" }, children: active.title }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 12, color: "rgba(255,255,255,0.64)", marginTop: 8 }, children: active.url })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.status, children: [
+          "🛡️ Đã chặn ",
+          privacy.blocked,
+          " request · ",
+          privacy.listSize,
+          " miền"
+        ] })
+      ] })
+    ] }),
     containerMenu && /* @__PURE__ */ jsxRuntimeExports.jsx(
       ContainerMenu,
       {
@@ -12938,22 +13053,6 @@ function App() {
         onClose: () => setContainerMenu(false)
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(FeatureBar, {}),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(AddressBar, { onNavigate: open, onOpenAI: () => setAiOpen(true) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.content, children: [
-      active && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { textAlign: "center", paddingTop: 64, color: "rgba(255,255,255,0.48)" }, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 13 }, children: "🌐 Đang xem" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 21, fontWeight: 600, color: "#fff", marginTop: 6, letterSpacing: "-0.28px" }, children: active.title }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 12, color: "rgba(255,255,255,0.64)", marginTop: 8 }, children: active.url })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: styles.status, children: [
-        "🛡️ Đã chặn ",
-        privacy.blocked,
-        " request · ",
-        privacy.listSize,
-        " miền"
-      ] })
-    ] }),
     aiOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(AIPanel, { activeTabId: activeId, onClose: () => setAiOpen(false) })
   ] });
 }

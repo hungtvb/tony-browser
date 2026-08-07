@@ -21,7 +21,10 @@ const styles: Record<string, React.CSSProperties> = {
   label: { fontSize: 11, color: 'rgba(255,255,255,0.48)', marginLeft: 'auto', letterSpacing: '-0.08px' },
 }
 
-export default function FeatureBar() {
+export default function FeatureBar({ layout, onToggleLayout }: {
+  layout: 'top' | 'side'
+  onToggleLayout: () => void
+}) {
   const [focusOn, setFocusOn] = useState(false)
   const [sleeping, setSleeping] = useState(0)
   const [warnings, setWarnings] = useState<string[]>([])
@@ -50,7 +53,10 @@ export default function FeatureBar() {
       </button>
       <span style={styles.chipStatic}>💤 {sleeping} tab ngủ</span>
       {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}>⚠️ {warnings.length} nặng RAM</span>}
-      <span style={styles.label}>tony-browser v0.4</span>
+      <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Chuyển layout tab">
+        {layout === 'side' ? '📐 Dọc' : '↕️ Ngang'}
+      </button>
+      <span style={styles.label}>tony-browser v0.7</span>
     </div>
   )
 }
