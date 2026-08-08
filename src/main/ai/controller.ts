@@ -34,7 +34,7 @@ export class AIController {
     const view = tabId ? this.deps.getActiveView(tabId) : undefined
     const wc = view?.webContents
 
-    // ─── AI Actions: thao thao trang thật ───
+    // ─── AI Actions: thao tác trang thật ───
     if (params.mode === 'act') {
       if (!wc) throw new Error('Không có tab hoạt động để thao tác')
       const adapter = createWebContentsAdapter(() => wc)

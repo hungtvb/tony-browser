@@ -25,20 +25,29 @@ export function extractJsonArray(text: string): unknown[] {
   } catch {
     // rơi xuống bước 3
   }
-  // 3. Dò từng cặp [ ... ] tìm array parse được (xử lý prose ở xung quanh)
+  // 3. Dò từng cặp [ ... ] tìm array parse được (xử lý prose ở xung quanh).
+  //    Ưu tiên array chứa object có `type` hợp lệ -> tránh bắt nhầm array số
+  //    (VD prose: "Kết quả: [1,2]" trước array action thật).
+  const candidates: unknown[][] = []
   for (let i = 0; i < body.length; i++) {
     if (body[i] !== '[') continue
     for (let j = body.length - 1; j > i; j--) {
       if (body[j] !== ']') continue
       try {
         const v = JSON.parse(body.slice(i, j + 1))
-        if (Array.isArray(v)) return v
+        if (Array.isArray(v)) {
+          candidates.push(v)
+          if (v.some((x) => x && typeof (x as Record<string, unknown>).type === 'string')) {
+            return v
+          }
+        }
       } catch {
         // đoạn này không phải array hợp lệ, thử đoạn tiếp
       }
     }
   }
-  return []
+  // không tìm thấy array chứa action -> trả array parse được đầu tiên (nếu có)
+  return candidates[0] ?? []
 }
 
 /** Chuyển chuỗi LLM trả về (hoặc mảng chuỗi JSON) thành danh sách action hợp lệ */
@@ -53,7 +62,7 @@ export function parseActions(input: string | string[]): ParsedAction[] {
         parsed.push({
           type: obj.type,
           selector: typeof obj.selector === 'string' ? obj.selector : undefined,
-          value: typeof obj.value === 'string' ? obj.value : undefined,
+          value: obj.value == null ? undefined : String(obj.value),
         })
       }
     }

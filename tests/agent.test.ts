@@ -51,4 +51,30 @@ describe('parseActions', () => {
   it('returns empty for junk', () => {
     expect(parseActions('Xin lỗi, tôi không hiểu')).toEqual([])
   })
+
+  it('keeps numeric value (scroll/wait/size params) as string — regression from reviewer warning', () => {
+    // 🔴 Regression cũ: `value: typeof obj.value === 'string' ? obj.value : undefined`
+    // drop value number (vd 800) → adapter fallback 400px/1000ms dù LLM yêu cầu khác
+    expect(parseActions('[{"type":"scroll","value":800}]')).toEqual([
+      { type: 'scroll', selector: undefined, value: '800' },
+    ])
+    expect(parseActions('[{"type":"wait","value":2000}]')).toEqual([
+      { type: 'wait', selector: undefined, value: '2000' },
+    ])
+    expect(parseActions('[{"type":"type","selector":"#q","value":42}]')).toEqual([
+      { type: 'type', selector: '#q', value: '42' },
+    ])
+  })
+
+  it('prefers action array over numeric array appearing earlier in prose — reviewer nit', () => {
+    // Nit: step 3 cũ trả array parse được ĐẦU TIÊN → prose "[1,2]" nuốt mất action thật
+    const text = 'Kết quả: [1,2] mục. Các bước: [{"type":"click","selector":"#buy","value":800}]'
+    expect(parseActions(text)).toEqual([
+      { type: 'click', selector: '#buy', value: '800' },
+    ])
+  })
+
+  it('falls back to first parseable array when no action array found', () => {
+    expect(parseActions('Kết quả: [1,2] mục')).toEqual([])
+  })
 })
