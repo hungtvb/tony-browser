@@ -3,7 +3,7 @@ import type { IpcDeps } from '../ipc'
 import { AIService } from './service'
 import { extractPageText, extractPageMeta } from './reader'
 import { loadAIConfig, saveAIConfig } from './store'
-import { createAgentCore } from './agent'
+import { createAgentCore, parseActions } from './agent'
 import { createWebContentsAdapter } from './agent-adapter'
 import type { AIConfig, AIRequestParams, AIStatus } from '../../shared/types'
 
@@ -47,10 +47,10 @@ export class AIController {
         { mode: 'chat', text: `Bạn là AI điều khiển trình duyệt. Trang hiện tại:\n${snap}\n\nNhiệm vụ: ${goal}\nHãy trả về JSON array các hành động: [{"type":"click","selector":"#id"},{"type":"type","selector":"#id","value":"..."},{"type":"scroll","value":400}]. Chỉ dùng selector có trong trang.` },
         undefined,
       )
-      // parse JSON từ LLM response
-      const actions = this.extractJsonArray(planText)
+      // parse JSON từ LLM response (xử lý code fence + prose xung quanh)
+      const actions = parseActions(planText)
       if (actions.length === 0) return `Không xác định được hành động. AI trả: ${planText.slice(0, 300)}`
-      const result = await agent.run(actions.map(a => JSON.stringify(a)))
+      const result = await agent.run(actions)
       return result.summary
     }
 
@@ -80,17 +80,5 @@ export class AIController {
     }
 
     return this.service.ask(params, pageText)
-  }
-
-  /** Trích JSON array từ chuỗi LLM trả về (có thể bọc trong code block) */
-  private extractJsonArray(text: string): any[] {
-    const match = text.match(/\[[\s\S]*\]/)
-    if (!match) return []
-    try {
-      const arr = JSON.parse(match[0])
-      return Array.isArray(arr) ? arr : []
-    } catch {
-      return []
-    }
   }
 }
