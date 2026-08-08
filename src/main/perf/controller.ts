@@ -16,6 +16,7 @@ export class SleeperController {
     const infos = tabs.map(t => ({
       id: t.id,
       url: t.url,
+      lastActive: t.lastActive,
       memoryMB: views?.find(v => v.id === t.id)?.memoryMB ?? 0,
     }))
     const result = this.sleeper.evaluate(infos, activeId, whitelist)

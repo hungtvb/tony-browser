@@ -33,6 +33,8 @@ export function useTabs() {
   function activate(id: string) {
     setActiveId(id)
     window.tony?.tabs.activate(id)
+    // báo cho TabSleeper biết tab này vừa được dùng (reset lastActive tracker)
+    window.tony?.sleeper.activity(id)
   }
 
   return { tabs, activeId, ready, open, openInContainer, close, activate }

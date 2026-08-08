@@ -15,6 +15,8 @@ export interface Tab {
   loading: boolean
   view: View
   container: string
+  /** Lần cuối tab được mở/activate — nguồn cho TabSleeper quyết định ngủ tab nền */
+  lastActive?: number
 }
 
 export type TabEvent = { type: 'open' | 'close' | 'activate'; id: string }
@@ -28,7 +30,7 @@ export function createTabManager(factory: ViewFactory) {
   function open(url: string, container = 'default'): Tab {
     const id = `tab-${++counter}-${Date.now()}`
     const view = factory(id)
-    const tab: Tab = { id, url, title: 'New Tab', loading: true, view, container }
+    const tab: Tab = { id, url, title: 'New Tab', loading: true, view, container, lastActive: Date.now() }
     tabs.set(id, tab)
     activeId = id
     view.loadURL(url)
@@ -55,6 +57,8 @@ export function createTabManager(factory: ViewFactory) {
   function activate(id: string) {
     if (!tabs.has(id)) return
     activeId = id
+    const tab = tabs.get(id)!
+    tab.lastActive = Date.now()
     emitter.emit('changed', { type: 'activate', id })
   }
 
