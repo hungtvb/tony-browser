@@ -11,17 +11,17 @@ export class SmartTabController {
   get sessionsList() { return [...this.sessions] }
 
   groupByDomain(tabs: Tab[]): GroupedTabInfo[] {
-    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }))
+    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }))
     return this.smart.groupByDomain(states)
   }
 
   groupByTheme(tabs: Tab[]): GroupedTabInfo[] {
-    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }))
+    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }))
     return this.smart.groupByTheme(states)
   }
 
   saveSession(tabs: Tab[], name?: string): TabSessionInfo {
-    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading }))
+    const states: TabState[] = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }))
     const session = this.smart.saveSession(states, name)
     const info: TabSessionInfo = { name: session.name, createdAt: session.createdAt, tabs: session.tabs }
     this.sessions.unshift(info)

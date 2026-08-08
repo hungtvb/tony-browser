@@ -48,7 +48,7 @@ export function extractArticle(html: string): ArticleResult {
   if (article) {
     contentHtml = article[0]
   } else {
-    const main = html.match(/<(?:div|main)[^>]*(?:id|class)="[^"]*(?:content|main|article)[^"]*"[\s\S]*?<\/\1>/i)
+    const main = html.match(/<(?:div|main)[^>]*(?:id|class)="[^"]*(?:content|main|article)[^"]*"[\s\S]*?<\/(?:div|main)>/i)
     if (main) contentHtml = main[0]
     else contentHtml = html
   }

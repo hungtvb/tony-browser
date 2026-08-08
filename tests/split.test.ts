@@ -7,8 +7,8 @@ describe('Split View bounds', () => {
     expect(a.x).toBe(0)
     expect(a.y).toBe(92)
     expect(a.width).toBe(600)
-    expect(b.x).toBe(600)
-    expect(b.width).toBe(600)
+    expect(b?.x).toBe(600)
+    expect(b?.width).toBe(600)
     expect(a.height).toBe(708)
   })
 
@@ -20,6 +20,6 @@ describe('Split View bounds', () => {
   it('handles uneven split ratio', () => {
     const [a, b] = computeSplitBounds(900, 600, 92, true, 0.6)
     expect(a.width).toBe(540)
-    expect(b.x).toBe(540)
+    expect(b?.x).toBe(540)
   })
 })

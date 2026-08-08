@@ -27,14 +27,14 @@ describe('TabManager', () => {
   })
 
   it('closes active tab and activates another', () => {
-    const { factory } = makeVM()
+    const { factory, views } = makeVM()
     const tm = createTabManager(factory)
     const a = tm.open('https://a.com')
     const b = tm.open('https://b.com')
     tm.close(a.id)
     expect(tm.activeId).toBe(b.id)
     expect(tm.list().length).toBe(1)
-    expect(a.view.destroyed).toBe(true)
+    expect(views[0].destroyed).toBe(true)
   })
 
   it('activate switches active tab', () => {

@@ -36,7 +36,7 @@ describe('YouTube player response stripping (bóc ads khỏi video)', () => {
       playabilityStatus: { status: 'OK' },
     }
     const out = stripPlayerResponse(JSON.stringify(resp))
-    const parsed = JSON.parse(out)
+    const parsed = JSON.parse(out!)
     expect(parsed.playerAds.adPlacements).toBeUndefined()
     expect(parsed.playabilityStatus.status).toBe('OK')
   })
@@ -46,7 +46,7 @@ describe('YouTube player response stripping (bóc ads khỏi video)', () => {
       videoDetails: { videoId: 'abc', adBreaks: [{ adBreak: 1 }] },
     }
     const out = stripPlayerResponse(JSON.stringify(resp))
-    const parsed = JSON.parse(out)
+    const parsed = JSON.parse(out!)
     expect(parsed.videoDetails.adBreaks).toEqual([])
   })
 

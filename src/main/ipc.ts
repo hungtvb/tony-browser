@@ -56,7 +56,7 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
       if (!privacyFilterOn) { callback({}); return }
       const filter = session.webRequest.filterResponseData(details.id)
       const chunks: Buffer[] = []
-      filter.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
+      filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
       filter.on('end', () => {
         try {
           const body = Buffer.concat(chunks).toString('utf-8')
