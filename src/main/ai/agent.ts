@@ -9,34 +9,60 @@ export interface AgentResult {
   actionsTaken: string[]
 }
 
+export type ParsedAction = { type: string; selector?: string; value?: string }
+
 const ACTION_TYPES = new Set(['click', 'type', 'scroll', 'navigate', 'wait'])
 
-export function createAgentCore(adapter: PageAdapter) {
-  function parseActions(actionsJson: string[]): { type: string; selector?: string; value?: string }[] {
-    const parsed: { type: string; selector?: string; value?: string }[] = []
-    for (const raw of actionsJson) {
-      const json = raw.trim()
-      if (!json) continue
-      // cho phép JSON nằm trong ``` json ```
-      const match = json.match(/```(?:json)?\s*([\s\S]*?)```/)
-      const body = match ? match[1] : json
+/** Tách JSON array từ chuỗi LLM trả về — xử lý code fence ```json + prose xung quanh */
+export function extractJsonArray(text: string): unknown[] {
+  // 1. Bóc phần nằm trong ```json ... ``` nếu có
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+  const body = (fence ? fence[1] : text).trim()
+  // 2. Thử parse nguyên văn (trường hợp JSON thuần, không fence)
+  try {
+    const v = JSON.parse(body)
+    if (Array.isArray(v)) return v
+  } catch {
+    // rơi xuống bước 3
+  }
+  // 3. Dò từng cặp [ ... ] tìm array parse được (xử lý prose ở xung quanh)
+  for (let i = 0; i < body.length; i++) {
+    if (body[i] !== '[') continue
+    for (let j = body.length - 1; j > i; j--) {
+      if (body[j] !== ']') continue
       try {
-        const obj = JSON.parse(body)
-        const list = Array.isArray(obj) ? obj : [obj]
-        for (const a of list) {
-          if (a && typeof a.type === 'string' && ACTION_TYPES.has(a.type)) {
-            parsed.push({ type: a.type, selector: a.selector, value: a.value })
-          }
-        }
+        const v = JSON.parse(body.slice(i, j + 1))
+        if (Array.isArray(v)) return v
       } catch {
-        // bỏ qua dòng không phải JSON
+        // đoạn này không phải array hợp lệ, thử đoạn tiếp
       }
     }
-    return parsed
   }
+  return []
+}
 
-  async function run(actionsJson: string[]): Promise<AgentResult> {
-    const actions = parseActions(actionsJson)
+/** Chuyển chuỗi LLM trả về (hoặc mảng chuỗi JSON) thành danh sách action hợp lệ */
+export function parseActions(input: string | string[]): ParsedAction[] {
+  const chunks = Array.isArray(input) ? input : [input]
+  const parsed: ParsedAction[] = []
+  for (const raw of chunks) {
+    const list = extractJsonArray(raw)
+    for (const a of list) {
+      const obj = a as Record<string, unknown>
+      if (obj && typeof obj.type === 'string' && ACTION_TYPES.has(obj.type)) {
+        parsed.push({
+          type: obj.type,
+          selector: typeof obj.selector === 'string' ? obj.selector : undefined,
+          value: typeof obj.value === 'string' ? obj.value : undefined,
+        })
+      }
+    }
+  }
+  return parsed
+}
+
+export function createAgentCore(adapter: PageAdapter) {
+  async function run(actions: ParsedAction[]): Promise<AgentResult> {
     if (actions.length === 0) {
       return { summary: 'Không tìm thấy thao tác hợp lệ (cần JSON như {"type":"click","selector":"..."})', actionsTaken: [] }
     }
