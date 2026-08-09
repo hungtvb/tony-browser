@@ -5,6 +5,7 @@ import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
+import { openRestoredTabs } from './save/session-restore'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -86,6 +87,7 @@ const deps: IpcDeps = {
   layoutViews,
   getSplitIds,
   setSplitIds,
+  getFocus: () => focusController,
 }
 
 // FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
@@ -117,10 +119,10 @@ app.whenReady().then(() => {
   // resize cửa sổ → layout lại mọi view (full + split) theo kích thước mới
   mainWindow.on('resize', () => layoutViews())
 
-  // khôi phục session từ lần chạy trước
+  // khôi phục session từ lần chạy trước — mở lại TOÀN BỘ tab đã lưu (không cắt magic number)
   const saved = loadSessionFromDisk()
   if (saved.length > 0) {
-    for (const s of saved.slice(0, 10)) {
+    openRestoredTabs(saved, (s) => {
       const tab = tm.open(s.url, s.container ?? 'default')
       const view = createTabView(s.url, s.container ?? 'default')
       viewByTab.set(tab.id, view)
@@ -129,7 +131,7 @@ app.whenReady().then(() => {
         const t = tm.get(tab.id)
         if (t) { t.title = title; tm.broadcast() }
       })
-    }
+    })
     const w = BrowserWindow.getAllWindows()[0]
     if (w) {
       const first = tm.list()[0]
