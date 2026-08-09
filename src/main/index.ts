@@ -1,6 +1,6 @@
 // Tony Browser — Electron main process
 import { app, BrowserWindow, WebContentsView } from 'electron'
-import { createMainWindow, ensureSession, createTabView } from './window'
+import { createMainWindow, ensureSession, createTabView, attachView } from './window'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import * as fs from 'fs'
@@ -51,7 +51,19 @@ const deps: IpcDeps = {
 
 app.whenReady().then(() => {
   ensureSession()
-  mainWindow = createMainWindow()
+  // window.open/target=_blank từ UI → mở tab mới qua TabManager (không mở cửa sổ Electron raw)
+  mainWindow = createMainWindow((url) => {
+    const tab = tm.open(url, 'default')
+    const view = createTabView(url, 'default')
+    viewByTab.set(tab.id, view)
+    attachCosmetic(view.webContents)
+    view.webContents.on('page-title-updated', (_e, title) => {
+      const t = tm.get(tab.id)
+      if (t) { t.title = title; tm.broadcast() }
+    })
+    if (mainWindow) attachView(mainWindow, view)
+    tm.broadcast()
+  })
   attachPrivacy(mainWindow, deps)
   registerIpc(deps)
 

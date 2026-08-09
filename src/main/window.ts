@@ -4,7 +4,12 @@ import path from 'path'
 
 export const TOOLBAR_HEIGHT = 92 // TabBar (42) + AddressBar (50)
 
-export function createMainWindow(): BrowserWindow {
+/** Chỉ cho phép navigate/mở URL http/https — chặn file://, javascript:, ... */
+export function isAllowedUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url)
+}
+
+export function createMainWindow(onOpenExternal?: (url: string) => void): BrowserWindow {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -16,6 +21,20 @@ export function createMainWindow(): BrowserWindow {
       sandbox: false,
     },
   })
+
+  // window.open / target=_blank → không mở cửa sổ Electron raw; mở tab mới nếu http(s)
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isAllowedUrl(url) && onOpenExternal) onOpenExternal(url)
+    return { action: 'deny' }
+  })
+
+  // bảo vệ chính UI: chặn navigate sang scheme khác http/https
+  win.webContents.on('will-navigate', (e, url) => {
+    if (!isAllowedUrl(url)) e.preventDefault()
+  })
+
+  // quyền hạn cho session cửa sổ chính ngay từ đầu (trước đây chỉ qua ensureSession() sau khi khởi động)
+  applyPermissions(win.webContents.session)
 
   // electron-vite: dev dùng ELECTRON_RENDERER_URL, prod load file
   const devUrl = process.env['ELECTRON_RENDERER_URL']
