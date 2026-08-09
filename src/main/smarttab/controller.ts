@@ -4,9 +4,34 @@ import type { TabSessionInfo, GroupedTabInfo } from '../../shared/types'
 import type { TabState } from '../../shared/types'
 import type { Tab } from '../tabs/TabManager'
 
+export interface SmartTabPersist {
+  save(list: TabSessionInfo[]): void
+  load(): TabSessionInfo[]
+}
+
+function isValidSession(s: TabSessionInfo | null | undefined): s is TabSessionInfo {
+  if (!s || typeof s !== 'object') return false
+  if (typeof s.name !== 'string' || !s.name) return false
+  if (typeof s.createdAt !== 'number') return false
+  return Array.isArray(s.tabs) && s.tabs.every(t => t && typeof t.url === 'string' && typeof t.title === 'string')
+}
+
 export class SmartTabController {
   private smart = createSmartTab()
   private sessions: TabSessionInfo[] = []
+  private persist?: SmartTabPersist
+
+  constructor(persist?: SmartTabPersist) {
+    this.persist = persist
+    if (persist) {
+      try {
+        const loaded = persist.load()
+        if (Array.isArray(loaded)) {
+          this.sessions = loaded.filter(isValidSession)
+        }
+      } catch { /* persist lỗi → khởi động với danh sách rỗng */ }
+    }
+  }
 
   get sessionsList() { return [...this.sessions] }
 
@@ -26,6 +51,7 @@ export class SmartTabController {
     const info: TabSessionInfo = { name: session.name, createdAt: session.createdAt, tabs: session.tabs }
     this.sessions.unshift(info)
     if (this.sessions.length > 10) this.sessions.length = 10
+    this.persist?.save(this.sessions)
     return info
   }
 

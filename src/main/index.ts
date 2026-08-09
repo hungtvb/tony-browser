@@ -1,18 +1,54 @@
 // Tony Browser — Electron main process
 import { app, BrowserWindow, WebContentsView } from 'electron'
-import { createMainWindow, ensureSession, createTabView, attachView } from './window'
+import { createMainWindow, ensureSession, createTabView, attachView, TOOLBAR_HEIGHT } from './window'
+import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
+import { FocusController } from './focus/controller'
 import * as fs from 'fs'
 import * as path from 'path'
 
 let mainWindow: BrowserWindow | null = null
 const viewByTab = new Map<string, WebContentsView>()
 const attachCosmetic = createCosmeticInjector()
+// trạng thái split hiện tại — registerIpc cập nhật qua setter (không export trực tiếp)
+let splitIds: string[] = []
+export function setSplitIds(ids: string[]) {
+  splitIds = ids
+}
+export function getSplitIds(): string[] {
+  return splitIds
+}
+
+// Layout lại mọi view đang hiển thị theo kích thước cửa sổ hiện tại
+// (dùng cho resize + sau khi vào/thoát split + mở/đóng tab)
+export function layoutViews() {
+  const win = mainWindow
+  if (!win || win.isDestroyed()) return
+  const [w, h] = win.getContentSize()
+  const plan = planLayout(
+    tm.list().map(t => t.id),
+    splitIds,
+    tm.activeId,
+    w,
+    h,
+    TOOLBAR_HEIGHT,
+  )
+  for (const item of plan) {
+    const v = viewByTab.get(item.id)
+    if (!v || v.webContents.isDestroyed()) continue
+    v.setBounds(item.bounds)
+    v.setVisible(item.visible)
+  }
+}
 
 // path lưu session (JSON store tự viết, tránh ESM-only dep)
 function sessionFile() {
   return path.join(app.getPath('userData'), 'session.json')
+}
+
+function smartTabSessionsFile() {
+  return path.join(app.getPath('userData'), 'smarttab-sessions.json')
 }
 
 function saveSessionToDisk(tabs: { url: string; title: string; container?: string }[]) {
@@ -47,12 +83,19 @@ const deps: IpcDeps = {
   },
   getActiveView: (tabId: string) => viewByTab.get(tabId),
   createRealView: (url: string) => createTabView(url),
+  layoutViews,
+  getSplitIds,
+  setSplitIds,
 }
+
+// FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
+// (khởi tạo ở module scope để cả hai cùng tham chiếu một instance)
+const focusController = new FocusController()
 
 app.whenReady().then(() => {
   ensureSession()
   // window.open/target=_blank từ UI → mở tab mới qua TabManager (không mở cửa sổ Electron raw)
-  mainWindow = createMainWindow((url) => {
+  function openTabInMain(url: string) {
     const tab = tm.open(url, 'default')
     const view = createTabView(url, 'default')
     viewByTab.set(tab.id, view)
@@ -61,11 +104,18 @@ app.whenReady().then(() => {
       const t = tm.get(tab.id)
       if (t) { t.title = title; tm.broadcast() }
     })
-    if (mainWindow) attachView(mainWindow, view)
+    if (mainWindow) {
+      attachView(mainWindow, view)
+      layoutViews()
+    }
     tm.broadcast()
-  })
-  attachPrivacy(mainWindow, deps)
-  registerIpc(deps)
+  }
+  mainWindow = createMainWindow(openTabInMain)
+  attachPrivacy(mainWindow, deps, () => focusController)
+  registerIpc(deps, { smartPersistFile: smartTabSessionsFile() })
+
+  // resize cửa sổ → layout lại mọi view (full + split) theo kích thước mới
+  mainWindow.on('resize', () => layoutViews())
 
   // khôi phục session từ lần chạy trước
   const saved = loadSessionFromDisk()
@@ -86,9 +136,8 @@ app.whenReady().then(() => {
       if (first) {
         const v = viewByTab.get(first.id)
         if (v) {
-          const [cw, ch] = w.getContentSize()
-          v.setBounds({ x: 0, y: 92, width: cw, height: Math.max(ch - 92, 0) })
           w.contentView.addChildView(v)
+          layoutViews()
         }
       }
     }
@@ -96,14 +145,7 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow((url) => {
-      const tab = tm.open(url, 'default')
-      const view = createTabView(url, 'default')
-      viewByTab.set(tab.id, view)
-      attachCosmetic(view.webContents)
-      if (mainWindow) attachView(mainWindow, view)
-      tm.broadcast()
-    })
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow(openTabInMain)
   })
 })
 

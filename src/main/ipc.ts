@@ -6,9 +6,9 @@ import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
 import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
-import { createSessionStore } from './save/session-store'
+import { createSessionStore, createSessionPersist } from './save/session-store'
 import blocklistDomains from './privacy/blocklist.json'
-import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
+import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSessionInfo } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
 import { AIController } from './ai/controller'
 import { FocusController } from './focus/controller'
@@ -21,12 +21,18 @@ export interface IpcDeps {
   trackView: (tabId: string, view: WebContentsView | null) => void
   getActiveView: (tabId: string) => WebContentsView | undefined
   createRealView: (url: string) => WebContentsView
+  /** layout lại mọi view theo kích thước cửa sổ + trạng thái split hiện tại (index.ts) */
+  layoutViews: () => void
+  /** đọc/ghi trạng thái split (index.ts giữ state gốc, ipc là nơi duy nhất sửa) */
+  getSplitIds: () => string[]
+  setSplitIds: (ids: string[]) => void
 }
 
 // Privacy filter state
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
+let focusBlockedCount = 0
 
 type TM = ReturnType<typeof createTabManager>
 
@@ -34,15 +40,26 @@ function tabToState(t: any): TabState {
   return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }
 }
 
-export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
+export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
   const { session } = win.webContents
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
   listSize = bl.size
 
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+    let blocked = false
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
+      blocked = true
+    }
+    // Focus Mode — chặn trang xao nhãng (counter riêng, không tính vào adblock)
+    const focus = getFocus?.()
+    if (!blocked && focus && focus.enabled && focus.check(details.url).blocked) {
+      focusBlockedCount++
+      callback({ cancel: true })
+      return
+    }
+    if (blocked) {
       callback({ cancel: true })
     } else {
       callback({})
@@ -82,9 +99,14 @@ export function createCosmeticInjector() {
   }
 }
 
-export function registerIpc(deps: IpcDeps) {
+export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string }) {
   const tm = deps.getTabManager()
   const win = deps.getWindow
+
+  // ─── smarttab persist (disk) ───
+  const smartPersist = opts?.smartPersistFile
+    ? createSessionPersist<TabSessionInfo>(opts.smartPersistFile)
+    : undefined
 
   // ─── tabs ───
   ipcMain.handle('tabs:list', () => tm.list().map(tabToState))
@@ -95,7 +117,10 @@ export function registerIpc(deps: IpcDeps) {
     const view = deps.createRealView(tab.url)
     deps.trackView(tab.id, view)
     const w = win()
-    if (w) attachView(w, view)
+    if (w) {
+      attachView(w, view)
+      layoutAfterChange()
+    }
     broadcastTabs()
     return tabToState(tab)
   })
@@ -105,7 +130,10 @@ export function registerIpc(deps: IpcDeps) {
     const view = deps.createRealView(tab.url)
     deps.trackView(tab.id, view)
     const w = win()
-    if (w) attachView(w, view)
+    if (w) {
+      attachView(w, view)
+      layoutAfterChange()
+    }
     broadcastTabs()
     return tabToState(tab)
   })
@@ -134,9 +162,15 @@ export function registerIpc(deps: IpcDeps) {
       deps.trackView(id, null)
     }
     tm.close(id)
+    // thoát split nếu đóng 1 trong 2 tab đang split — tránh layoutViews tính split với id đã chết
+    const cur = deps.getSplitIds()
+    if (cur.includes(id)) {
+      deps.setSplitIds(cur.filter(x => x !== id))
+    }
     if (tabBefore) {
       try { session.recordClosed({ id: tabBefore.id, url: tabBefore.url, title: tabBefore.title, container: tabBefore.container }) } catch {}
     }
+    deps.layoutViews()
     broadcastTabs()
     return true
   })
@@ -185,14 +219,8 @@ export function registerIpc(deps: IpcDeps) {
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
-    // ẩn/hiện view theo active
-    const w = win()
-    if (w) {
-      for (const tab of tm.list()) {
-        const v = deps.getActiveView(tab.id)
-        if (v) v.setVisible(tab.id === id)
-      }
-    }
+    // ẩn/hiện view theo active — layout tập trung cũng cập nhật bounds/visibility
+    deps.layoutViews()
     broadcastTabs()
     return true
   })
@@ -206,27 +234,22 @@ export function registerIpc(deps: IpcDeps) {
   })
 
   // ─── split view ───
-  let splitIds: string[] = []
+  // state split do index.ts giữ (nơi layoutViews cần đọc) — ipc chỉ sửa qua setter
+  const setSplit = (ids: string[]) => deps.setSplitIds(ids)
   ipcMain.handle('tabs:split', (_e, aId: string, bId: string | null) => {
     const w = win()
     if (!w) return { ok: false }
     if (!bId) {
-      // thoát split — hiện lại full view active
-      splitIds = []
-      const a = deps.getActiveView(aId)
-      if (a) a.setBounds({ x: 0, y: TOOLBAR_HEIGHT, width: w.getContentSize()[0], height: Math.max(w.getContentSize()[1] - TOOLBAR_HEIGHT, 0) })
+      // thoát split — layout lại full view active
+      setSplit([])
+      deps.layoutViews()
       return { ok: true }
     }
-    splitIds = [aId, bId]
-    const [wB, hB] = w.getContentSize()
-    const [ba, bb] = computeSplitBounds(wB, hB, TOOLBAR_HEIGHT)
-    const va = deps.getActiveView(aId)
-    const vb = deps.getActiveView(bId)
-    if (va) va.setBounds(ba)
-    if (vb) { vb.setBounds(bb!); vb.setVisible(true) }
+    setSplit([aId, bId])
+    deps.layoutViews()
     return { ok: true }
   })
-  ipcMain.handle('tabs:splitState', () => splitIds)
+  ipcMain.handle('tabs:splitState', () => deps.getSplitIds())
 
   // ─── save page + tts ───
   ipcMain.handle('tts:speak', async (_e, tabId?: string) => {
@@ -277,13 +300,13 @@ export function registerIpc(deps: IpcDeps) {
 
   // ─── focus ───
   const focus = new FocusController()
-  ipcMain.handle('focus:state', () => focus.getState())
+  ipcMain.handle('focus:state', () => ({ ...focus.getState(), blocked: focusBlockedCount }))
   ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return focus.getState() })
   ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return focus.getState() })
   ipcMain.handle('focus:setWhitelist', (_e, list: string[]) => { focus.setWhitelist(list); return focus.getState() })
 
   // ─── smarttab ───
-  const smart = new SmartTabController()
+  const smart = new SmartTabController(smartPersist)
   ipcMain.handle('smarttab:groups', (_e, mode: 'domain' | 'theme') => {
     const tabs = tm.list()
     return mode === 'theme' ? smart.groupByTheme(tabs) : smart.groupByDomain(tabs)
@@ -310,6 +333,11 @@ export function registerIpc(deps: IpcDeps) {
     if (w && !w.webContents.isDestroyed()) {
       w.webContents.send('tabs:changed', tm.list().map(tabToState))
     }
+  }
+  // layout sau khi số lượng view thay đổi (mở tab) — attachView đã set bounds lần đầu,
+  // gọi lại để mọi view (kể cả split) có bounds nhất quán theo layout tập trung
+  function layoutAfterChange() {
+    try { deps.layoutViews() } catch { /* view chưa sẵn sàng — bỏ qua */ }
   }
   tm.on('changed', broadcastTabs)
 
