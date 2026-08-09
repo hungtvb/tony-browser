@@ -6,7 +6,7 @@ import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
 import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
-import { createSessionStore, createSessionPersist } from './save/session-store'
+import { createSessionStore, createSessionPersist, type SessionTab } from './save/session-store'
 import blocklistDomains from './privacy/blocklist.json'
 import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSessionInfo } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
@@ -110,13 +110,18 @@ export function createCosmeticInjector() {
   }
 }
 
-export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string }) {
+export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; undoPersistFile?: string }) {
   const tm = deps.getTabManager()
   const win = deps.getWindow
 
   // ─── smarttab persist (disk) ───
   const smartPersist = opts?.smartPersistFile
     ? createSessionPersist<TabSessionInfo>(opts.smartPersistFile)
+    : undefined
+
+  // ─── undo-close persist (disk) — stack đóng tab giữ qua restart ───
+  const undoPersist = opts?.undoPersistFile
+    ? createSessionPersist<SessionTab>(opts.undoPersistFile)
     : undefined
 
   // ─── tabs ───
@@ -289,7 +294,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
   ipcMain.handle('tts:stop', () => ({ ok: true }))
 
   // ─── session restore ───
-  const session = createSessionStore()
+  const session = createSessionStore(undoPersist)
 
   // record tab bị đóng để undo
   ipcMain.handle('tabs:recordClosed', (_e, tab: any) => {
