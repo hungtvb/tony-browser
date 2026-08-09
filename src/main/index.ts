@@ -3,6 +3,7 @@ import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView } from './window'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
+import { FocusController } from './focus/controller'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -13,6 +14,10 @@ const attachCosmetic = createCosmeticInjector()
 // path lưu session (JSON store tự viết, tránh ESM-only dep)
 function sessionFile() {
   return path.join(app.getPath('userData'), 'session.json')
+}
+
+function smartTabSessionsFile() {
+  return path.join(app.getPath('userData'), 'smarttab-sessions.json')
 }
 
 function saveSessionToDisk(tabs: { url: string; title: string; container?: string }[]) {
@@ -49,11 +54,15 @@ const deps: IpcDeps = {
   createRealView: (url: string) => createTabView(url),
 }
 
+// FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
+// (khởi tạo ở module scope để cả hai cùng tham chiếu một instance)
+const focusController = new FocusController()
+
 app.whenReady().then(() => {
   ensureSession()
   mainWindow = createMainWindow()
-  attachPrivacy(mainWindow, deps)
-  registerIpc(deps)
+  attachPrivacy(mainWindow, deps, () => focusController)
+  registerIpc(deps, { smartPersistFile: smartTabSessionsFile() })
 
   // khôi phục session từ lần chạy trước
   const saved = loadSessionFromDisk()

@@ -60,6 +60,7 @@ export interface FocusState {
   enabled: boolean
   blocklist: string[]
   whitelist: string[]
+  blocked?: number
 }
 
 export interface GroupedTabInfo {

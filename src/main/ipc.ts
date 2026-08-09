@@ -6,9 +6,9 @@ import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
 import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
-import { createSessionStore } from './save/session-store'
+import { createSessionStore, createSessionPersist } from './save/session-store'
 import blocklistDomains from './privacy/blocklist.json'
-import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
+import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSessionInfo } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
 import { AIController } from './ai/controller'
 import { FocusController } from './focus/controller'
@@ -27,6 +27,7 @@ export interface IpcDeps {
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
+let focusBlockedCount = 0
 
 type TM = ReturnType<typeof createTabManager>
 
@@ -34,15 +35,26 @@ function tabToState(t: any): TabState {
   return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }
 }
 
-export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps) {
+export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
   const { session } = win.webContents
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
   listSize = bl.size
 
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+    let blocked = false
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
+      blocked = true
+    }
+    // Focus Mode — chặn trang xao nhãng (counter riêng, không tính vào adblock)
+    const focus = getFocus?.()
+    if (!blocked && focus && focus.enabled && focus.check(details.url).blocked) {
+      focusBlockedCount++
+      callback({ cancel: true })
+      return
+    }
+    if (blocked) {
       callback({ cancel: true })
     } else {
       callback({})
@@ -82,9 +94,14 @@ export function createCosmeticInjector() {
   }
 }
 
-export function registerIpc(deps: IpcDeps) {
+export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string }) {
   const tm = deps.getTabManager()
   const win = deps.getWindow
+
+  // ─── smarttab persist (disk) ───
+  const smartPersist = opts?.smartPersistFile
+    ? createSessionPersist<TabSessionInfo>(opts.smartPersistFile)
+    : undefined
 
   // ─── tabs ───
   ipcMain.handle('tabs:list', () => tm.list().map(tabToState))
@@ -277,13 +294,13 @@ export function registerIpc(deps: IpcDeps) {
 
   // ─── focus ───
   const focus = new FocusController()
-  ipcMain.handle('focus:state', () => focus.getState())
+  ipcMain.handle('focus:state', () => ({ ...focus.getState(), blocked: focusBlockedCount }))
   ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return focus.getState() })
   ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return focus.getState() })
   ipcMain.handle('focus:setWhitelist', (_e, list: string[]) => { focus.setWhitelist(list); return focus.getState() })
 
   // ─── smarttab ───
-  const smart = new SmartTabController()
+  const smart = new SmartTabController(smartPersist)
   ipcMain.handle('smarttab:groups', (_e, mode: 'domain' | 'theme') => {
     const tabs = tm.list()
     return mode === 'theme' ? smart.groupByTheme(tabs) : smart.groupByDomain(tabs)
