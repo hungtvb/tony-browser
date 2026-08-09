@@ -57,6 +57,50 @@ describe('AgentCore', () => {
     expect(adapter.exec).toHaveBeenCalledWith('navigate', '', 'https://example.com')
     expect(result.actionsTaken).toContain('navigate https://example.com')
   })
+
+  it('wait không ngốn MAX_ACTIONS — bị skip, không count, không exec (fix #33)', async () => {
+    // 8 click thật + 4 wait lẫn vào → chỉ 8 click được exec, wait không chiếm slot
+    const actions = [
+      ...Array.from({ length: 8 }, (_, i) => ({ type: 'click' as const, selector: `#btn${i}` })),
+      { type: 'wait' as const, value: '1000' },
+      { type: 'wait' as const, value: '1000' },
+      { type: 'wait' as const, value: '1000' },
+      { type: 'wait' as const, value: '1000' },
+    ]
+    const result = await agent.run(actions)
+    expect(adapter.exec).toHaveBeenCalledTimes(8)
+    expect(result.actionsTaken).toHaveLength(8)
+    expect(result.actionsTaken.some(a => a.includes('wait'))).toBe(false)
+    expect(result.summary).not.toContain('MAX_ACTIONS')
+  })
+
+  it('rejects selector chứa ký tự không an toàn — prompt injection guard (fix #33)', async () => {
+    const badSelectors = [
+      '#buy;alert(1)',        // dấu ;
+      '#buy`;alert(1)//',     // backtick — phá vỡ template literal của executeJavaScript
+      '#buy\nwindow.alert(1)', // xuống dòng
+    ]
+    for (const sel of badSelectors) {
+      const result = await agent.run([{ type: 'click', selector: sel }])
+      expect(adapter.exec).not.toHaveBeenCalled()
+      expect(result.summary).toContain('từ chối')
+      expect(result.summary).toContain('selector')
+    }
+  })
+
+  it('rejects selector quá dài (> 200 ký tự)', async () => {
+    const long = '#btn' + 'a'.repeat(250)
+    const result = await agent.run([{ type: 'click', selector: long }])
+    expect(adapter.exec).not.toHaveBeenCalled()
+    expect(result.summary).toContain('từ chối')
+  })
+
+  it('vẫn exec bình thường với selector hợp lệ', async () => {
+    const result = await agent.run([{ type: 'click', selector: '#buy' }, { type: 'scroll', selector: undefined }])
+    expect(adapter.exec).toHaveBeenCalledWith('click', '#buy', undefined)
+    expect(adapter.exec).toHaveBeenCalledWith('scroll', '', undefined)
+    expect(result.actionsTaken).toHaveLength(2)
+  })
 })
 
 describe('parseActions', () => {
@@ -75,17 +119,22 @@ describe('parseActions', () => {
     expect(parseActions('Xin lỗi, tôi không hiểu')).toEqual([])
   })
 
-  it('keeps numeric value (scroll/wait/size params) as string — regression from reviewer warning', () => {
+  it('keeps numeric value (scroll/size params) as string — regression from reviewer warning', () => {
     // 🔴 Regression cũ: `value: typeof obj.value === 'string' ? obj.value : undefined`
     // drop value number (vd 800) → adapter fallback 400px/1000ms dù LLM yêu cầu khác
     expect(parseActions('[{"type":"scroll","value":800}]')).toEqual([
       { type: 'scroll', selector: undefined, value: '800' },
     ])
-    expect(parseActions('[{"type":"wait","value":2000}]')).toEqual([
-      { type: 'wait', selector: undefined, value: '2000' },
-    ])
     expect(parseActions('[{"type":"type","selector":"#q","value":42}]')).toEqual([
       { type: 'type', selector: '#q', value: '42' },
+    ])
+  })
+
+  it('filters out wait actions — wait không còn là action hợp lệ (fix #33: no-op từng ngốn slot MAX_ACTIONS)', () => {
+    // wait bị loại khỏi ACTION_TYPES → LLM trả wait bị lọc từ parse, không tới run()
+    expect(parseActions('[{"type":"wait","value":2000}]')).toEqual([])
+    expect(parseActions('[{"type":"wait","value":2000},{"type":"click","selector":"#buy"}]')).toEqual([
+      { type: 'click', selector: '#buy', value: undefined },
     ])
   })
 
