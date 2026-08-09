@@ -28,12 +28,6 @@ export interface PrivacyStats {
   listSize: number
 }
 
-export interface AIConfig {
-  baseUrl: string
-  apiKey: string
-  model: string
-}
-
 export interface AIAskParams {
   text: string
   tabId?: string // nếu có → đọc nội dung tab đó
