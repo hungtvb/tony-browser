@@ -162,6 +162,11 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
       deps.trackView(id, null)
     }
     tm.close(id)
+    // thoát split nếu đóng 1 trong 2 tab đang split — tránh layoutViews tính split với id đã chết
+    const cur = deps.getSplitIds()
+    if (cur.includes(id)) {
+      deps.setSplitIds(cur.filter(x => x !== id))
+    }
     if (tabBefore) {
       try { session.recordClosed({ id: tabBefore.id, url: tabBefore.url, title: tabBefore.title, container: tabBefore.container }) } catch {}
     }

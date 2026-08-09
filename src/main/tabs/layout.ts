@@ -27,3 +27,32 @@ export function computeLayoutBounds(
   const [a, b] = layoutBounds(splitIds.length >= 2 ? 2 : 1, winWidth, winHeight, toolbarHeight)
   return b ? [a, b] : [a]
 }
+
+/**
+ * Lập kế hoạch layout cho TẤT CẢ tab: tab nào hiển thị, bounds ra sao, tab nào ẩn.
+ * Bounds gán theo vị trí trong DANH SÁCH HIỂN THỊ (full → [activeId], split → splitIds),
+ * KHÔNG theo index của tab trong tm.list() — tránh lỗi gán nhầm bounds khi active
+ * tab không phải tab đầu danh sách (bug #14 còn sót).
+ */
+export function planLayout(
+  tabIds: string[],
+  splitIds: string[],
+  activeId: string,
+  winWidth: number,
+  winHeight: number,
+  toolbarHeight = 92,
+): { id: string; bounds: Bounds; visible: boolean }[] {
+  // split chỉ khi đủ 2 id còn tồn tại trong tabIds — nếu 1 id đã chết (đóng tab giữa chừng) thì coi là full
+  const split = splitIds.length >= 2 && splitIds.every(id => tabIds.includes(id))
+  const showIds = split ? splitIds : [activeId]
+  const bounds = computeLayoutBounds(showIds, winWidth, winHeight, toolbarHeight)
+  return tabIds.map(id => {
+    const idx = showIds.indexOf(id)
+    const visible = idx >= 0
+    return {
+      id,
+      bounds: visible ? bounds[idx] : bounds[0],
+      visible,
+    }
+  })
+}

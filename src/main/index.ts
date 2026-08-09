@@ -1,7 +1,7 @@
 // Tony Browser — Electron main process
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView, TOOLBAR_HEIGHT } from './window'
-import { computeLayoutBounds } from './tabs/layout'
+import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
@@ -26,17 +26,19 @@ export function layoutViews() {
   const win = mainWindow
   if (!win || win.isDestroyed()) return
   const [w, h] = win.getContentSize()
-  const bounds = computeLayoutBounds(splitIds, w, h, TOOLBAR_HEIGHT)
-  let i = 0
-  for (const tab of tm.list()) {
-    const v = viewByTab.get(tab.id)
+  const plan = planLayout(
+    tm.list().map(t => t.id),
+    splitIds,
+    tm.activeId,
+    w,
+    h,
+    TOOLBAR_HEIGHT,
+  )
+  for (const item of plan) {
+    const v = viewByTab.get(item.id)
     if (!v || v.webContents.isDestroyed()) continue
-    const b = bounds[i]
-    if (b) v.setBounds(b)
-    i++
-    // chỉ show 2 view khi đang split, ngoài ra chỉ view active
-    const visible = splitIds.length >= 2 ? splitIds.includes(tab.id) : tab.id === tm.activeId
-    v.setVisible(visible)
+    v.setBounds(item.bounds)
+    v.setVisible(item.visible)
   }
 }
 
