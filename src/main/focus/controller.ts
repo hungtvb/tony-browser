@@ -13,7 +13,8 @@ export class FocusController {
 
   constructor(initial?: FocusState) {
     this._enabled = initial?.enabled ?? false
-    this.blocklist = initial?.blocklist?.length ? initial.blocklist : DEFAULT_BLOCKLIST
+    const bl = initial?.blocklist
+    this.blocklist = bl !== undefined ? bl : DEFAULT_BLOCKLIST
     this.whitelist = initial?.whitelist ?? []
     this.engine = createFocusEngine({ blocklist: this.blocklist, whitelist: this.whitelist })
     this.engine.setEnabled(this._enabled)
