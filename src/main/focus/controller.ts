@@ -3,19 +3,22 @@ import { createFocusEngine, type FocusEngine } from '../focus/engine'
 import { saveFocusState } from '../focus/store'
 import type { FocusState } from '../../shared/types'
 
-const DEFAULT_BLOCKLIST = ['facebook.com', 'youtube.com', 'tiktok.com', 'instagram.com', 'news.vn', 'zingnews.vn', 'dantri.com.vn', 'vnexpress.net', 'tuoitre.vn']
+export const DEFAULT_BLOCKLIST = ['facebook.com', 'youtube.com', 'tiktok.com', 'instagram.com', 'news.vn', 'zingnews.vn', 'dantri.com.vn', 'vnexpress.net', 'tuoitre.vn']
 
 export class FocusController {
   private engine: FocusEngine
-  private _enabled: boolean
-  private blocklist: string[]
-  private whitelist: string[]
+  private _enabled = false
+  private blocklist: string[] = DEFAULT_BLOCKLIST
+  private whitelist: string[] = []
+  private _blockedCount = 0
 
-  constructor(initial?: FocusState) {
-    this._enabled = initial?.enabled ?? false
-    const bl = initial?.blocklist
-    this.blocklist = bl !== undefined ? bl : DEFAULT_BLOCKLIST
-    this.whitelist = initial?.whitelist ?? []
+  constructor(initial?: Partial<Pick<FocusState, 'enabled' | 'blocklist' | 'whitelist'>>) {
+    if (initial) {
+      if (initial.enabled !== undefined) this._enabled = initial.enabled
+      // giữ nguyên [] khi user cố tình set blocklist rỗng (không thay bằng DEFAULT)
+      if (initial.blocklist !== undefined) this.blocklist = initial.blocklist
+      if (initial.whitelist !== undefined) this.whitelist = initial.whitelist
+    }
     this.engine = createFocusEngine({ blocklist: this.blocklist, whitelist: this.whitelist })
     this.engine.setEnabled(this._enabled)
   }
@@ -46,5 +49,14 @@ export class FocusController {
 
   check(url: string) {
     return this.engine.check(url)
+  }
+
+  // counter chặn do focus — cộng khi attachPrivacy chặn request (không lẫn adblock)
+  incrementBlocked() {
+    this._blockedCount++
+  }
+
+  getBlockedCount(): number {
+    return this._blockedCount
   }
 }

@@ -1,0 +1,36 @@
+import { describe, it, expect } from 'vitest'
+import { openRestoredTabs } from '../src/main/save/session-restore'
+
+describe('Session restore — mở toàn bộ tab đã lưu (không cắt magic number)', () => {
+  it('restore đủ 12+ tab mà session lưu (không slice(0,10))', () => {
+    const saved = Array.from({ length: 15 }, (_, i) => ({
+      url: `https://site${i}.com`,
+      title: `Site ${i}`,
+      container: i % 2 === 0 ? 'default' : 'work',
+    }))
+    const opened: string[] = []
+    const count = openRestoredTabs(saved, (s) => opened.push(s.url))
+    expect(count).toBe(15)
+    expect(opened).toHaveLength(15)
+    expect(opened[14]).toBe('https://site14.com')
+  })
+
+  it('restore theo đúng thứ tự session lưu (tab 11+ không bị rớt)', () => {
+    const saved = Array.from({ length: 12 }, (_, i) => ({
+      url: `https://tab${i}.com`,
+      title: `Tab ${i}`,
+    }))
+    const opened: string[] = []
+    openRestoredTabs(saved, (s) => opened.push(s.url))
+    expect(opened.slice(0, 3)).toEqual(['https://tab0.com', 'https://tab1.com', 'https://tab2.com'])
+    expect(opened).toContain('https://tab10.com')
+    expect(opened).toContain('https://tab11.com')
+  })
+
+  it('session rỗng → không mở tab nào', () => {
+    const opened: string[] = []
+    const count = openRestoredTabs([], (s) => opened.push(s.url))
+    expect(count).toBe(0)
+    expect(opened).toHaveLength(0)
+  })
+})
