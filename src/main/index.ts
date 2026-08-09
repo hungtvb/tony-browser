@@ -96,7 +96,14 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow()
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow((url) => {
+      const tab = tm.open(url, 'default')
+      const view = createTabView(url, 'default')
+      viewByTab.set(tab.id, view)
+      attachCosmetic(view.webContents)
+      if (mainWindow) attachView(mainWindow, view)
+      tm.broadcast()
+    })
   })
 })
 
