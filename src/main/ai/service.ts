@@ -27,6 +27,11 @@ export class AIService {
     if (!cfg) throw new Error('AI chưa được cấu hình')
     if (!this.configured) throw new Error('Thiếu baseUrl/apiKey/model')
 
+    // act-mode phải chờ LLM plan lâu hơn → 120s; chat/summarize 30s
+    const timeoutMs = params.mode === 'act' ? 120_000 : 30_000
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+
     this._busy = true
     try {
       const system = this.systemPrompt()
@@ -48,6 +53,7 @@ export class AIService {
           Authorization: `Bearer ${cfg.apiKey}`,
         },
         body: JSON.stringify(body),
+        signal: ctrl.signal,
       })
 
       if (!res.ok) {
@@ -58,7 +64,14 @@ export class AIService {
       const data = (await res.json()) as any
       const content: string = data?.choices?.[0]?.message?.content ?? ''
       return content.trim()
+    } catch (e) {
+      // abort do timeout → lỗi rõ ràng thay vì "This operation was aborted"
+      if (ctrl.signal.aborted) {
+        throw new Error(`LLM API timeout sau ${timeoutMs / 1000}s`)
+      }
+      throw e
     } finally {
+      clearTimeout(timer)
       this._busy = false
     }
   }
