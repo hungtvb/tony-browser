@@ -13,6 +13,9 @@ export type ParsedAction = { type: string; selector?: string; value?: string }
 
 const ACTION_TYPES = new Set(['click', 'type', 'scroll', 'navigate', 'wait'])
 
+/** Giới hạn số action AI được thực hiện trong 1 lần run — chặn prompt injection bắt AI loop/hành động dài */
+export const MAX_ACTIONS = 8
+
 /** Tách JSON array từ chuỗi LLM trả về — xử lý code fence ```json + prose xung quanh */
 export function extractJsonArray(text: string): unknown[] {
   // 1. Bóc phần nằm trong ```json ... ``` nếu có
@@ -77,7 +80,13 @@ export function createAgentCore(adapter: PageAdapter) {
     }
     const taken: string[] = []
     for (const a of actions) {
+      if (taken.length >= MAX_ACTIONS) {
+        return { summary: `Đã thực hiện ${taken.length} thao tác (dừng ở MAX_ACTIONS=${MAX_ACTIONS}): ${taken.join(' → ')}`, actionsTaken: taken }
+      }
       if (a.type === 'navigate' && a.value) {
+        if (!/^https?:\/\//.test(a.value)) {
+          return { summary: `navigate bị từ chối: chỉ cho phép http/https (nhận '${a.value}')`, actionsTaken: taken }
+        }
         await adapter.exec('navigate', '', a.value)
         taken.push(`navigate ${a.value}`)
         continue
