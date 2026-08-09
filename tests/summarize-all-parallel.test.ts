@@ -34,8 +34,14 @@ describe('AIController summarizeAll (song song hóa)', () => {
       { id: 't3', title: 'Tab 3', url: 'https://c.com' },
     ])
     // extractPageText trả Promise trễ 80ms mỗi tab (mô phỏng executeJavaScript chậm)
+    // Đếm số lần extract đang chạy đồng thời — assertion định lượng, không phụ thuộc wall-time (chống flaky CI)
+    let concurrent = 0
+    let maxConcurrent = 0
     vi.spyOn(reader, 'extractPageText').mockImplementation(async () => {
+      concurrent++
+      maxConcurrent = Math.max(maxConcurrent, concurrent)
       await new Promise((r) => setTimeout(r, 80))
+      concurrent--
       return 'nội dung tab'
     })
     // Tab t2 extract fail → rejected promise
@@ -48,12 +54,10 @@ describe('AIController summarizeAll (song song hóa)', () => {
     const askSpy = vi.spyOn(AIService.prototype, 'ask').mockResolvedValue('Tổng hợp xong')
     const ctrl = new AIController(deps as any)
 
-    const start = Date.now()
     const result = await ctrl.ask({ tabId: 't1', mode: 'summarizeAll', text: '' })
-    const elapsed = Date.now() - start
 
-    // song song: 3 tab × 80ms nhưng chạy đồng thời → ~80-160ms, không phải 240ms+
-    expect(elapsed).toBeLessThan(220)
+    // song song thật: 3 extract phải có lúc chạy đồng thời (tuần tự thì maxConcurrent = 1)
+    expect(maxConcurrent).toBeGreaterThanOrEqual(2)
     // 2 tab thành công (t2 fail bị bỏ qua), không throw
     expect(result).toBe('Tổng hợp xong')
     expect(askSpy).toHaveBeenCalledTimes(1)
