@@ -12,6 +12,7 @@ import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSe
 import type { createTabManager } from './tabs/TabManager'
 import { AIController } from './ai/controller'
 import { FocusController } from './focus/controller'
+import { createFocusBlocker, type FocusBlocker } from './focus/blocker'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
 
@@ -26,13 +27,14 @@ export interface IpcDeps {
   /** đọc/ghi trạng thái split (index.ts giữ state gốc, ipc là nơi duy nhất sửa) */
   getSplitIds: () => string[]
   setSplitIds: (ids: string[]) => void
+  /** FocusController dùng chung — attachPrivacy chặn request + registerIpc expose IPC phải cùng 1 instance */
+  getFocus: () => FocusController
 }
 
 // Privacy filter state
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
-let focusBlockedCount = 0
 
 type TM = ReturnType<typeof createTabManager>
 
@@ -46,18 +48,27 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () 
   const urlFilter = createUrlFilter()
   listSize = bl.size
 
+  // Focus Mode — quyết định chặn riêng (counter riêng, không lẫn adblock)
+  const focusBlocker: FocusBlocker = createFocusBlocker({ blocklist: getFocus?.()?.getState().blocklist ?? [] })
+  const focusCtrl = getFocus
+
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
     let blocked = false
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
       blocked = true
     }
-    // Focus Mode — chặn trang xao nhãng (counter riêng, không tính vào adblock)
-    const focus = getFocus?.()
-    if (!blocked && focus && focus.enabled && focus.check(details.url).blocked) {
-      focusBlockedCount++
-      callback({ cancel: true })
-      return
+    // Focus Mode — chặn trang xao nhãng (đồng bộ trạng thái với controller dùng chung)
+    const focus = focusCtrl?.()
+    if (focus) {
+      focusBlocker.setEnabled(focus.enabled)
+      focusBlocker.setBlocklist(focus.getState().blocklist)
+      focusBlocker.setWhitelist(focus.getState().whitelist)
+      if (!blocked && focusBlocker.isFocusBlocked(details.url)) {
+        focus.incrementBlocked()
+        callback({ cancel: true })
+        return
+      }
     }
     if (blocked) {
       callback({ cancel: true })
@@ -219,6 +230,16 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
+    // đánh thức tab nếu đang ngủ (TabSleeper) — gỡ throttle để tab chạy bình thường
+    if (sleeper.isSleeping(id)) {
+      const view = deps.getActiveView(id)
+      sleeper.wake(id, (wid) => {
+        const wv = deps.getActiveView(wid)
+        if (wv && !wv.webContents.isDestroyed()) {
+          try { wv.webContents.setBackgroundThrottling(false) } catch {}
+        }
+      })
+    }
     // ẩn/hiện view theo active — layout tập trung cũng cập nhật bounds/visibility
     deps.layoutViews()
     broadcastTabs()
@@ -299,11 +320,11 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
   })
 
   // ─── focus ───
-  const focus = new FocusController()
-  ipcMain.handle('focus:state', () => ({ ...focus.getState(), blocked: focusBlockedCount }))
-  ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return focus.getState() })
-  ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return focus.getState() })
-  ipcMain.handle('focus:setWhitelist', (_e, list: string[]) => { focus.setWhitelist(list); return focus.getState() })
+  const focus = deps.getFocus()
+  ipcMain.handle('focus:state', () => ({ ...focus.getState(), blocked: focus.getBlockedCount() }))
+  ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return { ...focus.getState(), blocked: focus.getBlockedCount() } })
+  ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return { ...focus.getState(), blocked: focus.getBlockedCount() } })
+  ipcMain.handle('focus:setWhitelist', (_e, list: string[]) => { focus.setWhitelist(list); return { ...focus.getState(), blocked: focus.getBlockedCount() } })
 
   // ─── smarttab ───
   const smart = new SmartTabController(smartPersist)
