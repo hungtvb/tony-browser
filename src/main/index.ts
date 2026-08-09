@@ -1,6 +1,7 @@
 // Tony Browser — Electron main process
 import { app, BrowserWindow, WebContentsView } from 'electron'
-import { createMainWindow, ensureSession, createTabView } from './window'
+import { createMainWindow, ensureSession, createTabView, TOOLBAR_HEIGHT } from './window'
+import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
@@ -10,6 +11,36 @@ import * as path from 'path'
 let mainWindow: BrowserWindow | null = null
 const viewByTab = new Map<string, WebContentsView>()
 const attachCosmetic = createCosmeticInjector()
+// trạng thái split hiện tại — registerIpc cập nhật qua setter (không export trực tiếp)
+let splitIds: string[] = []
+export function setSplitIds(ids: string[]) {
+  splitIds = ids
+}
+export function getSplitIds(): string[] {
+  return splitIds
+}
+
+// Layout lại mọi view đang hiển thị theo kích thước cửa sổ hiện tại
+// (dùng cho resize + sau khi vào/thoát split + mở/đóng tab)
+export function layoutViews() {
+  const win = mainWindow
+  if (!win || win.isDestroyed()) return
+  const [w, h] = win.getContentSize()
+  const plan = planLayout(
+    tm.list().map(t => t.id),
+    splitIds,
+    tm.activeId,
+    w,
+    h,
+    TOOLBAR_HEIGHT,
+  )
+  for (const item of plan) {
+    const v = viewByTab.get(item.id)
+    if (!v || v.webContents.isDestroyed()) continue
+    v.setBounds(item.bounds)
+    v.setVisible(item.visible)
+  }
+}
 
 // path lưu session (JSON store tự viết, tránh ESM-only dep)
 function sessionFile() {
@@ -52,6 +83,9 @@ const deps: IpcDeps = {
   },
   getActiveView: (tabId: string) => viewByTab.get(tabId),
   createRealView: (url: string) => createTabView(url),
+  layoutViews,
+  getSplitIds,
+  setSplitIds,
 }
 
 // FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
@@ -63,6 +97,9 @@ app.whenReady().then(() => {
   mainWindow = createMainWindow()
   attachPrivacy(mainWindow, deps, () => focusController)
   registerIpc(deps, { smartPersistFile: smartTabSessionsFile() })
+
+  // resize cửa sổ → layout lại mọi view (full + split) theo kích thước mới
+  mainWindow.on('resize', () => layoutViews())
 
   // khôi phục session từ lần chạy trước
   const saved = loadSessionFromDisk()
@@ -83,9 +120,8 @@ app.whenReady().then(() => {
       if (first) {
         const v = viewByTab.get(first.id)
         if (v) {
-          const [cw, ch] = w.getContentSize()
-          v.setBounds({ x: 0, y: 92, width: cw, height: Math.max(ch - 92, 0) })
           w.contentView.addChildView(v)
+          layoutViews()
         }
       }
     }

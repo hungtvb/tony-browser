@@ -9,7 +9,7 @@ export function computeSplitBounds(
   ratio = 0.5,
 ): [Bounds, Bounds?] {
   const contentW = viewWidth
-  const contentH = viewHeight - toolbarHeight
+  const contentH = Math.max(viewHeight - toolbarHeight, 0)
   if (!split) {
     return [{ x: 0, y: toolbarHeight, width: contentW, height: contentH }]
   }
