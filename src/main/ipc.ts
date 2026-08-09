@@ -31,10 +31,16 @@ export interface IpcDeps {
   getFocus: () => FocusController
 }
 
-// Privacy filter state
+// Privacy filter state — dùng chung cho MỌI session (default + container)
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
+
+/** các session đã gắn webRequest filter rồi — tránh attach 2 lần (defaultSession vừa qua attachPrivacy vừa qua createTabView) */
+const attachedSessions = new Set<Electron.Session>()
+
+/** nguồn FocusController dùng chung — attachPrivacy đăng ký để createTabView (container) cũng chặn được Focus Mode */
+let focusProvider: (() => FocusController | null) | undefined
 
 type TM = ReturnType<typeof createTabManager>
 
@@ -42,24 +48,30 @@ function tabToState(t: any): TabState {
   return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }
 }
 
-export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
-  const { session } = win.webContents
+/**
+ * Gắn webRequest filter (adblock + urlFilter + YouTube ad-strip + Focus Mode) cho 1 session bất kỳ.
+ * Dùng chung cho defaultSession (attachPrivacy) và session phân vùng container (createTabView).
+ * Guard Set đảm bảo mỗi session chỉ attach đúng 1 lần.
+ */
+export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => FocusController | null) {
+  if (attachedSessions.has(ses)) return
+  attachedSessions.add(ses)
+
+  const provider = getFocus ?? focusProvider
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
-  listSize = bl.size
 
   // Focus Mode — quyết định chặn riêng (counter riêng, không lẫn adblock)
-  const focusBlocker: FocusBlocker = createFocusBlocker({ blocklist: getFocus?.()?.getState().blocklist ?? [] })
-  const focusCtrl = getFocus
+  const focusBlocker: FocusBlocker = createFocusBlocker({ blocklist: provider?.()?.getState().blocklist ?? [] })
 
-  session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
+  ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
     let blocked = false
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
       blocked = true
     }
     // Focus Mode — chặn trang xao nhãng (đồng bộ trạng thái với controller dùng chung)
-    const focus = focusCtrl?.()
+    const focus = provider?.()
     if (focus) {
       focusBlocker.setEnabled(focus.enabled)
       focusBlocker.setBlocklist(focus.getState().blocklist)
@@ -78,11 +90,11 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () 
   })
 
   // Bóc ads khỏi YouTube player response (filterResponseData sửa nội dung)
-  session.webRequest.onBeforeRequest(
+  ses.webRequest.onBeforeRequest(
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
       if (!privacyFilterOn) { callback({}); return }
-      const filter = session.webRequest.filterResponseData(details.id)
+      const filter = ses.webRequest.filterResponseData(details.id)
       const chunks: Buffer[] = []
       filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
       filter.on('end', () => {
@@ -97,6 +109,14 @@ export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () 
       callback({})
     },
   )
+}
+
+export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
+  const { session } = win.webContents
+  listSize = createBlocklist(blocklistDomains).size
+  // đăng ký nguồn FocusController dùng chung — createTabView attach cho container cũng dùng được
+  focusProvider = getFocus
+  attachWebRequestFilters(session, getFocus)
 }
 
 // Injectable cosmetic filter dùng trong trackView (mỗi tab mới)
