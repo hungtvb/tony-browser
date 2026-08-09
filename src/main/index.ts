@@ -1,6 +1,6 @@
 // Tony Browser — Electron main process
 import { app, BrowserWindow, WebContentsView } from 'electron'
-import { createMainWindow, ensureSession, createTabView, TOOLBAR_HEIGHT } from './window'
+import { createMainWindow, ensureSession, createTabView, attachView, TOOLBAR_HEIGHT } from './window'
 import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
@@ -94,7 +94,23 @@ const focusController = new FocusController()
 
 app.whenReady().then(() => {
   ensureSession()
-  mainWindow = createMainWindow()
+  // window.open/target=_blank từ UI → mở tab mới qua TabManager (không mở cửa sổ Electron raw)
+  function openTabInMain(url: string) {
+    const tab = tm.open(url, 'default')
+    const view = createTabView(url, 'default')
+    viewByTab.set(tab.id, view)
+    attachCosmetic(view.webContents)
+    view.webContents.on('page-title-updated', (_e, title) => {
+      const t = tm.get(tab.id)
+      if (t) { t.title = title; tm.broadcast() }
+    })
+    if (mainWindow) {
+      attachView(mainWindow, view)
+      layoutViews()
+    }
+    tm.broadcast()
+  }
+  mainWindow = createMainWindow(openTabInMain)
   attachPrivacy(mainWindow, deps, () => focusController)
   registerIpc(deps, { smartPersistFile: smartTabSessionsFile() })
 
@@ -129,7 +145,7 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow()
+    if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow(openTabInMain)
   })
 })
 
