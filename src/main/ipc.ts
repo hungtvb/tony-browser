@@ -12,6 +12,7 @@ import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSe
 import type { createTabManager } from './tabs/TabManager'
 import { AIController } from './ai/controller'
 import { FocusController } from './focus/controller'
+import { loadFocusState } from './focus/store'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
 
@@ -299,7 +300,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
   })
 
   // ─── focus ───
-  const focus = new FocusController()
+  const focus = new FocusController(loadFocusState() ?? undefined)
   ipcMain.handle('focus:state', () => ({ ...focus.getState(), blocked: focusBlockedCount }))
   ipcMain.handle('focus:toggle', (_e, on: boolean) => { focus.setEnabled(on); return focus.getState() })
   ipcMain.handle('focus:setBlocklist', (_e, list: string[]) => { focus.setBlocklist(list); return focus.getState() })
