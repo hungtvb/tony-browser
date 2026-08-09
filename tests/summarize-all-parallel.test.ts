@@ -39,7 +39,8 @@ describe('AIController summarizeAll (song song hóa)', () => {
       return 'nội dung tab'
     })
     // Tab t2 extract fail → rejected promise
-    const wc2 = deps.getActiveView('t2').webContents
+    const wc2 = deps.getActiveView('t2')?.webContents
+    if (!wc2) throw new Error('test setup: missing view t2')
     vi.spyOn(reader, 'extractPageMeta').mockImplementation(async (wc: any) => {
       if (wc === wc2) throw new Error('webContents destroyed')
       return { title: wc.getTitle(), url: wc.getURL() }
