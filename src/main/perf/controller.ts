@@ -40,4 +40,15 @@ export class SleeperController {
   isSleeping(id: string): boolean {
     return this.sleepingIds.has(id)
   }
+
+  /**
+   * Đánh thức tab đang ngủ: xoá khỏi sleepingIds + gọi callback wake
+   * (IPC dùng để setBackgroundThrottling(false) / loadURL lại nếu đã unload).
+   */
+  wake(id: string, onWake?: (id: string) => void) {
+    if (!this.sleepingIds.has(id)) return
+    this.sleepingIds.delete(id)
+    this.sleeper.recordActivity(id)
+    onWake?.(id)
+  }
 }
