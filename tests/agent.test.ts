@@ -34,6 +34,29 @@ describe('AgentCore', () => {
     const actions = parseActions('[{"type":"hack","selector":"#x"},{"type":"click","selector":"#buy"}]')
     expect(actions).toEqual([{ type: 'click', selector: '#buy', value: undefined }])
   })
+
+  it('stops after MAX_ACTIONS (8) actions', async () => {
+    const actions = Array.from({ length: 12 }, (_, i) => ({ type: 'click', selector: `#btn${i}` }))
+    const result = await agent.run(actions)
+    expect(adapter.exec).toHaveBeenCalledTimes(8)
+    expect(result.actionsTaken).toHaveLength(8)
+    expect(result.summary).toContain('MAX_ACTIONS')
+  })
+
+  it('rejects navigate with non-http(s) scheme (file://, javascript:)', async () => {
+    const result = await agent.run([{ type: 'navigate', value: 'file:///etc/passwd' }])
+    expect(adapter.exec).not.toHaveBeenCalled()
+    expect(result.summary).toContain('từ chối')
+    const js = await agent.run([{ type: 'navigate', value: 'javascript:alert(1)' }])
+    expect(adapter.exec).not.toHaveBeenCalled()
+    expect(js.summary).toContain('từ chối')
+  })
+
+  it('allows navigate with http/https', async () => {
+    const result = await agent.run([{ type: 'navigate', value: 'https://example.com' }])
+    expect(adapter.exec).toHaveBeenCalledWith('navigate', '', 'https://example.com')
+    expect(result.actionsTaken).toContain('navigate https://example.com')
+  })
 })
 
 describe('parseActions', () => {
