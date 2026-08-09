@@ -66,16 +66,27 @@ export class AIController {
 
     if (params.mode === 'summarizeAll') {
       const tm = this.deps.getTabManager()
+      const tabs = tm.list().slice(0, 10) // cap 10 tab/lần — tránh bùng nổ song song
+      const results = await Promise.allSettled(
+        tabs.map(async (tab) => {
+          const v = this.deps.getActiveView(tab.id)
+          if (!v) return null
+          const [text, meta] = await Promise.all([
+            extractPageText(v.webContents, 8000),
+            extractPageMeta(v.webContents),
+          ])
+          return `### ${meta.title || tab.title} (${meta.url})\n${text.slice(0, 8000)}`
+        }),
+      )
+      // allSettled giữ thứ tự input → ghép theo index, bỏ rejected (log 1 dòng/tab lỗi)
       const parts: string[] = []
-      for (const tab of tm.list()) {
-        const v = this.deps.getActiveView(tab.id)
-        if (!v) continue
-        const [text, meta] = await Promise.all([
-          extractPageText(v.webContents, 8000),
-          extractPageMeta(v.webContents),
-        ])
-        parts.push(`### ${meta.title || tab.title} (${meta.url})\n${text.slice(0, 8000)}`)
-      }
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled' && r.value) {
+          parts.push(r.value)
+        } else if (r.status === 'rejected') {
+          console.warn(`summarizeAll: bỏ qua tab lỗi "${tabs[i]?.title ?? tabs[i]?.id ?? i}"`, r.reason)
+        }
+      })
       pageText = parts.join('\n\n')
     }
 
