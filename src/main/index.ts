@@ -5,6 +5,7 @@ import { planLayout } from './tabs/layout'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
+import { loadFocusState } from './focus/store'
 import { openRestoredTabs } from './save/session-restore'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -91,8 +92,8 @@ const deps: IpcDeps = {
 }
 
 // FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
-// (khởi tạo ở module scope để cả hai cùng tham chiếu một instance)
-const focusController = new FocusController()
+// (khởi tạo ở module scope để cả hai cùng tham chiếu một instance — seed state persisted từ disk)
+const focusController = new FocusController(loadFocusState() ?? undefined)
 
 app.whenReady().then(() => {
   ensureSession()
