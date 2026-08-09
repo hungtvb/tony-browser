@@ -230,13 +230,23 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
-    // đánh thức tab nếu đang ngủ (TabSleeper) — gỡ throttle để tab chạy bình thường
+    // đánh thức tab nếu đang ngủ (TabSleeper) — view đã bị close khi sleep → tạo lại + load url gốc
     if (sleeper.isSleeping(id)) {
-      const view = deps.getActiveView(id)
       sleeper.wake(id, (wid) => {
         const wv = deps.getActiveView(wid)
         if (wv && !wv.webContents.isDestroyed()) {
           try { wv.webContents.setBackgroundThrottling(false) } catch {}
+        } else {
+          // view đã bị đóng khi sleep (giải phóng RAM) → dựng lại từ url gốc
+          const tab = tm.get(wid)
+          if (tab) {
+            try {
+              const view = deps.createRealView(tab.url)
+              deps.trackView(wid, view)
+              const w = win()
+              if (w && !w.isDestroyed()) attachView(w, view)
+            } catch { /* view chưa sẵn sàng — bỏ qua, layoutViews lo phần còn lại */ }
+          }
         }
       })
     }
@@ -338,11 +348,14 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
 
   // ─── sleeper ───
   const sleeper = new SleeperController()
-  ipcMain.handle('sleeper:evaluate', () => {
-    return sleeper.evaluate(tm.list(), tm.activeId, [], undefined, (id) => {
+  ipcMain.handle('sleeper:evaluate', async () => {
+    return sleeper.evaluate(tm.list(), tm.activeId, [], undefined, async (id) => {
       const view = deps.getActiveView(id)
       if (view && !view.webContents.isDestroyed()) {
-        try { view.webContents.setBackgroundThrottling(true) } catch {}
+        // Electron 31 không có webContents.discard() → close() renderer để giải phóng RAM thật,
+        // gỡ view khỏi track (wake sẽ tạo lại từ url gốc). setBackgroundThrottling chỉ là no-op mặc định.
+        try { view.webContents.close({ waitForBeforeUnload: false }) } catch { try { view.webContents.close() } catch {} }
+        deps.trackView(id, null)
       }
     })
   })

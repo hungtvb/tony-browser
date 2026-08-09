@@ -23,55 +23,55 @@ describe('SleeperController (đường thật qua controller)', () => {
     controller = new SleeperController()
   })
 
-  function evaluateWithSleepLog(tabs: Tab[], activeId?: string, whitelist: string[] = [], views?: ViewInfo[]) {
+  async function evaluateWithSleepLog(tabs: Tab[], activeId?: string, whitelist: string[] = [], views?: ViewInfo[]) {
     const slept: string[] = []
-    controller.evaluate(tabs, activeId ?? '', whitelist, views, (id) => slept.push(id))
+    await controller.evaluate(tabs, activeId ?? '', whitelist, views, (id) => { slept.push(id) })
     return slept
   }
 
-  it('sleep tab nền idle quá 10 phút — qua SleeperController.evaluate()', () => {
+  it('sleep tab nền idle quá 10 phút — qua SleeperController.evaluate()', async () => {
     const old = Date.now() - 11 * 60 * 1000
     const tabs = [makeTab('a', old), makeTab('b', Date.now())]
     const views: ViewInfo[] = [
       { id: 'a', memoryMB: 50 },
       { id: 'b', memoryMB: 50 },
     ]
-    const slept = evaluateWithSleepLog(tabs, 'b', [], views)
+    const slept = await evaluateWithSleepLog(tabs, 'b', [], views)
     expect(slept).toContain('a')
     expect(slept).not.toContain('b')
   })
 
-  it('không sleep tab active dù idle lâu', () => {
+  it('không sleep tab active dù idle lâu', async () => {
     const old = Date.now() - 30 * 60 * 1000
     const tabs = [makeTab('a', old)]
-    const slept = evaluateWithSleepLog(tabs, 'a')
+    const slept = await evaluateWithSleepLog(tabs, 'a')
     expect(slept).not.toContain('a')
   })
 
-  it('không sleep tab trong whitelist', () => {
+  it('không sleep tab trong whitelist', async () => {
     const old = Date.now() - 20 * 60 * 1000
     const tabs = [makeTab('keep', old), makeTab('drop', old)]
-    const slept = evaluateWithSleepLog(tabs, undefined, ['keep'])
+    const slept = await evaluateWithSleepLog(tabs, undefined, ['keep'])
     expect(slept).not.toContain('keep')
     expect(slept).toContain('drop')
   })
 
-  it('báo warning RAM nặng khi view info > heavyMemoryMB', () => {
+  it('báo warning RAM nặng khi view info > heavyMemoryMB', async () => {
     const views: ViewInfo[] = [{ id: 'h', memoryMB: 800 }]
-    const result = controller.evaluate([makeTab('h')], 'h', [], views)
+    const result = await controller.evaluate([makeTab('h')], 'h', [], views)
     expect(result.warnings).toContain('h')
   })
 
-  it('theo dõi số tab đang ngủ qua các lần evaluate + quên tab đã đóng', () => {
+  it('theo dõi số tab đang ngủ qua các lần evaluate + quên tab đã đóng', async () => {
     const old = Date.now() - 11 * 60 * 1000
     const views: ViewInfo[] = [
       { id: 'a', memoryMB: 50 },
       { id: 'b', memoryMB: 50 },
     ]
-    const r1 = controller.evaluate([makeTab('a', old), makeTab('b', Date.now())], 'b', [], views)
+    const r1 = await controller.evaluate([makeTab('a', old), makeTab('b', Date.now())], 'b', [], views)
     expect(r1.sleeping).toBe(1)
     // b đóng → chỉ còn a (đang ngủ) → vẫn đếm 1
-    const r2 = controller.evaluate([makeTab('a', old)], 'a', [], [{ id: 'a', memoryMB: 50 }])
+    const r2 = await controller.evaluate([makeTab('a', old)], 'a', [], [{ id: 'a', memoryMB: 50 }])
     expect(r2.sleeping).toBe(1)
   })
 })
