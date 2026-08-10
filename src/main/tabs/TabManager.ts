@@ -15,7 +15,7 @@ export interface Tab {
   loading: boolean
   view: View
   container: string
-  /** Favicon URL (data URL khi < 8KB, ngược lại http URL) — undefined khi trang không có favicon */
+  /** Favicon URL (data URL when < 8KB, otherwise http(s) URL) — undefined when the page has no favicon */
   favicon?: string
   /** Lần cuối tab được mở/activate — nguồn cho TabSleeper quyết định ngủ tab nền */
   lastActive?: number
