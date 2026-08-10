@@ -382,20 +382,8 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   const session = createSessionStore(undoPersist)
 
   // record the closed tab for undo
-  ipcMain.handle('tabs:recordClosed', (_e, tab: any) => {
-    session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container, favicon: tab.favicon })
-    return session.closedCount()
-  })
   ipcMain.handle('tabs:undoClose', () => session.popClosed())
   ipcMain.handle('tabs:closedCount', () => session.closedCount())
-  // snapshot the current session
-  ipcMain.handle('session:save', () => {
-    session.saveSession(tm.list().map(t => ({
-      id: t.id, url: t.url, title: t.title, container: t.container, favicon: t.favicon,
-    })))
-    return true
-  })
-  ipcMain.handle('session:restore', () => session.restoreSession())
 
   // ─── save page collection (fix #57) ───
   // the "Save page" button used to only toast success — nothing was persisted.
