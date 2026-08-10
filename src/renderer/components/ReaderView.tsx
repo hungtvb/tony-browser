@@ -11,7 +11,7 @@ const styles: Record<string, React.CSSProperties> = {
     backdropFilter: 'saturate(180%) blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.08)',
   },
   btn: {
-    padding: '5px 14px', borderRadius: 980, border: '1px solid #0071e3', background: 'transparent',
+    padding: '5px 14px', borderRadius: 980, border: 'none', background: 'rgba(212,255,64,0.12)',
     color: '#0066cc', cursor: 'pointer', fontSize: 13,
   },
   title: { fontSize: 14, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },

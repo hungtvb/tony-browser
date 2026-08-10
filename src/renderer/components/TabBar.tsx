@@ -20,7 +20,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 6,
     transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.15s var(--ease-out)',
   },
-  active: { background: 'rgba(255,255,255,0.16)', color: '#fff' },
+  active: { background: 'rgba(212,255,64,0.18)', color: '#fff' },
   dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'transform 0.2s var(--ease-out)' },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },

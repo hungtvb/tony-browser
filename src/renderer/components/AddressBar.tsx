@@ -11,7 +11,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   input: {
     flex: 1, padding: '7px 14px', borderRadius: 980, border: 'none',
-    background: 'rgba(255,255,255,0.10)', color: '#fff', fontSize: 13, outline: 'none',
+    background: 'rgba(255,255,255,0.14)', color: '#fff', fontSize: 13, outline: 'none',
+    boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.06)',
     letterSpacing: '-0.12px', transition: 'background 0.15s ease',
   },
   btn: {

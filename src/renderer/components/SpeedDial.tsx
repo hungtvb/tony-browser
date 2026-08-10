@@ -18,7 +18,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tile: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '18px 8px 14px',
-    borderRadius: 'var(--apple-radius-xl)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 'var(--apple-radius-xl)', cursor: 'pointer', border: 'none',
     background: 'rgba(212,255,64,0.05)', transition: 'all 0.25s var(--ease-out)', userSelect: 'none',
   },
   tileHover: {

@@ -11,13 +11,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chip: {
     padding: '4px 11px', borderRadius: 980, fontSize: 11, cursor: 'pointer',
-    border: 'none', background: 'rgba(255,255,255,0.09)',
+    border: 'none', background: 'rgba(255,255,255,0.12)',
     color: 'rgba(255,255,255,0.82)', letterSpacing: '-0.08px', transition: 'all 0.15s ease',
     display: 'flex', alignItems: 'center', gap: 4,
   },
   chipStatic: {
     padding: '4px 11px', borderRadius: 980, fontSize: 11, border: 'none',
-    background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.66)', letterSpacing: '-0.08px',
+    background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.68)', letterSpacing: '-0.08px',
     display: 'flex', alignItems: 'center', gap: 4,
   },
   active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#0a0a0a' },
@@ -25,8 +25,7 @@ const styles: Record<string, React.CSSProperties> = {
   brand: {
     marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
     fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.2px',
-    padding: '3px 10px', borderRadius: 980, background: 'rgba(212,255,64,0.08)',
-    border: '1px solid rgba(212,255,64,0.18)', userSelect: 'none',
+    padding: '3px 10px', borderRadius: 980, background: 'rgba(212,255,64,0.10)', userSelect: 'none',
   },
   brandDot: {
     width: 8, height: 8, borderRadius: '50%',
