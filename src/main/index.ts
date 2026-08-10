@@ -2,6 +2,7 @@
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView, attachView, TOOLBAR_HEIGHT } from './window'
 import { planLayout } from './tabs/layout'
+import { attachFaviconEvents } from './tabs/faviconEvents'
 import { attachViewEvents } from './tabs/viewEvents'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
@@ -94,6 +95,12 @@ function trackTabView(tabId: string, view: WebContentsView) {
   view.webContents.on('page-title-updated', (_e, title) => {
     const t = tm.get(tabId)
     if (t) { t.title = title; tm.broadcast() }
+  })
+  attachFaviconEvents(view.webContents, (favicon) => {
+    const t = tm.get(tabId)
+    if (!t) return
+    t.favicon = favicon
+    tm.broadcast()
   })
 }
 
