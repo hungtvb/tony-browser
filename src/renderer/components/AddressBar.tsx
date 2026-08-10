@@ -39,8 +39,15 @@ export interface NavControls {
   onReload: () => void
 }
 
-export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts, nav }: {
-  onNavigate: (url: string) => void
+/**
+ * Controlled address bar (issue #42 + #45): shows the ACTIVE tab URL as its value,
+ * plus optional back/forward/reload nav controls (issue #45).
+ * While focused/typing a local draft is shown; Enter commits, Escape reverts,
+ * blur commits (non-empty draft) or reverts to the active URL.
+ */
+export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip, onSplit, onTts, nav }: {
+  value: string
+  onCommit: (url: string) => void
   onOpenAI: () => void
   onReader?: () => void
   onPip?: () => void
@@ -48,14 +55,38 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSp
   onTts?: () => void
   nav?: NavControls
 }) {
-  const [value, setValue] = useState('')
+  // null = not editing → show `value`; string = user's in-progress draft
+  const [draft, setDraft] = useState<string | null>(null)
   const [hoverBtn, setHoverBtn] = useState<string | null>(null)
 
+  const shown = draft ?? value
+
+  function normalize(v: string): string {
+    return /^https?:\/\//i.test(v) ? v : `https://${v}`
+  }
+
   function go() {
-    const v = value.trim()
+    // Only act on a real draft. When the input is not being edited (draft === null)
+    // the blur handler already committed/reverted — navigating with stale `value`
+    // would send the user back to the previous page (issue #42 review fix).
+    const v = draft?.trim() ?? ''
     if (!v) return
-    const url = /^https?:\/\//i.test(v) ? v : `https://${v}`
-    onNavigate(url)
+    setDraft(null)
+    onCommit(normalize(v))
+  }
+
+  function cancel() {
+    setDraft(null) // Escape → revert to the active tab URL
+  }
+
+  function commitOrRevert() {
+    const v = (draft ?? '').trim()
+    setDraft(null)
+    if (!v) return // empty draft on blur → just revert to the active URL
+    // No-op blur (focus then blur without editing) must not re-navigate to the
+    // current URL — that would cause a needless page reload (issue #42 review fix).
+    if (normalize(v) === normalize(value.trim())) return
+    onCommit(normalize(v))
   }
 
   const navBtn = (disabled: boolean): React.CSSProperties => ({
@@ -89,9 +120,14 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSp
         className="apple-focus"
         style={styles.input}
         placeholder="Nhập địa chỉ web hoặc tìm kiếm..."
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && go()}
+        value={shown}
+        onChange={e => setDraft(e.target.value)}
+        onFocus={e => { setDraft(e.target.value); e.target.select() }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') go()
+          else if (e.key === 'Escape') cancel()
+        }}
+        onBlur={commitOrRevert}
       />
       <button className="apple-focus" style={styles.btn} onClick={go}><UIcon name="arrow" size={14} color="#0a0a0a" /></button>
       {onReader && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'reader' ? styles.aiHover : {}) }} title="Reader Mode" onClick={onReader} onMouseEnter={() => setHoverBtn('reader')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="reader" size={18} /></button>}

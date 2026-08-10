@@ -2,6 +2,7 @@
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView, attachView, TOOLBAR_HEIGHT } from './window'
 import { planLayout } from './tabs/layout'
+import { attachViewEvents } from './tabs/viewEvents'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
@@ -71,17 +72,37 @@ const tm = createTabManager(() => ({
   destroy: () => {},
 }))
 
+// Track a tab view: keep viewByTab fresh + sync url/loading state from webContents events
+// (issues #42/#43) — did-navigate updates the tab url, start/stop-loading updates isLoading.
+function trackTabView(tabId: string, view: WebContentsView) {
+  viewByTab.set(tabId, view)
+  attachCosmetic(view.webContents)
+  attachViewEvents(view, {
+    onNavigated: (url) => {
+      const t = tm.get(tabId)
+      if (!t) return
+      t.url = url
+      tm.broadcast()
+    },
+    onLoading: (isLoading) => {
+      const t = tm.get(tabId)
+      if (!t) return
+      t.loading = isLoading
+      tm.broadcast()
+    },
+  })
+  view.webContents.on('page-title-updated', (_e, title) => {
+    const t = tm.get(tabId)
+    if (t) { t.title = title; tm.broadcast() }
+  })
+}
+
 const deps: IpcDeps = {
   getWindow: () => mainWindow,
   getTabManager: () => tm,
   trackView: (tabId: string, view: WebContentsView | null) => {
     if (!view) { viewByTab.delete(tabId); return }
-    viewByTab.set(tabId, view)
-    attachCosmetic(view.webContents)
-    view.webContents.on('page-title-updated', (_e, title) => {
-      const t = tm.get(tabId)
-      if (t) { t.title = title; tm.broadcast() }
-    })
+    trackTabView(tabId, view)
   },
   getActiveView: (tabId: string) => viewByTab.get(tabId),
   createRealView: (url: string, container?: string) => createTabView(url, container),
@@ -101,12 +122,7 @@ app.whenReady().then(() => {
   function openTabInMain(url: string) {
     const tab = tm.open(url, 'default')
     const view = createTabView(url, 'default')
-    viewByTab.set(tab.id, view)
-    attachCosmetic(view.webContents)
-    view.webContents.on('page-title-updated', (_e, title) => {
-      const t = tm.get(tab.id)
-      if (t) { t.title = title; tm.broadcast() }
-    })
+    trackTabView(tab.id, view)
     if (mainWindow) {
       attachView(mainWindow, view)
       layoutViews()
@@ -129,12 +145,7 @@ app.whenReady().then(() => {
     openRestoredTabs(saved, (s) => {
       const tab = tm.open(s.url, s.container ?? 'default')
       const view = createTabView(s.url, s.container ?? 'default')
-      viewByTab.set(tab.id, view)
-      attachCosmetic(view.webContents)
-      view.webContents.on('page-title-updated', (_e, title) => {
-        const t = tm.get(tab.id)
-        if (t) { t.title = title; tm.broadcast() }
-      })
+      trackTabView(tab.id, view)
     })
     const w = BrowserWindow.getAllWindows()[0]
     if (w) {

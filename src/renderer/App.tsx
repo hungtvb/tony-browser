@@ -96,6 +96,8 @@ export default function App() {
 
   const active = tabs.find(t => t.id === activeId)
   const showSpeedDial = !active || !active.url || active.url === 'about:blank' || active.url.includes('google.com') && active.title === 'New Tab'
+  // Issue #42: show placeholder (empty input) for new/blank tabs; otherwise the active tab URL
+  const activeUrl = active && active.url && active.url !== 'about:blank' ? active.url : ''
 
   return (
     <div style={styles.app}>
@@ -104,7 +106,7 @@ export default function App() {
           onNewTab={() => setContainerMenu(true)} />
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
-      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)}
+      <AddressBar value={activeUrl} onCommit={open} onOpenAI={() => setAiOpen(true)}
         nav={{
           canGoBack: navState.canGoBack,
           canGoForward: navState.canGoForward,
