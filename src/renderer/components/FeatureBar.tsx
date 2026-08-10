@@ -35,24 +35,32 @@ const styles: Record<string, React.CSSProperties> = {
   brandVer: { fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 2 },
 }
 
-export default function FeatureBar({ layout, onToggleLayout }: {
+export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned }: {
   layout: 'top' | 'side'
   onToggleLayout: () => void
+  warnedIds: string[]
+  onWarned: (ids: string[]) => void
 }) {
   const [focusOn, setFocusOn] = useState(false)
   const [sleeping, setSleeping] = useState(0)
-  const [warnings, setWarnings] = useState<string[]>([])
 
   useEffect(() => {
     window.tony?.focus.state().then(s => setFocusOn(s.enabled)).catch(() => {})
     const iv = setInterval(() => {
       window.tony?.sleeper.evaluate().then(r => {
         setSleeping(r.sleeping)
-        setWarnings(r.warnings)
+        // Issue #72 — polled warnings kept as a fallback; the authoritative warned-id
+        // set arrives via the proactive 'sleeper:warnings' event below (onWarned).
+        onWarned(r.warnings)
       }).catch(() => {})
     }, 10000)
-    return () => clearInterval(iv)
-  }, [])
+    // Issue #72 — proactive event: fires the moment the warned set changes in main,
+    // so a heavy tab is highlighted immediately instead of waiting for the next poll.
+    // onWarnings returns an unsubscribe fn — call it in cleanup so a re-mounted
+    // FeatureBar never leaks a second 'sleeper:warnings' listener.
+    const offWarnings = window.tony?.sleeper.onWarnings(onWarned)
+    return () => { clearInterval(iv); offWarnings?.() }
+  }, [onWarned])
 
   function toggleFocus() {
     const next = !focusOn
@@ -65,8 +73,8 @@ export default function FeatureBar({ layout, onToggleLayout }: {
       <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
         <UIcon name="focus" size={13} /> {focusOn ? 'Focus On' : 'Focus Off'}
       </button>
-      <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tabs asleep</span>
-      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnings.length} RAM-heavy tabs</span>}
+<span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tabs asleep</span>
+      {warnedIds.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnedIds.length} RAM-heavy tabs</span>}
       <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Switch tab layout">
         <UIcon name="layout" size={13} /> {layout === 'side' ? 'Vertical' : 'Horizontal'}
       </button>

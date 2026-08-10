@@ -452,6 +452,11 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   // ─── sleeper ───
   const sleeper = new SleeperController()
+  // Issue #72 — track the warned-tab id set across evaluate runs; when it CHANGES
+  // (empty → non-empty, set changes, non-empty → empty) push a proactive
+  // 'sleeper:warnings' event so the renderer can highlight heavy tabs + toast
+  // instead of relying on polling-only. No event when the set is unchanged.
+  let warnedIds = new Set<string>()
   ipcMain.handle('sleeper:evaluate', async () => {
     // feed real per-tab memory into the controller so the heavy-tab RAM warning can fire (fix #68)
     const tabs = tm.list()
@@ -473,7 +478,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     }))
     // pass a live getter for activeId so the controller re-validates after the async
     // onSleep (a tab activated mid-teardown must not be marked sleeping — race guard)
-    return sleeper.evaluate(tabs, () => tm.activeId, [], views, async (id) => {
+    const result = await sleeper.evaluate(tabs, () => tm.activeId, [], views, async (id) => {
       // race guard: never close the view of the tab that just became active
       if (id === tm.activeId) return
       const view = deps.getActiveView(id)
@@ -496,6 +501,17 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
         }
       }
     })
+    // Issue #72 — emit only on warned-set transitions (dedupe identical runs)
+    const warned = new Set(result.warnings)
+    const changed = warned.size !== warnedIds.size
+      || [...warned].some((id) => !warnedIds.has(id))
+      || [...warnedIds].some((id) => !warned.has(id))
+    if (changed) {
+      warnedIds = warned
+      const w = win()
+      if (w && !w.webContents.isDestroyed()) w.webContents.send('sleeper:warnings', [...warned])
+    }
+    return result
   })
   ipcMain.handle('sleeper:activity', (_e, id: string) => sleeper.recordActivity(id))
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import TabBar from './components/TabBar'
 import Sidebar from './components/Sidebar'
 import AddressBar from './components/AddressBar'
@@ -40,6 +40,12 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
   const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, isLoading: false })
+  // Issue #72 — ids of heavy-RAM tabs; fed by the proactive 'sleeper:warnings' event
+  // (FeatureBar subscribes via onWarned) + the polled evaluate() fallback.
+  const [warnedIds, setWarnedIds] = useState<string[]>([])
+  // Issue #72 — toast once per empty → non-empty transition of the warned set
+  // (the proactive event can fire repeatedly while heavy tabs stay heavy).
+  const prevWarned = useRef<string[]>([])
   // Issue #43: top progress bar phase driven by the ACTIVE tab loading state
   const [progressPhase, setProgressPhase] = useState<ProgressPhase>('idle')
   const { toasts, status, toast, setStatus } = useFeedback()
@@ -55,6 +61,16 @@ export default function App() {
   useEffect(() => {
     window.tony?.tabs.nav.state().then(setNavState).catch(() => {})
   }, [tabs, activeId])
+
+  // Issue #72 — toast consumer for the proactive sleeper:warnings event: fire a
+  // toast only on empty → non-empty transitions (dedupe repeats while still heavy).
+  useEffect(() => {
+    const wasEmpty = prevWarned.current.length === 0
+    prevWarned.current = warnedIds
+    if (warnedIds.length > 0 && wasEmpty) {
+      toast(`${warnedIds.length} heavy tab${warnedIds.length > 1 ? 's' : ''} using high RAM`, 'warn')
+    }
+  }, [warnedIds])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -119,10 +135,11 @@ export default function App() {
     <div style={styles.app}>
       <div style={{ ...styles.progress, ...phaseStyle(progressPhase) }} />
       {layout === 'top' && (
-        <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
+        <TabBar tabs={tabs} activeId={activeId} warnedIds={warnedIds} onSelect={activate} onClose={close}
           onNewTab={() => setContainerMenu(true)} />
       )}
-      <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
+      <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')}
+        warnedIds={warnedIds} onWarned={setWarnedIds} />
       <AddressBar value={activeUrl} onCommit={open} onOpenAI={() => setAiOpen(true)}
         nav={{
           canGoBack: navState.canGoBack,
