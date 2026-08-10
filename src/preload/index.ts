@@ -1,11 +1,17 @@
 // Tony Browser — Preload script (contextBridge)
 import { contextBridge, ipcRenderer } from 'electron'
+import { readAppVersionArg } from '../shared/app-version'
 import type { TabState, PrivacyStats, TonyAPI, AIConfig, AIStatus, AIRequestParams } from '../shared/types'
 
+// Issue #69 — real app version injected by main via additionalArguments
+// (--tony-app-version=<v>); falls back to '' if absent. Never a hardcoded literal.
+const apiVersion = readAppVersionArg(process.argv)
+
 const api: TonyAPI = {
-  version: '0.2.0',
+  version: apiVersion,
   platform: process.platform,
   getAppInfo: () => ({
+    version: apiVersion,
     electron: process.versions.electron,
     chrome: process.versions.chrome,
   }),
