@@ -77,7 +77,7 @@ export interface SleeperStats {
 export interface TonyAPI {
   version: string
   platform: string
-  getAppInfo: () => { electron: string; chrome: string }
+  getAppInfo: () => { version: string; electron: string; chrome: string }
   tabs: {
     open: (url: string, container?: string, favicon?: string) => Promise<TabState>
     openContainer: (url: string, container: string) => Promise<TabState>

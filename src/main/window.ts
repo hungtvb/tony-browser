@@ -1,6 +1,7 @@
 // Quản lý cửa sổ chính + attach WebContentsView cho tab
-import { BrowserWindow, WebContentsView, session } from 'electron'
+import { app, BrowserWindow, WebContentsView, session } from 'electron'
 import { attachWebRequestFilters } from './ipc'
+import { appVersionArg } from '../shared/app-version'
 import path from 'path'
 
 export const TOOLBAR_HEIGHT = 92 // TabBar (42) + AddressBar (50)
@@ -20,6 +21,9 @@ export function createMainWindow(onOpenExternal?: (url: string) => void): Browse
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // Issue #69: hand the real app version (app.getVersion()) to the preload so
+      // window.tony.version stops reporting the stale hardcoded literal.
+      additionalArguments: [appVersionArg(app.getVersion())],
     },
   })
 
