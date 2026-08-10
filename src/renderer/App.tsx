@@ -104,7 +104,7 @@ export default function App() {
           onNewTab={() => setContainerMenu(true)} />
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
-      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)}
+      <AddressBar value={active?.url ?? ''} onCommit={open} onOpenAI={() => setAiOpen(true)}
         nav={{
           canGoBack: navState.canGoBack,
           canGoForward: navState.canGoForward,
