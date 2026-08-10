@@ -29,7 +29,7 @@ function fakeWC() {
   }
 }
 
-function setupIpc() {
+function setupIpc(winGetter: () => any = () => null) {
   handlers.clear()
   const views = new Map<string, any>()
   const tm = createTabManager(() => ({ id: '', loadURL: () => {}, destroy: () => {} }))
@@ -41,7 +41,7 @@ function setupIpc() {
     getBlockedCount: () => 0,
   }
   const deps: IpcDeps = {
-    getWindow: () => null,
+    getWindow: winGetter,
     getTabManager: () => tm,
     trackView: (id, v) => { if (!v) views.delete(id); else views.set(id, v) },
     getActiveView: (id) => views.get(id),
@@ -90,10 +90,52 @@ describe('TabSleeper — giải phóng RAM thật qua IPC (sleeper:evaluate + ta
     const createRealView = vi.spyOn(deps, 'createRealView')
     handlers.get('tabs:activate')!({}, a.id)
 
-    expect(createRealView).toHaveBeenCalledWith('https://sitea.com') // url gốc từ tm.get(wid)
+    expect(createRealView).toHaveBeenCalledWith('https://sitea.com', 'default') // url gốc + container (default)
     const newView = views.get(a.id)
     expect(newView).toBeDefined()
     expect(newView.webContents.loadURL).toHaveBeenCalledWith('https://sitea.com')
+  })
+
+  it('wake CONTAINER tab (view đã đóng) → createRealView nhận container để giữ partition riêng (review warning: container isolation)', async () => {
+    const { tm, views, deps } = setupIpc()
+    const wc = fakeWC()
+    tm.open('https://sitea.com', 'work') // container tab — session riêng persist:container-work
+    tm.open('https://siteb.com')
+    const a = tm.list().find(t => t.url === 'https://sitea.com')!
+    a.lastActive = Date.now() - 11 * 60 * 1000
+    views.set(a.id, { webContents: wc })
+    await handlers.get('sleeper:evaluate')!()
+    expect(views.has(a.id)).toBe(false)
+
+    const createRealView = vi.spyOn(deps, 'createRealView')
+    handlers.get('tabs:activate')!({}, a.id)
+
+    // container phải được truyền nguyên vẹn — nếu không tab mất cookie/login container (tạo lại trong defaultSession)
+    expect(createRealView).toHaveBeenCalledWith('https://sitea.com', 'work')
+  })
+
+  it('sleep: view được detach khỏi contentView TRƯỚC khi close — không để dead view mắc kẹt (review warning 2)', async () => {
+    const removeChildView = vi.fn()
+    const fakeWin = {
+      isDestroyed: () => false,
+      getContentSize: () => [1000, 800],
+      contentView: { addChildView: vi.fn(), removeChildView },
+      webContents: { isDestroyed: () => false, send: vi.fn() },
+    } as any
+    const { tm, views } = setupIpc(() => fakeWin)
+    const wc = fakeWC()
+    tm.open('https://sitea.com')
+    tm.open('https://siteb.com')
+    const a = tm.list().find(t => t.url === 'https://sitea.com')!
+    a.lastActive = Date.now() - 11 * 60 * 1000
+    const view = { webContents: wc, setBounds: vi.fn(), setVisible: vi.fn() } as any
+    views.set(a.id, view)
+
+    await handlers.get('sleeper:evaluate')!()
+
+    // giống tabs:close — detachView trước close, không để view destroyed còn là child của contentView
+    expect(removeChildView).toHaveBeenCalledWith(view)
+    expect(wc.close).toHaveBeenCalledTimes(1)
   })
 
   it('wake tab đang ngủ nhưng view còn sống → chỉ gỡ throttle, không tạo view mới', async () => {

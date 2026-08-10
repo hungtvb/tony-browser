@@ -21,7 +21,7 @@ export interface IpcDeps {
   getTabManager: () => ReturnType<typeof createTabManager>
   trackView: (tabId: string, view: WebContentsView | null) => void
   getActiveView: (tabId: string) => WebContentsView | undefined
-  createRealView: (url: string) => WebContentsView
+  createRealView: (url: string, container?: string) => WebContentsView
   /** layout lại mọi view theo kích thước cửa sổ + trạng thái split hiện tại (index.ts) */
   layoutViews: () => void
   /** đọc/ghi trạng thái split (index.ts giữ state gốc, ipc là nơi duy nhất sửa) */
@@ -241,7 +241,9 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
           const tab = tm.get(wid)
           if (tab) {
             try {
-              const view = deps.createRealView(tab.url)
+              // truyền container nguyên vẹn — wake container tab phải dựng lại view trong ĐÚNG
+              // partition (persist:container-*) chứ không phải defaultSession (review warning 1)
+              const view = deps.createRealView(tab.url, tab.container)
               deps.trackView(wid, view)
               const w = win()
               if (w && !w.isDestroyed()) attachView(w, view)
@@ -354,6 +356,9 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string })
       if (view && !view.webContents.isDestroyed()) {
         // Electron 31 không có webContents.discard() → close() renderer để giải phóng RAM thật,
         // gỡ view khỏi track (wake sẽ tạo lại từ url gốc). setBackgroundThrottling chỉ là no-op mặc định.
+        // detach TRƯỚC close — giống tabs:close, không để view destroyed còn là child của contentView (review warning 2)
+        const w = win()
+        if (w) detachView(w, view)
         try { view.webContents.close({ waitForBeforeUnload: false }) } catch { try { view.webContents.close() } catch {} }
         deps.trackView(id, null)
       }

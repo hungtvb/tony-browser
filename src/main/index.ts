@@ -84,7 +84,7 @@ const deps: IpcDeps = {
     })
   },
   getActiveView: (tabId: string) => viewByTab.get(tabId),
-  createRealView: (url: string) => createTabView(url),
+  createRealView: (url: string, container?: string) => createTabView(url, container),
   layoutViews,
   getSplitIds,
   setSplitIds,
