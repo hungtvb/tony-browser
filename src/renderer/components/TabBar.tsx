@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CONTAINER_COLORS } from '../../shared/types'
 
-interface Tab { id: string; title: string; url: string; favicon?: string; container?: string }
+interface Tab { id: string; title: string; url: string; favicon?: string; loading?: boolean; container?: string }
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -26,6 +26,12 @@ const styles: Record<string, React.CSSProperties> = {
   favicon: { width: 16, height: 16, borderRadius: 3, flexShrink: 0, objectFit: 'contain', background: 'rgba(255,255,255,0.08)' },
   miniDot: { width: 4, height: 4, borderRadius: '50%', flexShrink: 0, position: 'absolute', right: -1, bottom: -1, boxShadow: '0 0 2px rgba(0,0,0,0.6)' },
   faviconWrap: { position: 'relative', display: 'inline-flex', flexShrink: 0 },
+  // Issue #43: border-based spinner replaces the container dot while the tab is loading
+  spinner: {
+    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+    border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff',
+    animation: 'tony-spin 0.8s linear infinite',
+  },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },
   plus: {
@@ -62,7 +68,9 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
           onMouseLeave={() => setHoverId(null)}
           title={t.url}
         >
-          {t.favicon ? (
+{t.loading ? (
+            <span style={styles.spinner} />
+          ) : t.favicon ? (
             <span style={styles.faviconWrap}>
               <img src={t.favicon} style={styles.favicon} alt="" draggable={false}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />

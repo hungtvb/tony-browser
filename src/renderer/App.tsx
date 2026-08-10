@@ -12,12 +12,21 @@ import TtsPanel from './components/TtsPanel'
 import SpeedDial from './components/SpeedDial'
 import { ToastStack, StatusBar, useFeedback } from './components/Feedback'
 import { useTabs } from './hooks/useTabs'
+import { nextPhase, phaseStyle, type ProgressPhase } from './progress'
 import type { PrivacyStats } from '../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
   app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#101110' },
   body: { display: 'flex', flex: 1, overflow: 'hidden' },
   content: { flex: 1, position: 'relative', background: '#101110' },
+  // Issue #43: 2px top progress bar — width animates 0→90% while loading, snaps 100% + fades on stop
+  progress: {
+    position: 'fixed', top: 0, left: 0, height: 2, zIndex: 9999,
+    background: 'linear-gradient(90deg, #2997ff, #0071e3)',
+    boxShadow: '0 0 8px rgba(41,151,255,0.6)',
+    transition: 'width 0.3s ease, opacity 0.4s ease 0.1s',
+    pointerEvents: 'none',
+  },
 }
 
 export default function App() {
@@ -31,6 +40,8 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
   const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, isLoading: false })
+  // Issue #43: top progress bar phase driven by the ACTIVE tab loading state
+  const [progressPhase, setProgressPhase] = useState<ProgressPhase>('idle')
   const { toasts, status, toast, setStatus } = useFeedback()
 
   // CI screenshot hook: auto-open command palette when CAPTURE_PALETTE=1
@@ -96,15 +107,23 @@ export default function App() {
 
   const active = tabs.find(t => t.id === activeId)
   const showSpeedDial = !active || !active.url || active.url === 'about:blank' || active.url.includes('google.com') && active.title === 'New Tab'
+  // Issue #42: show placeholder (empty input) for new/blank tabs; otherwise the active tab URL
+  const activeUrl = active && active.url && active.url !== 'about:blank' ? active.url : ''
+
+  // Issue #43: progress bar follows the ACTIVE tab loading state (spinner is per-tab in TabBar)
+  useEffect(() => {
+    setProgressPhase(prev => nextPhase(prev, active?.loading ?? false))
+  }, [active?.loading])
 
   return (
     <div style={styles.app}>
+      <div style={{ ...styles.progress, ...phaseStyle(progressPhase) }} />
       {layout === 'top' && (
         <TabBar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
           onNewTab={() => setContainerMenu(true)} />
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
-      <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)}
+      <AddressBar value={activeUrl} onCommit={open} onOpenAI={() => setAiOpen(true)}
         nav={{
           canGoBack: navState.canGoBack,
           canGoForward: navState.canGoForward,
