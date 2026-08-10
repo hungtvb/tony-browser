@@ -18,7 +18,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10,
     cursor: 'pointer', fontSize: 13, color: 'rgba(255,255,255,0.85)',
   },
-  itemActive: { background: 'var(--apple-blue)', color: '#fff' },
+  itemActive: { background: 'var(--apple-blue)', color: '#0a0a0a' },
   icon: { fontSize: 15, width: 22, textAlign: 'center' as const },
   kbd: { marginLeft: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '1px 5px' },
 }
@@ -69,7 +69,7 @@ export default function CommandPalette({ commands, onClose }: {
               onClick={() => { c.run(); onClose() }}>
               <span style={styles.icon}>{c.icon}</span>
               <span>{c.label}</span>
-              {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.3)' } : {}) }}>{c.hint}</span>}
+              {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: 'rgba(0,0,0,0.6)', borderColor: 'rgba(0,0,0,0.2)' } : {}) }}>{c.hint}</span>}
             </div>
           ))}
         </div>

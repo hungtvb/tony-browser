@@ -35,10 +35,12 @@ export function ToastStack({ toasts }: { toasts: { id: number; msg: string; type
 }
 
 export function StatusBar({ status }: { status: string }) {
+  // Hide when idle — only show the bar when there is something to report
+  if (!status) return null
   return (
     <div style={styles.status}>
       <UIcon name="privacy" size={11} title="shield" />
-      {status || 'Tony Browser'}
+      {status}
     </div>
   )
 }

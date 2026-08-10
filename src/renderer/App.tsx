@@ -32,6 +32,13 @@ export default function App() {
   const [ttsOpen, setTtsOpen] = useState(false)
   const { toasts, status, toast, setStatus } = useFeedback()
 
+  // CI screenshot hook: auto-open command palette when CAPTURE_PALETTE=1
+  useEffect(() => {
+    if (import.meta.env?.DEV === false && /CAPTURE_PALETTE=1/.test(window.location.search || '')) {
+      setPaletteOpen(true)
+    }
+  }, [])
+
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

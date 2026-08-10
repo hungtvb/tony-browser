@@ -48,7 +48,7 @@ export function createMainWindow(onOpenExternal?: (url: string) => void): Browse
   if (devUrl) {
     win.loadURL(devUrl)
   } else {
-    win.loadFile(path.join(__dirname, '../renderer/index.html'))
+    win.loadFile(path.join(__dirname, '../renderer/index.html'), process.env['CAPTURE_PALETTE'] ? { query: { CAPTURE_PALETTE: '1' } } : undefined)
   }
 
   return win
