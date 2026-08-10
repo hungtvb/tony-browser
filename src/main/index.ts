@@ -153,6 +153,26 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) mainWindow = createMainWindow(openTabInMain)
   })
+
+  // UI screenshot hook for CI: set CAPTURE_UI_PATH=/path/out.png to capture the
+  // window after render and exit (used by .github/workflows/ui-screenshot.yml)
+  const capturePath = process.env['CAPTURE_UI_PATH']
+  if (capturePath) {
+    setTimeout(async () => {
+      try {
+        const win = BrowserWindow.getAllWindows()[0]
+        if (!win) { app.exit(1); return }
+        const image = await win.webContents.capturePage()
+        const fs = await import('fs')
+        fs.writeFileSync(capturePath, image.toPNG())
+        console.log('[capture] saved', capturePath)
+        app.exit(0)
+      } catch (e) {
+        console.error('[capture] failed', e)
+        app.exit(1)
+      }
+    }, 4500)
+  }
 })
 
 // lưu session tự động khi thoát

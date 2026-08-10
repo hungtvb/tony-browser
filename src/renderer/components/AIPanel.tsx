@@ -18,19 +18,18 @@ const styles: Record<string, React.CSSProperties> = {
   body: { flex: 1, overflow: 'auto', padding: 14, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.12px' },
   inputRow: { display: 'flex', gap: 6, padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' },
   input: {
-    flex: 1, padding: 8, borderRadius: 980, border: '1px solid rgba(255,255,255,0.12)',
-    background: 'rgba(255,255,255,0.08)', color: '#fff', outline: 'none', fontSize: 13,
+    flex: 1, padding: 8, borderRadius: 980, border: 'none', background: 'rgba(255,255,255,0.10)', color: '#fff', outline: 'none', fontSize: 13,
   },
-  btn: { padding: '8px 14px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)', color: '#fff', cursor: 'pointer', fontSize: 13 },
+  btn: { padding: '8px 14px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)', color: '#0a0a0a', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
   actions: { display: 'flex', gap: 6, padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' },
   chip: {
-    padding: '4px 12px', borderRadius: 980, background: 'rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.85)', fontSize: 11, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
+    padding: '4px 12px', borderRadius: 980,
+    color: 'rgba(255,255,255,0.85)', fontSize: 11, cursor: 'pointer', border: 'none', background: 'rgba(255,255,255,0.09)',
   },
   settings: { background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, margin: '0 14px', marginTop: 10 },
   config: {
     width: '100%', marginBottom: 8, padding: 7, borderRadius: 8,
-    border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(0,0,0,0.3)',
+    border: 'none', background: 'rgba(255,255,255,0.08)',
     color: '#fff', fontSize: 12, outline: 'none',
   },
 }

@@ -18,7 +18,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10,
     cursor: 'pointer', fontSize: 13, color: 'rgba(255,255,255,0.85)',
   },
-  itemActive: { background: 'var(--apple-blue)', color: '#fff' },
+  itemActive: { background: 'var(--apple-blue)', color: '#0a0a0a' },
   title: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   url: { fontSize: 11, color: 'rgba(255,255,255,0.4)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   hint: { padding: '6px 18px', fontSize: 11, color: 'rgba(255,255,255,0.4)' },

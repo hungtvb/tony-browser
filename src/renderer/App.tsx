@@ -15,9 +15,9 @@ import { useTabs } from './hooks/useTabs'
 import type { PrivacyStats } from '../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
-  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#121212' },
+  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#101110' },
   body: { display: 'flex', flex: 1, overflow: 'hidden' },
-  content: { flex: 1, position: 'relative', background: '#121212' },
+  content: { flex: 1, position: 'relative', background: '#101110' },
 }
 
 export default function App() {
@@ -31,6 +31,13 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
   const { toasts, status, toast, setStatus } = useFeedback()
+
+  // CI screenshot hook: auto-open command palette when CAPTURE_PALETTE=1
+  useEffect(() => {
+    if (import.meta.env?.DEV === false && /CAPTURE_PALETTE=1/.test(window.location.search || '')) {
+      setPaletteOpen(true)
+    }
+  }, [])
 
   // Keyboard shortcuts
   useEffect(() => {

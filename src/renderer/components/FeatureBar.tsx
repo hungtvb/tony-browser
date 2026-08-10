@@ -3,34 +3,34 @@ import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
-    display: 'flex', gap: 6, padding: '6px 14px', background: 'rgba(28,28,30,0.7)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center',
-    backdropFilter: 'saturate(180%) blur(12px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(12px)',
+    display: 'flex', gap: 6, padding: '6px 14px', background: 'rgba(14,16,12,0.30)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+    backdropFilter: 'saturate(180%) blur(18px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(18px)',
+    alignItems: 'center',
   },
   chip: {
     padding: '4px 11px', borderRadius: 980, fontSize: 11, cursor: 'pointer',
-    border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)',
-    color: 'rgba(255,255,255,0.8)', letterSpacing: '-0.08px', transition: 'all 0.15s ease',
+    border: 'none', background: 'rgba(255,255,255,0.12)',
+    color: 'rgba(255,255,255,0.82)', letterSpacing: '-0.08px', transition: 'all 0.15s ease',
     display: 'flex', alignItems: 'center', gap: 4,
   },
   chipStatic: {
-    padding: '4px 11px', borderRadius: 980, fontSize: 11, border: '1px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.64)', letterSpacing: '-0.08px',
+    padding: '4px 11px', borderRadius: 980, fontSize: 11, border: 'none',
+    background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.68)', letterSpacing: '-0.08px',
     display: 'flex', alignItems: 'center', gap: 4,
   },
-  active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#fff' },
+  active: { background: 'var(--apple-blue)', borderColor: 'var(--apple-blue)', color: '#0a0a0a' },
   warn: { color: '#ff9f0a' },
   brand: {
     marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
     fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.2px',
-    padding: '3px 10px', borderRadius: 980, background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.08)', userSelect: 'none',
+    padding: '3px 10px', borderRadius: 980, background: 'rgba(212,255,64,0.10)', userSelect: 'none',
   },
   brandDot: {
     width: 8, height: 8, borderRadius: '50%',
-    background: 'linear-gradient(135deg, #2997ff, #0071e3)',
-    boxShadow: '0 0 8px rgba(0,113,227,0.6)',
+    background: 'linear-gradient(135deg, #e3ff8a, #d4ff40)',
+    boxShadow: '0 0 10px rgba(212,255,64,0.7)',
   },
   brandVer: { fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 2 },
 }

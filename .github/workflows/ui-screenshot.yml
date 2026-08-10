@@ -1,0 +1,46 @@
+name: UI Screenshot
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Xvfb + Electron runtime deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgtk-3-0 libnss3 libgbm1 libxss1 libx11-xcb1 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libxtst6 libatk-bridge2.0-0 libcups2 libdrm2 libxfixes3 libxcb1 libxcb-dri3-0 libasound2t64
+          sudo apt-get install -y -qq imagemagick
+
+      - name: Build
+        run: npx electron-vite build
+
+      - name: Capture UI screenshot (New Tab Page)
+        run: |
+          mkdir -p screenshots
+          xvfb-run -a -s "-screen 0 1400x900x24" env ELECTRON_DISABLE_SANDBOX=1 CAPTURE_UI_PATH="$PWD/screenshots/new-tab.png" npx electron out/main/index.js --no-sandbox 2>&1 | grep -E "\[capture\]|Error" || true
+          ls -la screenshots/
+
+      - name: Upload screenshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tony-browser-ui
+          path: screenshots/*.png
+          if-no-files-found: error
