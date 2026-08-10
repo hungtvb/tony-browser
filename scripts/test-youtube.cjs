@@ -1,14 +1,14 @@
-// Test thật: mở YouTube qua Electron, kiểm tra block + chụp
+// Real test: open YouTube via Electron, check blocking + capture
 const { app, BrowserWindow } = require('electron')
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ width: 1280, height: 800, show: false })
   let blocked = 0
 
-  // Mô phỏng privacy filter — chặn request ads youtube
+  // Simulate privacy filter — block youtube ad requests
   const { session } = win.webContents
 
-  // dùng webRequest chặn theo pattern ad (cùng logic isYouTubeAdRequest)
+  // use webRequest to block by ad pattern (same logic as isYouTubeAdRequest)
   session.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
     const url = details.url.toLowerCase()
     const isAd = /googleads\.|pagead\/|doubleclick\.net\/pagead|adservice\.google\.com|yt-ads/.test(url)
