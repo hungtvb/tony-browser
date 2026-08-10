@@ -45,4 +45,19 @@ describe('TabManager', () => {
     tm.activate(a.id)
     expect(tm.activeId).toBe(a.id)
   })
+
+  it('open accepts a favicon and attaches it to the tab (issue #52)', () => {
+    const { factory } = makeVM()
+    const tm = createTabManager(factory)
+    const t = tm.open('https://a.com', 'work', 'data:image/png;base64,FAV')
+    expect(t.favicon).toBe('data:image/png;base64,FAV')
+    expect(t.container).toBe('work')
+  })
+
+  it('open without favicon leaves tab.favicon undefined (issue #52)', () => {
+    const { factory } = makeVM()
+    const tm = createTabManager(factory)
+    const t = tm.open('https://a.com')
+    expect(t.favicon).toBeUndefined()
+  })
 })

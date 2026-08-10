@@ -45,7 +45,7 @@ let focusProvider: (() => FocusController | null) | undefined
 type TM = ReturnType<typeof createTabManager>
 
 function tabToState(t: any): TabState {
-  return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default' }
+  return { id: t.id, url: t.url, title: t.title, loading: t.loading, container: t.container ?? 'default', favicon: t.favicon }
 }
 
 /**
@@ -147,8 +147,8 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── tabs ───
   ipcMain.handle('tabs:list', () => tm.list().map(tabToState))
 
-  ipcMain.handle('tabs:open', (_e, url: string, container?: string) => {
-    const tab = tm.open(url, container ?? 'default')
+  ipcMain.handle('tabs:open', (_e, url: string, container?: string, favicon?: string) => {
+    const tab = tm.open(url, container ?? 'default', favicon)
     // tạo view thật
     const view = deps.createRealView(tab.url)
     deps.trackView(tab.id, view)
@@ -204,7 +204,12 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       deps.setSplitIds(cur.filter(x => x !== id))
     }
     if (tabBefore) {
-      try { session.recordClosed({ id: tabBefore.id, url: tabBefore.url, title: tabBefore.title, container: tabBefore.container }) } catch {}
+      try {
+        session.recordClosed({
+          id: tabBefore.id, url: tabBefore.url, title: tabBefore.title,
+          container: tabBefore.container, favicon: tabBefore.favicon,
+        })
+      } catch {}
     }
     deps.layoutViews()
     broadcastTabs()
@@ -373,14 +378,16 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   // record tab bị đóng để undo
   ipcMain.handle('tabs:recordClosed', (_e, tab: any) => {
-    session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container })
+    session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container, favicon: tab.favicon })
     return session.closedCount()
   })
   ipcMain.handle('tabs:undoClose', () => session.popClosed())
   ipcMain.handle('tabs:closedCount', () => session.closedCount())
   // snapshot session hiện tại
   ipcMain.handle('session:save', () => {
-    session.saveSession(tm.list().map(t => ({ id: t.id, url: t.url, title: t.title, container: t.container })))
+    session.saveSession(tm.list().map(t => ({
+      id: t.id, url: t.url, title: t.title, container: t.container, favicon: t.favicon,
+    })))
     return true
   })
   ipcMain.handle('session:restore', () => session.restoreSession())

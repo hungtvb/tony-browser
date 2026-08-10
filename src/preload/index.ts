@@ -10,7 +10,7 @@ const api: TonyAPI = {
     chrome: process.versions.chrome,
   }),
   tabs: {
-    open: (url: string, container?: string) => ipcRenderer.invoke('tabs:open', url, container),
+    open: (url: string, container?: string, favicon?: string) => ipcRenderer.invoke('tabs:open', url, container, favicon),
     openContainer: (url: string, container: string) => ipcRenderer.invoke('tabs:openContainer', url, container),
     close: (id: string) => ipcRenderer.invoke('tabs:close', id),
     activate: (id: string) => ipcRenderer.invoke('tabs:activate', id),

@@ -55,7 +55,7 @@ function smartTabSessionsFile() {
   return path.join(app.getPath('userData'), 'smarttab-sessions.json')
 }
 
-function saveSessionToDisk(tabs: { url: string; title: string; container?: string }[]) {
+function saveSessionToDisk(tabs: { url: string; title: string; container?: string; favicon?: string }[]) {
   try {
     fs.writeFileSync(sessionFile(), JSON.stringify(tabs), 'utf-8')
   } catch { /* ignore */ }
@@ -63,7 +63,7 @@ function saveSessionToDisk(tabs: { url: string; title: string; container?: strin
 
 function loadSessionFromDisk() {
   try {
-    return JSON.parse(fs.readFileSync(sessionFile(), 'utf-8')) as { url: string; title: string; container?: string }[]
+    return JSON.parse(fs.readFileSync(sessionFile(), 'utf-8')) as { url: string; title: string; container?: string; favicon?: string }[]
   } catch { return [] }
 }
 
@@ -150,7 +150,7 @@ app.whenReady().then(() => {
   const saved = loadSessionFromDisk()
   if (saved.length > 0) {
     openRestoredTabs(saved, (s) => {
-      const tab = tm.open(s.url, s.container ?? 'default')
+      const tab = tm.open(s.url, s.container ?? 'default', s.favicon)
       const view = createTabView(s.url, s.container ?? 'default')
       trackTabView(tab.id, view)
     })
@@ -195,7 +195,7 @@ app.whenReady().then(() => {
 
 // lưu session tự động khi thoát
 app.on('before-quit', () => {
-  saveSessionToDisk(tm.list().map(t => ({ url: t.url, title: t.title, container: t.container })))
+  saveSessionToDisk(tm.list().map(t => ({ url: t.url, title: t.title, container: t.container, favicon: t.favicon })))
 })
 
 app.on('window-all-closed', () => {

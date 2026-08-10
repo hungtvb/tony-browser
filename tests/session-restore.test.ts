@@ -33,4 +33,16 @@ describe('Session restore — mở toàn bộ tab đã lưu (không cắt magic 
     expect(count).toBe(0)
     expect(opened).toHaveLength(0)
   })
+
+  it('passes favicon through to the onOpen callback (issue #52)', () => {
+    const saved = [
+      { url: 'https://a.com', title: 'A', container: 'work', favicon: 'data:image/png;base64,FAV1' },
+      { url: 'https://b.com', title: 'B' },
+    ]
+    const opened: any[] = []
+    const count = openRestoredTabs(saved, (s) => opened.push(s))
+    expect(count).toBe(2)
+    expect(opened[0].favicon).toBe('data:image/png;base64,FAV1')
+    expect(opened[1].favicon).toBeUndefined()
+  })
 })
