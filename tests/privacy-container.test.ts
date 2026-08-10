@@ -11,13 +11,15 @@ const electronMock = vi.hoisted(() => {
   const partitionSessions = new Map<string, any>()
   function makeFakeSession(): any {
     const handlers: Array<{ filter: { urls: string[] }, handler: (details: any, cb: (r: any) => void) => void }> = []
+    let permissionHandlerCalls = 0
     return {
       handlers,
+      get permissionHandlerCalls() { return permissionHandlerCalls },
       webRequest: {
         onBeforeRequest: (filter: any, handler: any) => { handlers.push({ filter, handler }) },
         filterResponseData: () => ({ on: () => {}, write: () => {}, end: () => {} }),
       },
-      setPermissionRequestHandler: () => {},
+      setPermissionRequestHandler: () => { permissionHandlerCalls++ },
     }
   }
   return {
@@ -139,5 +141,12 @@ describe('createTabView — container partition được attach privacy filter (
     createTabView('https://b.com', 'work')
     const ses = electronMock.partitionSessions.get('persist:container-work')
     expect(ses.handlers).toHaveLength(2)
+  })
+
+  it('guard: createTabView twice on the same container session → setPermissionRequestHandler called once (fix #62)', () => {
+    createTabView('https://a.com', 'work')
+    createTabView('https://b.com', 'work')
+    const ses = electronMock.partitionSessions.get('persist:container-work')
+    expect(ses.permissionHandlerCalls).toBe(1)
   })
 })

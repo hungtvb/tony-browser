@@ -93,8 +93,13 @@ export function createTabView(url: string, container = 'default'): WebContentsVi
   return view
 }
 
+/** Session nào đã đăng ký permission handler rồi thì bỏ qua — tránh đăng ký closure mới mỗi lần mở tab (WeakSet: không giữ session, tránh leak) */
+const permissionHandled = new WeakSet<Electron.Session>()
+
 /** Áp quyền hạn cho session (dùng chung cho default + container) */
 function applyPermissions(ses: Electron.Session) {
+  if (permissionHandled.has(ses)) return
+  permissionHandled.add(ses)
   ses.setPermissionRequestHandler((_wc, permission, callback) => {
     const allow = ['clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'media', 'geolocation', 'notifications', 'pointerLock']
     callback(allow.includes(permission))
