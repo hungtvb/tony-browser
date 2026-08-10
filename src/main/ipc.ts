@@ -150,7 +150,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   ipcMain.handle('tabs:open', (_e, url: string, container?: string, favicon?: string) => {
     const tab = tm.open(url, container ?? 'default', favicon)
     // tạo view thật
-    const view = deps.createRealView(tab.url)
+    const view = deps.createRealView(tab.url, tab.container)
     deps.trackView(tab.id, view)
     const w = win()
     if (w) {
@@ -163,7 +163,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   ipcMain.handle('tabs:openContainer', (_e, url: string, container: string) => {
     const tab = tm.open(url, container)
-    const view = deps.createRealView(tab.url)
+    const view = deps.createRealView(tab.url, tab.container)
     deps.trackView(tab.id, view)
     const w = win()
     if (w) {
