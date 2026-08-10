@@ -25,9 +25,10 @@ describe('AgentCore', () => {
     expect(adapter.exec).not.toHaveBeenCalled()
   })
 
-  it('plans with snapshot', async () => {
-    await agent.plan('Mua sản phẩm')
-    expect(adapter.snapshot).toHaveBeenCalled()
+  it('does not expose dead plan() — snapshot available via adapter.snapshot() (fix #61)', async () => {
+    // 🔴 RED trước: plan() là API chết (chỉ trả adapter.snapshot(), không dùng goal, không gọi LLM,
+    // production không ai gọi). Fix #61: bỏ khỏi return object của createAgentCore.
+    expect(agent).not.toHaveProperty('plan')
   })
 
   it('filters out invalid action types', async () => {

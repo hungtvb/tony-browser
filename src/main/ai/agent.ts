@@ -115,11 +115,8 @@ export function createAgentCore(adapter: PageAdapter) {
     return { summary: `Đã thực hiện ${taken.length} thao tác: ${taken.join(' → ')}`, actionsTaken: taken }
   }
 
-  async function plan(goal: string): Promise<string> {
-    // lấy snapshot để AI "nhìn" trang (lời gọi AI thật nằm ở controller)
-    const snap = await adapter.snapshot()
-    return snap
-  }
+  // plan() đã bị xóa (fix #61): API chết — chỉ trả adapter.snapshot(), không dùng goal, không gọi LLM,
+  // production không ai gọi. Snapshot vẫn lấy trực tiếp qua adapter.snapshot() khi cần.
 
-  return { run, parseActions, plan }
+  return { run, parseActions }
 }
