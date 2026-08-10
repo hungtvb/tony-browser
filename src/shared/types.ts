@@ -89,6 +89,12 @@ export interface TonyAPI {
     splitState: () => Promise<string[]>
     undoClose: () => Promise<{ id: string; url: string; title: string; container?: string } | null>
     closedCount: () => Promise<number>
+    nav: {
+      back: () => Promise<boolean>
+      forward: () => Promise<boolean>
+      reload: () => Promise<boolean>
+      state: () => Promise<{ canGoBack: boolean; canGoForward: boolean; isLoading: boolean }>
+    }
     onChange: (cb: (tabs: TabState[]) => void) => void
   }
   privacy: {

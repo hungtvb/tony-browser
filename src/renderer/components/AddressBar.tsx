@@ -31,13 +31,22 @@ const styles: Record<string, React.CSSProperties> = {
   searchIcon: { display: 'flex', color: 'rgba(255,255,255,0.4)' },
 }
 
-export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts }: {
+export interface NavControls {
+  canGoBack: boolean
+  canGoForward: boolean
+  onBack: () => void
+  onForward: () => void
+  onReload: () => void
+}
+
+export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSplit, onTts, nav }: {
   onNavigate: (url: string) => void
   onOpenAI: () => void
   onReader?: () => void
   onPip?: () => void
   onSplit?: () => void
   onTts?: () => void
+  nav?: NavControls
 }) {
   const [value, setValue] = useState('')
   const [hoverBtn, setHoverBtn] = useState<string | null>(null)
@@ -49,8 +58,32 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSp
     onNavigate(url)
   }
 
+  const navBtn = (disabled: boolean): React.CSSProperties => ({
+    padding: '7px 9px', borderRadius: 980, border: 'none', background: 'transparent',
+    color: disabled ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.75)',
+    cursor: disabled ? 'default' : 'pointer', fontSize: 15, lineHeight: 1,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all 0.15s ease', flexShrink: 0,
+  })
+
   return (
     <div style={styles.bar}>
+      {nav && (
+        <>
+          <button className="apple-focus" style={navBtn(!nav.canGoBack)} title="Back" disabled={!nav.canGoBack}
+            onClick={nav.onBack} onMouseEnter={() => setHoverBtn('back')} onMouseLeave={() => setHoverBtn(null)}>
+            <UIcon name="arrow-back" size={17} />
+          </button>
+          <button className="apple-focus" style={navBtn(!nav.canGoForward)} title="Forward" disabled={!nav.canGoForward}
+            onClick={nav.onForward} onMouseEnter={() => setHoverBtn('forward')} onMouseLeave={() => setHoverBtn(null)}>
+            <UIcon name="arrow-forward" size={17} />
+          </button>
+          <button className="apple-focus" style={navBtn(false)} title="Reload"
+            onClick={nav.onReload} onMouseEnter={() => setHoverBtn('reload')} onMouseLeave={() => setHoverBtn(null)}>
+            <UIcon name="refresh" size={17} />
+          </button>
+        </>
+      )}
       <span style={styles.searchIcon}><UIcon name="search" size={15} /></span>
       <input
         className="apple-focus"

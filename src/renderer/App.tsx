@@ -30,6 +30,7 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
+  const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, isLoading: false })
   const { toasts, status, toast, setStatus } = useFeedback()
 
   // CI screenshot hook: auto-open command palette when CAPTURE_PALETTE=1
@@ -38,6 +39,11 @@ export default function App() {
       setPaletteOpen(true)
     }
   }, [])
+
+  // Nav controls: refresh back/forward enabled state whenever the tab list or active tab changes
+  useEffect(() => {
+    window.tony?.tabs.nav.state().then(setNavState).catch(() => {})
+  }, [tabs, activeId])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -99,6 +105,13 @@ export default function App() {
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')} />
       <AddressBar onNavigate={open} onOpenAI={() => setAiOpen(true)}
+        nav={{
+          canGoBack: navState.canGoBack,
+          canGoForward: navState.canGoForward,
+          onBack: () => window.tony?.tabs.nav.back().then(() => window.tony?.tabs.nav.state().then(setNavState).catch(() => {})).catch(() => {}),
+          onForward: () => window.tony?.tabs.nav.forward().then(() => window.tony?.tabs.nav.state().then(setNavState).catch(() => {})).catch(() => {}),
+          onReload: () => window.tony?.tabs.nav.reload().catch(() => {}),
+        }}
         onReader={() => {
           window.tony?.reader.extract(activeId).then(r => {
             if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })

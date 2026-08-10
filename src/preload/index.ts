@@ -21,6 +21,12 @@ const api: TonyAPI = {
     splitState: () => ipcRenderer.invoke('tabs:splitState'),
     undoClose: () => ipcRenderer.invoke('tabs:undoClose'),
     closedCount: () => ipcRenderer.invoke('tabs:closedCount'),
+    nav: {
+      back: () => ipcRenderer.invoke('tabs:goBack') as Promise<boolean>,
+      forward: () => ipcRenderer.invoke('tabs:goForward') as Promise<boolean>,
+      reload: () => ipcRenderer.invoke('tabs:reload') as Promise<boolean>,
+      state: () => ipcRenderer.invoke('tabs:navState') as Promise<{ canGoBack: boolean; canGoForward: boolean; isLoading: boolean }>,
+    },
     onChange: (cb: (tabs: TabState[]) => void) => {
       ipcRenderer.on('tabs:changed', (_e, tabs: TabState[]) => cb(tabs))
     },

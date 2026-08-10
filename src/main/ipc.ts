@@ -289,6 +289,43 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     return true
   })
 
+  // ─── navigation controls (issue #41) ───
+  // act on the ACTIVE tab view; navState lets the renderer disable buttons at history edges
+  ipcMain.handle('tabs:goBack', () => {
+    const view = deps.getActiveView(tm.activeId)
+    if (!view || view.webContents.isDestroyed()) return false
+    if (!view.webContents.canGoBack()) return false
+    view.webContents.goBack()
+    return true
+  })
+
+  ipcMain.handle('tabs:goForward', () => {
+    const view = deps.getActiveView(tm.activeId)
+    if (!view || view.webContents.isDestroyed()) return false
+    if (!view.webContents.canGoForward()) return false
+    view.webContents.goForward()
+    return true
+  })
+
+  ipcMain.handle('tabs:reload', () => {
+    const view = deps.getActiveView(tm.activeId)
+    if (!view || view.webContents.isDestroyed()) return false
+    view.webContents.reload()
+    return true
+  })
+
+  ipcMain.handle('tabs:navState', () => {
+    const view = deps.getActiveView(tm.activeId)
+    if (!view || view.webContents.isDestroyed()) {
+      return { canGoBack: false, canGoForward: false, isLoading: false }
+    }
+    return {
+      canGoBack: view.webContents.canGoBack(),
+      canGoForward: view.webContents.canGoForward(),
+      isLoading: view.webContents.isLoading(),
+    }
+  })
+
   // ─── stacker/search ───
   ipcMain.handle('tabs:stacks', () => {
     return createTabStacker().group(tm.list())
