@@ -63,12 +63,12 @@ export default function FeatureBar({ layout, onToggleLayout }: {
   return (
     <div style={styles.bar}>
       <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
-        <UIcon name="focus" size={13} /> {focusOn ? 'Focus Bật' : 'Focus Tắt'}
+        <UIcon name="focus" size={13} /> {focusOn ? 'Focus On' : 'Focus Off'}
       </button>
-      <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tab ngủ</span>
-      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnings.length} nặng RAM</span>}
-      <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Chuyển layout tab">
-        <UIcon name="layout" size={13} /> {layout === 'side' ? 'Dọc' : 'Ngang'}
+      <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tabs asleep</span>
+      {warnings.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnings.length} RAM-heavy tabs</span>}
+      <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Switch tab layout">
+        <UIcon name="layout" size={13} /> {layout === 'side' ? 'Vertical' : 'Horizontal'}
       </button>
       <span style={styles.brand} title="Tony Browser">
         <span style={styles.brandDot} />

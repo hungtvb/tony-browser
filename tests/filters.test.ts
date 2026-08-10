@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createUrlFilter, createCosmeticFilter } from '../src/main/privacy/filters'
 
-describe('URL pattern filter (tầng 2)', () => {
+describe('URL pattern filter (layer 2)', () => {
   it('blocks /ads/ and /banner paths', () => {
     const f = createUrlFilter()
     expect(f.shouldBlock('https://example.com/ads/banner.png')).toBe(true)
@@ -32,7 +32,7 @@ describe('URL pattern filter (tầng 2)', () => {
   })
 })
 
-describe('Cosmetic filter (tầng 3 — ẩn element quảng cáo)', () => {
+describe('Cosmetic filter (layer 3 — hides ad elements)', () => {
   it('hides common ad containers', () => {
     const c = createCosmeticFilter()
     const css = c.css()

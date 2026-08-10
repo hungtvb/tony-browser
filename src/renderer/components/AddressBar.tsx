@@ -119,7 +119,7 @@ export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip,
       <input
         className="apple-focus"
         style={styles.input}
-        placeholder="Nhập địa chỉ web hoặc tìm kiếm..."
+        placeholder="Enter a web address or search..."
         value={shown}
         onChange={e => setDraft(e.target.value)}
         onFocus={e => { setDraft(e.target.value); e.target.select() }}
@@ -133,8 +133,8 @@ export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip,
       {onReader && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'reader' ? styles.aiHover : {}) }} title="Reader Mode" onClick={onReader} onMouseEnter={() => setHoverBtn('reader')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="reader" size={18} /></button>}
       {onPip && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'pip' ? styles.aiHover : {}) }} title="Picture-in-Picture" onClick={onPip} onMouseEnter={() => setHoverBtn('pip')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="pip" size={18} /></button>}
       {onSplit && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'split' ? styles.aiHover : {}) }} title="Split View" onClick={onSplit} onMouseEnter={() => setHoverBtn('split')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="split" size={18} /></button>}
-      {onTts && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'tts' ? styles.aiHover : {}) }} title="Đọc bài / Lưu trang" onClick={onTts} onMouseEnter={() => setHoverBtn('tts')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="tts" size={18} /></button>}
-      <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'ai' ? styles.aiHover : {}) }} title="Trợ lý AI" onClick={onOpenAI} onMouseEnter={() => setHoverBtn('ai')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="ai" size={18} /></button>
+      {onTts && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'tts' ? styles.aiHover : {}) }} title="Read article / Save page" onClick={onTts} onMouseEnter={() => setHoverBtn('tts')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="tts" size={18} /></button>}
+      <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'ai' ? styles.aiHover : {}) }} title="AI Assistant" onClick={onOpenAI} onMouseEnter={() => setHoverBtn('ai')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="ai" size={18} /></button>
     </div>
   )
 }

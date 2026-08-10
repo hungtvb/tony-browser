@@ -1,5 +1,5 @@
-// Focus Blocker — hàm thuần quyết định chặn request web khi Focus Mode bật.
-// Tách khỏi Electron để test được (issue #12 — wire Focus vào chặn web thật).
+// Focus Blocker — pure functions deciding whether to block web requests when Focus Mode is on.
+// Kept free of Electron so it can be tested (issue #12 — wire Focus into real web blocking).
 import { createFocusEngine, type FocusEngine } from './engine'
 
 export interface BlockDecision {
@@ -11,11 +11,11 @@ export interface FocusBlocker {
   setEnabled(on: boolean): void
   setBlocklist(domains: string[]): void
   setWhitelist(patterns: string[]): void
-  /** true nếu url bị chặn do focus (để bỏ qua adblock counter) */
+  /** true if the url is blocked by focus (so the adblock counter is skipped) */
   isFocusBlocked(url: string): boolean
-  /** quyết định chặn cho onBeforeRequest */
+  /** block decision for onBeforeRequest */
   blockUrl(url: string): BlockDecision
-  /** số request bị chặn do focus (counter riêng) */
+  /** number of requests blocked by focus (separate counter) */
   blockedCount(): number
 }
 

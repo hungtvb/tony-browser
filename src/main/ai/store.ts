@@ -1,4 +1,4 @@
-// AI — lưu cấu hình bằng file JSON đơn giản (tránh dependency ESM như electron-store)
+// AI — store config in a simple JSON file (avoids ESM-only deps like electron-store)
 import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -27,6 +27,6 @@ export function saveAIConfig(cfg: AIConfig): void {
     fs.mkdirSync(path.dirname(p), { recursive: true })
     fs.writeFileSync(p, JSON.stringify(payload, null, 2))
   } catch (e) {
-    console.error('Không lưu được config:', e)
+    console.error('Could not save config:', e)
   }
 }

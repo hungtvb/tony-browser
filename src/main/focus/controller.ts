@@ -1,4 +1,4 @@
-// Focus Mode — controller: giữ engine + state, expose qua IPC
+// Focus Mode — controller: holds the engine + state, exposes via IPC
 import { createFocusEngine, type FocusEngine } from '../focus/engine'
 import { saveFocusState } from '../focus/store'
 import type { FocusState } from '../../shared/types'
@@ -15,7 +15,7 @@ export class FocusController {
   constructor(initial?: Partial<Pick<FocusState, 'enabled' | 'blocklist' | 'whitelist'>>) {
     if (initial) {
       if (initial.enabled !== undefined) this._enabled = initial.enabled
-      // giữ nguyên [] khi user cố tình set blocklist rỗng (không thay bằng DEFAULT)
+      // keep [] when the user intentionally sets an empty blocklist (do not replace with DEFAULT)
       if (initial.blocklist !== undefined) this.blocklist = initial.blocklist
       if (initial.whitelist !== undefined) this.whitelist = initial.whitelist
     }
@@ -51,7 +51,7 @@ export class FocusController {
     return this.engine.check(url)
   }
 
-  // counter chặn do focus — cộng khi attachPrivacy chặn request (không lẫn adblock)
+  // counter for focus blocks — incremented when attachPrivacy blocks a request (kept separate from adblock)
   incrementBlocked() {
     this._blockedCount++
   }

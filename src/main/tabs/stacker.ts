@@ -1,4 +1,4 @@
-// Tab Stacking + Search — nhóm tab cùng domain, tìm nội dung tab
+// Tab Stacking + Search — groups tabs by domain, searches tab content
 export interface StackableTab {
   id: string
   url: string
@@ -11,10 +11,10 @@ export interface TabStack {
 }
 
 function hostOf(url: string): string {
-  try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase() } catch { return 'khác' }
+  try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase() } catch { return 'other' }
 }
 
-/** Nhóm tab theo domain — tab cùng domain thành 1 stack */
+/** Group tabs by domain — tabs sharing a domain become one stack */
 export function createTabStacker() {
   function group(tabs: StackableTab[]): TabStack[] {
     const map = new Map<string, StackableTab[]>()
@@ -31,7 +31,7 @@ export function createTabStacker() {
   return { group }
 }
 
-/** Tìm tab theo từ khoá trong title/url */
+/** Find tabs by keyword in title/url */
 export function searchTabs(tabs: StackableTab[], query: string): StackableTab[] {
   const q = query.toLowerCase().trim()
   if (!q) return []

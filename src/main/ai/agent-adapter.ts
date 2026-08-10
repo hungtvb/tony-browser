@@ -1,4 +1,4 @@
-// AI — PageAdapter thật cho Electron WebContents (thao tác qua executeJavaScript)
+// AI — Real PageAdapter for Electron WebContents (acts via executeJavaScript)
 import type { WebContents } from 'electron'
 import type { PageAdapter } from './agent'
 
@@ -9,7 +9,7 @@ function escapeSelector(sel: string): string {
 export function createWebContentsAdapter(wc: () => WebContents | null): PageAdapter {
   async function snapshot(): Promise<string> {
     const w = wc()
-    if (!w || w.isDestroyed()) return '(không có tab)'
+    if (!w || w.isDestroyed()) return '(no tab)'
     try {
       const text = (await w.executeJavaScript(`
         (() => {
@@ -34,26 +34,26 @@ export function createWebContentsAdapter(wc: () => WebContents | null): PageAdap
           return JSON.stringify({ title, url, inputs, text: getText() })
         })()
       `)) as string
-      return text || '(trống)'
+      return text || '(empty)'
     } catch (e: any) {
-      return '(lỗi đọc trang: ' + (e?.message ?? 'unknown') + ')'
+      return '(page read error: ' + (e?.message ?? 'unknown') + ')'
     }
   }
 
   async function exec(action: string, selector: string, value?: string): Promise<{ ok: boolean; error?: string }> {
     const w = wc()
-    if (!w || w.isDestroyed()) return { ok: false, error: 'Không có tab hoạt động' }
+    if (!w || w.isDestroyed()) return { ok: false, error: 'No active tab' }
     const s = escapeSelector(selector)
 
     let js = ''
     switch (action) {
       case 'click':
-        js = `(() => { const el = document.querySelector('${s}'); if (!el) return {ok:false,error:'Không tìm thấy ${s}'}; el.click(); return {ok:true} })()`
+        js = `(() => { const el = document.querySelector('${s}'); if (!el) return {ok:false,error:'Could not find ${s}'}; el.click(); return {ok:true} })()`
         break
       case 'type':
         js = `(() => {
           const el = document.querySelector('${s}');
-          if (!el) return {ok:false,error:'Không tìm thấy ${s}'};
+          if (!el) return {ok:false,error:'Could not find ${s}'};
           const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
             || Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
           if (setter) setter.call(el, ${JSON.stringify(value ?? '')});
@@ -66,13 +66,13 @@ export function createWebContentsAdapter(wc: () => WebContents | null): PageAdap
         js = `(() => { window.scrollBy(0, ${Math.round(Number(value) || 400)}); return {ok:true} })()`
         break
       case 'navigate':
-        js = '' // xử lý riêng
+        js = '' // handled separately
         break
       case 'wait':
         await new Promise(r => setTimeout(r, Math.min(Number(value) || 1000, 5000)))
         return { ok: true }
       default:
-        return { ok: false, error: 'Thao tác không hỗ trợ: ' + action }
+        return { ok: false, error: 'Unsupported action: ' + action }
     }
 
     try {
@@ -83,7 +83,7 @@ export function createWebContentsAdapter(wc: () => WebContents | null): PageAdap
       const res = (await w.executeJavaScript(js)) as { ok: boolean; error?: string }
       return res
     } catch (e: any) {
-      return { ok: false, error: e?.message ?? 'lỗi thực thi' }
+      return { ok: false, error: e?.message ?? 'execution error' }
     }
   }
 

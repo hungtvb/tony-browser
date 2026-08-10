@@ -46,11 +46,11 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
 
   async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act', text?: string) {
     if (busy) return
-    setBusy(true); setOut('Đang xử lý...')
+    setBusy(true); setOut('Processing...')
     try {
       const params: any = { mode, text: text ?? (mode === 'act' ? manualActCommand : msg || ''), tabId: activeTabId }
       const res = await window.tony!.ai.ask(params)
-      setOut(res.text || '(trống)')
+      setOut(res.text || '(empty)')
     } catch (e: any) {
       setOut('⚠️ ' + (e?.message || String(e)))
     } finally { setBusy(false) }
@@ -63,7 +63,7 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   return (
     <div style={styles.panel} className="anim-slide-right">
           <div style={styles.header}>
-        <span>🪄 Trợ lý AI</span>
+        <span>🪄 AI Assistant</span>
         <div style={{ display: 'flex', gap: 6 }}>
           <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)}>⚙️</button>
           <button className="apple-focus" style={styles.chip} onClick={onClose}>✕</button>
@@ -72,24 +72,24 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
 
       {showSettings && (
         <div style={styles.settings}>
-          <input style={styles.config} placeholder="Base URL (vd: https://api.openai.com/v1)" value={config.baseUrl}
+          <input style={styles.config} placeholder="Base URL (e.g. https://api.openai.com/v1)" value={config.baseUrl}
             onChange={e => setConfig({ ...config, baseUrl: e.target.value })} />
           <input style={styles.config} placeholder="API key" type="password" value={config.apiKey}
             onChange={e => setConfig({ ...config, apiKey: e.target.value })} />
-          <input style={styles.config} placeholder="Model (vd: gpt-4o-mini)" value={config.model}
+          <input style={styles.config} placeholder="Model (e.g. gpt-4o-mini)" value={config.model}
             onChange={e => setConfig({ ...config, model: e.target.value })} />
-          <button className="apple-focus" style={{ ...styles.btn, width: '100%' }} onClick={saveCfg}>Lưu cấu hình</button>
+          <button className="apple-focus" style={{ ...styles.btn, width: '100%' }} onClick={saveCfg}>Save config</button>
         </div>
       )}
 
       <div style={styles.actions}>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Tóm tắt trang</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Tổng hợp tab</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('act')}>🤖 Thao tác web</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Summarize page</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Summarize all tabs</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('act')}>🤖 Web automation</button>
       </div>
 
       <div style={{ padding: '6px 14px', display: 'flex', gap: 6 }}>
-        <input style={styles.input} placeholder='VD: "Click nút Mua ngay"' value={manualActCommand}
+        <input style={styles.input} placeholder='E.g. "Click the Buy Now button"' value={manualActCommand}
           onChange={e => setManualActCommand(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && run('act')} />
       </div>
@@ -99,10 +99,10 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       </div>
 
       <div style={styles.inputRow}>
-        <input style={styles.input} placeholder="Hỏi gì về trang này?" value={msg}
+        <input style={styles.input} placeholder="Ask about this page?" value={msg}
           onChange={e => setMsg(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && run('chat', msg)} />
-        <button className="apple-focus" style={styles.btn} onClick={() => run('chat', msg)}>Gửi</button>
+        <button className="apple-focus" style={styles.btn} onClick={() => run('chat', msg)}>Send</button>
       </div>
     </div>
   )

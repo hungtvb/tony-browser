@@ -27,14 +27,14 @@ describe('AIController act-mode', () => {
   })
 
   it('executes actions when LLM returns JSON inside ```json fence with trailing prose', async () => {
-    // RED thật: regex greedy /\[[\s\S]*\]/ của extractJsonArray ăn từ [ đầu
-    // (mở array JSON) tới ] cuối (sau prose "[1,2],[3]") → JSON.parse fail → trả []
+    // Real RED: the greedy regex /\[[\s\S]*\]/ in extractJsonArray eats from the first [
+    // (JSON array opening) to the final ] (after the prose "[1,2],[3]") → JSON.parse fails → returns []
     const { deps, wc } = makeDeps()
     vi.spyOn(AIService.prototype, 'ask').mockResolvedValue(
-      '```json\n[{"type":"click","selector":"#buy"}]\n```\nĐã thực hiện xong, còn lại: [1,2] mục và [3] việc khác.',
+      '```json\n[{"type":"click","selector":"#buy"}]\n```\nDone, remaining: [1,2] items and [3] other tasks.',
     )
     const ctrl = new AIController(deps as any)
-    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Bấm nút mua' })
+    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Click the buy button' })
 
     expect(result).toContain('click #buy')
     expect(wc.executeJavaScript).toHaveBeenCalled()
@@ -46,7 +46,7 @@ describe('AIController act-mode', () => {
       '[{"type":"click","selector":"#buy"},{"type":"scroll","value":400}]',
     )
     const ctrl = new AIController(deps as any)
-    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Bấm nút mua' })
+    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Click the buy button' })
 
     expect(result).toContain('click #buy')
     expect(result).toContain('scroll')
@@ -55,12 +55,12 @@ describe('AIController act-mode', () => {
 
   it('reports failure when LLM returns junk (no valid actions)', async () => {
     const { deps, wc } = makeDeps()
-    vi.spyOn(AIService.prototype, 'ask').mockResolvedValue('Xin lỗi, tôi không hiểu')
+    vi.spyOn(AIService.prototype, 'ask').mockResolvedValue('Sorry, I do not understand')
     const ctrl = new AIController(deps as any)
-    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Bấm nút mua' })
+    const result = await ctrl.ask({ tabId: 't1', mode: 'act', text: 'Click the buy button' })
 
-    expect(result).toContain('Không xác định được hành động')
-    // snapshot() vẫn gọi executeJavaScript (hợp lệ) — chỉ không thực thi action cụ thể nào
+    expect(result).toContain('No actions could be determined')
+    // snapshot() still calls executeJavaScript (valid) — it just does not execute any specific action
     expect(wc.executeJavaScript).toHaveBeenCalledTimes(1)
   })
 })

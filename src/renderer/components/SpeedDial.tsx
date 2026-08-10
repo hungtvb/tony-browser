@@ -50,10 +50,10 @@ export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) =>
   return (
     <div style={styles.wrap}>
       <div style={styles.greetingWrap}>
-        <div style={styles.greeting}>Chào Đại ca</div>
+        <div style={styles.greeting}>Hello Boss</div>
         <span style={styles.wave}><UIcon name="waving" size={32} title="waving hand" /></span>
       </div>
-      <div style={styles.sub}>Hôm nay muốn làm gì? Hãy chọn trang yêu thích hoặc nhập địa chỉ.</div>
+      <div style={styles.sub}>What would you like to do today? Pick a favorite site or enter an address.</div>
       <div style={styles.grid}>
         {SITES.map(s => (
           <div key={s.url}
@@ -69,7 +69,7 @@ export default function SpeedDial({ onNavigate }: { onNavigate: (url: string) =>
       </div>
       <div style={styles.tip}>
         <span style={{ color: 'var(--apple-text-secondary)', display: 'flex' }}><UIcon name="lightbulb" size={14} /></span>
-        Mẹo: Ctrl+K mở lệnh nhanh · Ctrl+Shift+F tìm tab
+        Tip: Ctrl+K for quick commands · Ctrl+Shift+F to find tabs
       </div>
     </div>
   )

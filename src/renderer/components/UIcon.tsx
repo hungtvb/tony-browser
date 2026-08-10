@@ -1,5 +1,5 @@
 import React from 'react'
-// ?raw = Vite trả về NỘI DUNG SVG thật (không phải URL)
+// ?raw = Vite returns the real SVG CONTENT (not a URL)
 import focusIcon from '../icons/focus.svg?raw'
 import readerIcon from '../icons/reader.svg?raw'
 import pipIcon from '../icons/pip.svg?raw'
@@ -29,8 +29,8 @@ import arrowBackIcon from '../icons/arrow_back.svg?raw'
 import arrowForwardIcon from '../icons/arrow_forward.svg?raw'
 import refreshIcon from '../icons/refresh.svg?raw'
 
-// Gói icon UI — Material Symbols Rounded (Google, miễn phí)
-// Inline SVG component (React.createElement từ string path)
+// UI icon pack — Material Symbols Rounded (Google, free)
+// Inline SVG component (React.createElement from string path)
 
 export const ICONS: Record<string, string> = {
   focus: focusIcon, reader: readerIcon, pip: pipIcon, split: splitIcon,
@@ -44,7 +44,7 @@ export const ICONS: Record<string, string> = {
 }
 
 function extractPath(svg: string): string {
-  // Lấy d attribute từ <path d="...">
+  // Extract the d attribute from <path d="...">
   const m = svg.match(/<path[^>]*d="([^"]+)"/)
   return m ? m[1] : ''
 }

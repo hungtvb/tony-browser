@@ -29,7 +29,7 @@ export default function ReaderView({ title, content, onClose }: {
     <div style={styles.overlay}>
       <div style={styles.bar}>
         <span style={styles.title}>📖 {title || 'Reader Mode'}</span>
-        <button className="apple-focus" style={styles.btn} onClick={onClose}>✕ Đóng</button>
+        <button className="apple-focus" style={styles.btn} onClick={onClose}>✕ Close</button>
       </div>
       <div style={styles.body}>
         <h1 style={styles.h1}>{title}</h1>

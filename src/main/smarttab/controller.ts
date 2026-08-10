@@ -1,4 +1,4 @@
-// Smart Tab — controller: nhóm + lưu/khôi phục session, expose qua IPC
+// Smart Tab — controller: groups + saves/restores sessions, exposes via IPC
 import { createSmartTab } from './grouping'
 import type { TabSessionInfo, GroupedTabInfo } from '../../shared/types'
 import type { TabState } from '../../shared/types'
@@ -29,7 +29,7 @@ export class SmartTabController {
         if (Array.isArray(loaded)) {
           this.sessions = loaded.filter(isValidSession)
         }
-      } catch { /* persist lỗi → khởi động với danh sách rỗng */ }
+      } catch { /* persist failed → start with an empty list */ }
     }
   }
 

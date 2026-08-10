@@ -1,4 +1,4 @@
-// Session store — undo đóng tab (Ctrl+Shift+T) + lưu/khôi phục session
+// Session store — undo closed tabs (Ctrl+Shift+T) + save/restore session
 import * as fs from 'fs'
 
 export interface SessionTab {
@@ -10,7 +10,7 @@ export interface SessionTab {
 }
 
 export function createSessionStore(persist?: SessionPersist<SessionTab>) {
-  // load stack undo từ disk (nếu có persist) — giữ tối đa 50 phần tử như recordClosed
+  // load the undo stack from disk (if persist is provided) — keep at most 50 entries like recordClosed
   const closed: SessionTab[] = (persist?.load() ?? []).slice(0, 50)
   let snapshot: SessionTab[] | null = null
 
@@ -45,7 +45,7 @@ export function createSessionStore(persist?: SessionPersist<SessionTab>) {
   return { recordClosed, popClosed, closedCount, saveSession, restoreSession, clearSession }
 }
 
-// Persist danh sách session xuống disk dạng JSON (dùng cho SmartTab sessions)
+// Persist the session list to disk as JSON (used for SmartTab sessions)
 export interface SessionPersist<T> {
   save(list: T[]): void
   load(): T[]
@@ -55,7 +55,7 @@ export function createSessionPersist<T>(file: string): SessionPersist<T> {
   function save(list: T[]) {
     try {
       fs.writeFileSync(file, JSON.stringify(list), 'utf-8')
-    } catch { /* ignore — không crash app khi disk lỗi */ }
+    } catch { /* ignore — do not crash the app on disk errors */ }
   }
 
   function load(): T[] {
@@ -64,7 +64,7 @@ export function createSessionPersist<T>(file: string): SessionPersist<T> {
       const parsed = JSON.parse(fs.readFileSync(file, 'utf-8'))
       return Array.isArray(parsed) ? parsed as T[] : []
     } catch {
-      return [] // file hỏng → fallback rỗng, không crash
+      return [] // corrupted file → empty fallback, do not crash
     }
   }
 

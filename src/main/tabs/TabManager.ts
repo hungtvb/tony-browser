@@ -17,7 +17,7 @@ export interface Tab {
   container: string
   /** Favicon URL (data URL when < 8KB, otherwise http(s) URL) — undefined when the page has no favicon */
   favicon?: string
-  /** Lần cuối tab được mở/activate — nguồn cho TabSleeper quyết định ngủ tab nền */
+  /** Last time the tab was opened/activated — source for TabSleeper deciding which background tabs sleep */
   lastActive?: number
 }
 
@@ -80,7 +80,7 @@ export function createTabManager(factory: ViewFactory) {
     return tabs.get(activeId)
   }
 
-  /** Phát event changed + gọi callback broadcast (renderer sync) */
+  /** Emit the changed event + call the broadcast callback (renderer sync) */
   function broadcast() {
     emitter.emit('changed', { type: 'sync', id: activeId })
   }

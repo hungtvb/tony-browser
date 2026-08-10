@@ -58,11 +58,11 @@ export default function CommandPalette({ commands, onClose }: {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.palette} onClick={e => e.stopPropagation()}>
-        <input ref={inputRef} style={styles.input} placeholder="Gõ lệnh hoặc hỏi AI..." value={query}
+        <input ref={inputRef} style={styles.input} placeholder="Type a command or ask AI..." value={query}
           onChange={e => setQuery(e.target.value)} onKeyDown={onKey} />
-        <div style={styles.hint}>↑↓ chọn · Enter thực thi · Esc đóng</div>
+        <div style={styles.hint}>↑↓ select · Enter run · Esc close</div>
         <div style={styles.list}>
-          {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Không có lệnh phù hợp</div>}
+          {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No matching commands</div>}
           {filtered.map((c, i) => (
             <div key={c.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)}

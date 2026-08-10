@@ -1,36 +1,36 @@
 # Tony Browser 🚀
 
-**Tony Browser** — trình duyệt web thông minh có trợ lý AI, do Đại ca (hungtvb) xây dựng.
+**Tony Browser** — a smart web browser with an AI assistant, built by hungtvb.
 
-> *"Browser không chỉ để lướt web — nó hiểu bạn đang làm gì."*
+> *"A browser isn't just for browsing — it understands what you're doing."*
 
-## ✨ Tính năng (Roadmap)
+## ✨ Features (Roadmap)
 
-| # | Tính năng | Mô tả | Trạng thái |
+| # | Feature | Description | Status |
 |---|---|---|---|
-| 1 | **🤖 Trợ lý AI** | Đọc trang, tóm tắt nội dung, tự thao tác (click, điền form) theo lệnh | 🔜 Sắp tới |
-| 2 | **🧘 Focus Mode** | Chặn web xao nhãng, chế độ tập trung, nhắc nghỉ | 🔜 Sắp tới |
-| 3 | **🛡️ Privacy** | Chặn quảng cáo, tracker, chống theo dõi — built-in | 🔜 Sắp tới |
-| 4 | **🗂️ Smart Tabs** | Tự nhóm tab theo chủ đề, lưu/khôi phục phiên | 🔜 Sắp tới |
-| 5 | **📋 Tóm tắt nhanh** | AI tóm tắt toàn bộ tab đang mở thành báo cáo | 🔜 Sắp tới |
-| 6 | **⚡ Tiết kiệm RAM/Pin** | Tự ngủ tab nền, báo cáo tab ngốn RAM | 🔜 Sắp tới |
-| 7 | **🎬 RPA Replay** | Ghi & phát lại thao tác tự động (để sau) | ⏸️ Hoãn |
+| 1 | **🤖 AI Assistant** | Reads pages, summarizes content, performs actions (click, fill forms) on command | ✅ Done |
+| 2 | **🧘 Focus Mode** | Blocks distracting sites, focus mode, break reminders | ✅ Done |
+| 3 | **🛡️ Privacy** | Built-in ad blocking, tracker blocking, anti-tracking | ✅ Done |
+| 4 | **🗂️ Smart Tabs** | Auto-groups tabs by topic, saves/restores sessions | ✅ Done |
+| 5 | **📋 Quick Summaries** | AI summarizes all open tabs into a report | ✅ Done |
+| 6 | **⚡ RAM/Battery saver** | Sleeps background tabs, reports RAM-hungry tabs | ✅ Done |
+| 7 | **🎬 RPA Replay** | Record & replay automated actions (later) | ⏸️ Postponed |
 
-## 🛠️ Công nghệ
+## 🛠️ Tech stack
 
-- **Electron** — nền tảng desktop
-- **React + TypeScript** — giao diện
-- **Playwright** — tự động hóa (cho AI agent)
+- **Electron** — desktop platform
+- **React + TypeScript** — UI
+- **Playwright** — automation (for the AI agent)
 - **Vite** — build tool
 
-## 🚀 Chạy dự án
+## 🚀 Running the project
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 📁 Cấu trúc
+## 📁 Structure
 
 ```
 tony-browser/
@@ -38,7 +38,7 @@ tony-browser/
 │   ├── main/          # Electron main process
 │   ├── preload/       # Preload scripts (contextBridge)
 │   ├── renderer/      # React UI
-│   └── features/      # Tính năng (AI, focus, privacy...)
+│   └── features/      # Features (AI, focus, privacy...)
 ├── package.json
 └── README.md
 ```

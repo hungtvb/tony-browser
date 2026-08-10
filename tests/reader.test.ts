@@ -8,29 +8,29 @@ describe('Reader Mode extract', () => {
       <script>bad()</script>
       <style>.x{}</style>
       <div id="content">
-        <h1>Tiêu đề bài báo</h1>
-        <p>Đoạn đầu tiên của bài viết.</p>
-        <p>Đoạn thứ hai nói về nội dung chính.</p>
+        <h1>Article headline</h1>
+        <p>The first paragraph of the article.</p>
+        <p>The second paragraph covers the main content.</p>
       </div>
-      <aside>Quảng cáo</aside>
+      <aside>Advertisement</aside>
       <footer>Footer</footer>
     </body></html>`
     const result = extractArticle(html)
-    expect(result.title).toContain('Tiêu đề bài báo')
-    expect(result.content).toContain('Đoạn đầu tiên')
-    expect(result.content).toContain('Đoạn thứ hai')
+    expect(result.title).toContain('Article headline')
+    expect(result.content).toContain('The first paragraph')
+    expect(result.content).toContain('The second paragraph')
     expect(result.content).not.toContain('Menu')
-    expect(result.content).not.toContain('Quảng cáo')
+    expect(result.content).not.toContain('Advertisement')
     expect(result.content).not.toContain('Footer')
   })
 
   it('uses <article> when present', () => {
     const html = `<html><body>
       <header>Site header</header>
-      <article><h1>Bài viết</h1><p>Nội dung article chính.</p></article>
+      <article><h1>Article</h1><p>The main article content.</p></article>
     </body></html>`
     const result = extractArticle(html)
-    expect(result.content).toContain('Nội dung article')
+    expect(result.content).toContain('The main article')
   })
 
   it('strips script/style/noscript/iframe', () => {

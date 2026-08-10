@@ -1,4 +1,4 @@
-// Quản lý cửa sổ chính + attach WebContentsView cho tab
+// Manage the main window + attach WebContentsView for tabs
 import { app, BrowserWindow, WebContentsView, session } from 'electron'
 import { attachWebRequestFilters } from './ipc'
 import { appVersionArg } from '../shared/app-version'
@@ -6,7 +6,7 @@ import path from 'path'
 
 export const TOOLBAR_HEIGHT = 92 // TabBar (42) + AddressBar (50)
 
-/** Chỉ cho phép navigate/mở URL http/https — chặn file://, javascript:, ... */
+/** Only allow navigating/opening http/https URLs — block file://, javascript:, ... */
 export function isAllowedUrl(url: string): boolean {
   return /^https?:\/\//i.test(url)
 }
@@ -34,21 +34,21 @@ export function createMainWindow(onOpenExternal?: (url: string) => void): Browse
     }
   } catch { /* unsupported platform — keep solid dark */ }
 
-  // window.open / target=_blank → không mở cửa sổ Electron raw; mở tab mới nếu http(s)
+  // window.open / target=_blank → do not open a raw Electron window; open a new tab if http(s)
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAllowedUrl(url) && onOpenExternal) onOpenExternal(url)
     return { action: 'deny' }
   })
 
-  // bảo vệ chính UI: chặn navigate sang scheme khác http/https
+  // protect the main UI: block navigation to schemes other than http/https
   win.webContents.on('will-navigate', (e, url) => {
     if (!isAllowedUrl(url)) e.preventDefault()
   })
 
-  // quyền hạn cho session cửa sổ chính ngay từ đầu (trước đây chỉ qua ensureSession() sau khi khởi động)
+  // grant permissions to the main window session up front (previously only via ensureSession() after startup)
   applyPermissions(win.webContents.session)
 
-  // electron-vite: dev dùng ELECTRON_RENDERER_URL, prod load file
+  // electron-vite: dev uses ELECTRON_RENDERER_URL, prod loads the file
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (devUrl) {
     win.loadURL(devUrl)
@@ -73,7 +73,7 @@ export function detachView(win: BrowserWindow, view: WebContentsView) {
 }
 
 export function createTabView(url: string, container = 'default'): WebContentsView {
-  // Mỗi container có session riêng → cookie/lịch sử tách biệt
+  // Each container has its own session → cookies/history stay separate
   const ses = container === 'default'
     ? session.defaultSession
     : session.fromPartition(`persist:container-${container}`)
@@ -86,21 +86,21 @@ export function createTabView(url: string, container = 'default'): WebContentsVi
     },
   })
   applyPermissions(ses)
-  // Fix #37 — container tab không còn bypass privacy filter + Focus Mode:
-  // gắn webRequest filter cho session phân vùng (guard Set trong attachWebRequestFilters
-  // đảm bảo defaultSession đã được attachPrivacy xử lý thì không attach lại lần nữa)
+  // Fix #37 — container tabs no longer bypass the privacy filter + Focus Mode:
+  // attach a webRequest filter to the partitioned session (the guard Set in attachWebRequestFilters
+  // ensures a defaultSession already handled by attachPrivacy is not attached again)
   attachWebRequestFilters(ses)
   view.setVisible(false)
   view.webContents.loadURL(url).catch(() => {
-    view.webContents.loadURL('data:text/html,<h1 style="font-family:sans-serif">Không tải được trang</h1>')
+    view.webContents.loadURL('data:text/html,<h1 style="font-family:sans-serif">Page failed to load</h1>')
   })
   return view
 }
 
-/** Session nào đã đăng ký permission handler rồi thì bỏ qua — tránh đăng ký closure mới mỗi lần mở tab (WeakSet: không giữ session, tránh leak) */
+/** Sessions that already registered a permission handler are skipped — prevents registering a new closure on every tab open (WeakSet: does not hold the session, avoids leaks) */
 const permissionHandled = new WeakSet<Electron.Session>()
 
-/** Áp quyền hạn cho session (dùng chung cho default + container) */
+/** Apply permissions to a session (shared by default + container) */
 function applyPermissions(ses: Electron.Session) {
   if (permissionHandled.has(ses)) return
   permissionHandled.add(ses)
@@ -110,7 +110,7 @@ function applyPermissions(ses: Electron.Session) {
   })
 }
 
-/** Đảm bảo session dùng chung có các quyền hạn hợp lý cho browser */
+/** Ensure the shared session has proper browser permissions */
 export function ensureSession() {
   const ses = session.defaultSession
   applyPermissions(ses)

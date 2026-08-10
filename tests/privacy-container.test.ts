@@ -1,12 +1,12 @@
-// Fix #37 — Container tab bypass toàn bộ privacy filter + Focus Mode.
-// attachWebRequestFilters phải gắn webRequest filter lên MỌI partition (default + container),
-// và createTabView phải gọi hàm này cho session phân vùng (không attach 2 lần).
+// Fix #37 — Container tabs bypassed the entire privacy filter + Focus Mode.
+// attachWebRequestFilters must attach the webRequest filter to EVERY partition (default + container),
+// and createTabView must call this function for partitioned sessions (no double attach).
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { attachWebRequestFilters, attachPrivacy } from '../src/main/ipc'
 import { createTabView } from '../src/main/window'
 import { FocusController } from '../src/main/focus/controller'
 
-// ─── fake Electron session (giả lập partition container) ───
+// ─── fake Electron session (simulating partition container) ───
 const electronMock = vi.hoisted(() => {
   const partitionSessions = new Map<string, any>()
   function makeFakeSession(): any {
@@ -58,8 +58,8 @@ function blockerOf(ses: any) {
   return ses.handlers.find((h: any) => h.filter.urls.includes('*://*/*'))
 }
 
-describe('attachWebRequestFilters — session phân vùng (container)', () => {
-  it('gắn cả 2 webRequest filter (blocker + YouTube strip) lên session', () => {
+describe('attachWebRequestFilters — partitioned session (container)', () => {
+  it('attaches both webRequest filters (blocker + YouTube strip) to the session', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
     expect(ses.handlers).toHaveLength(2)
@@ -70,7 +70,7 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
     ])
   })
 
-  it('chặn URL trong blocklist ads trên session phân vùng → callback cancel:true', () => {
+  it('blocks URL in ads blocklist on partitioned session → callback cancel:true', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
     let result: any = null
@@ -78,7 +78,7 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
     expect(result).toEqual({ cancel: true })
   })
 
-  it('không chặn URL thường (ngoài blocklist + focus off)', () => {
+  it('does not block normal URLs (outside blocklist + focus off)', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
     let result: any = null
@@ -86,7 +86,7 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
     expect(result).toEqual({})
   })
 
-  it('chặn URL bị Focus Mode block trên session phân vùng → callback cancel:true', () => {
+  it('blocks URLs blocked by Focus Mode on partitioned session → callback cancel:true', () => {
     const ses = electronMock.makeFakeSession()
     const focus = new FocusController({ enabled: true, blocklist: ['facebook.com'] })
     attachWebRequestFilters(ses, () => focus)
@@ -95,7 +95,7 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
     expect(result).toEqual({ cancel: true })
   })
 
-  it('Focus Mode off → không chặn URL trong blocklist focus', () => {
+  it('Focus Mode off → does not block URL in focus blocklist', () => {
     const ses = electronMock.makeFakeSession()
     const focus = new FocusController({ enabled: false, blocklist: ['facebook.com'] })
     attachWebRequestFilters(ses, () => focus)
@@ -104,7 +104,7 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
     expect(result).toEqual({})
   })
 
-  it('guard: attach 2 lần cùng 1 session → chỉ đăng ký filter 1 lần', () => {
+  it('guard: attaching twice to the same session → registers the filter only once', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
     attachWebRequestFilters(ses)
@@ -112,8 +112,8 @@ describe('attachWebRequestFilters — session phân vùng (container)', () => {
   })
 })
 
-describe('createTabView — container partition được attach privacy filter (fix #37)', () => {
-  it('tab container → session phân vùng có webRequest filter hoạt động (chặn ads)', () => {
+describe('createTabView — container partition gets privacy filter attached (fix #37)', () => {
+  it('container tab → partitioned session has a working webRequest filter (blocks ads)', () => {
     createTabView('https://example.com', 'work')
     const ses = electronMock.partitionSessions.get('persist:container-work')
     expect(ses).toBeDefined()
@@ -123,9 +123,9 @@ describe('createTabView — container partition được attach privacy filter (
     expect(result).toEqual({ cancel: true })
   })
 
-  it('tab container → Focus Mode cũng chặn được trên session phân vùng', () => {
-    // focusProvider module-level trong ipc.ts được đăng ký qua attachPrivacy (index.ts) —
-    // đảm bảo createTabView attach cho container không mất Focus Mode
+  it('container tab → Focus Mode also blocks on partitioned sessions', () => {
+    // focusProvider at module level in ipc.ts is registered via attachPrivacy (index.ts) —
+    // ensures createTabView attaching for containers does not lose Focus Mode
     const focus = new FocusController({ enabled: true, blocklist: ['facebook.com'] })
     const fakeWin: any = { webContents: { session: electronMock.defaultSession } }
     attachPrivacy(fakeWin, {} as any, () => focus)
@@ -136,7 +136,7 @@ describe('createTabView — container partition được attach privacy filter (
     expect(result).toEqual({ cancel: true })
   })
 
-  it('tạo 2 tab cùng container → không attach filter 2 lần (guard Set)', () => {
+  it('creating 2 tabs in the same container → filter not attached twice (guard Set)', () => {
     createTabView('https://a.com', 'work')
     createTabView('https://b.com', 'work')
     const ses = electronMock.partitionSessions.get('persist:container-work')

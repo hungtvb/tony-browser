@@ -15,7 +15,7 @@ import * as path from 'path'
 let mainWindow: BrowserWindow | null = null
 const viewByTab = new Map<string, WebContentsView>()
 const attachCosmetic = createCosmeticInjector()
-// trạng thái split hiện tại — registerIpc cập nhật qua setter (không export trực tiếp)
+// current split state — registerIpc updates it via the setter (not exported directly)
 let splitIds: string[] = []
 export function setSplitIds(ids: string[]) {
   splitIds = ids
@@ -24,8 +24,8 @@ export function getSplitIds(): string[] {
   return splitIds
 }
 
-// Layout lại mọi view đang hiển thị theo kích thước cửa sổ hiện tại
-// (dùng cho resize + sau khi vào/thoát split + mở/đóng tab)
+// Re-layout every visible view according to the current window size
+// (used on resize + after entering/exiting split + opening/closing tabs)
 export function layoutViews() {
   const win = mainWindow
   if (!win || win.isDestroyed()) return
@@ -46,7 +46,7 @@ export function layoutViews() {
   }
 }
 
-// path lưu session (JSON store tự viết, tránh ESM-only dep)
+// session file path (hand-written JSON store, avoids ESM-only deps)
 function sessionFile() {
   return path.join(app.getPath('userData'), 'session.json')
 }
@@ -119,13 +119,13 @@ const deps: IpcDeps = {
   getFocus: () => focusController,
 }
 
-// FocusController dùng chung: attachPrivacy chặn request thật + registerIpc expose IPC
-// (khởi tạo ở module scope để cả hai cùng tham chiếu một instance — seed state persisted từ disk)
+// Shared FocusController: attachPrivacy really blocks requests + registerIpc exposes IPC
+// (created at module scope so both reference the same instance — state seeded from disk)
 const focusController = new FocusController(loadFocusState() ?? undefined)
 
 app.whenReady().then(() => {
   ensureSession()
-  // window.open/target=_blank từ UI → mở tab mới qua TabManager (không mở cửa sổ Electron raw)
+  // window.open/target=_blank from the UI → open a new tab via TabManager (no raw Electron window)
   function openTabInMain(url: string) {
     const tab = tm.open(url, 'default')
     const view = createTabView(url, 'default')
@@ -143,10 +143,10 @@ app.whenReady().then(() => {
     undoPersistFile: path.join(app.getPath('userData'), 'undo-close.json'),
   })
 
-  // resize cửa sổ → layout lại mọi view (full + split) theo kích thước mới
+  // window resize → re-layout every view (full + split) to the new size
   mainWindow.on('resize', () => layoutViews())
 
-  // khôi phục session từ lần chạy trước — mở lại TOÀN BỘ tab đã lưu (không cắt magic number)
+  // restore the session from the previous run — reopen ALL saved tabs (no magic number cutoff)
   const saved = loadSessionFromDisk()
   if (saved.length > 0) {
     openRestoredTabs(saved, (s) => {
@@ -193,7 +193,7 @@ app.whenReady().then(() => {
   }
 })
 
-// lưu session tự động khi thoát
+// auto-save the session on quit
 app.on('before-quit', () => {
   saveSessionToDisk(tm.list().map(t => ({ url: t.url, title: t.title, container: t.container, favicon: t.favicon })))
 })

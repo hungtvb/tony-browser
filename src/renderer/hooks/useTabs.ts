@@ -16,7 +16,7 @@ export function useTabs() {
     })
     tony.tabs.onChange(list => {
       setTabs(list)
-      // nếu active tab bị đóng, chọn tab cuối
+      // if the active tab was closed, select the last one
       setActiveId(prev => list.some(t => t.id === prev) ? prev : (list[list.length - 1]?.id ?? ''))
     })
   }, [])
@@ -33,7 +33,7 @@ export function useTabs() {
   function activate(id: string) {
     setActiveId(id)
     window.tony?.tabs.activate(id)
-    // báo cho TabSleeper biết tab này vừa được dùng (reset lastActive tracker)
+    // notify TabSleeper that this tab was just used (reset lastActive tracker)
     window.tony?.sleeper.activity(id)
   }
 

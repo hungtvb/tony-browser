@@ -1,4 +1,4 @@
-// TabSleeper — ngủ tab nền để tiết kiệm RAM, cảnh báo tab nặng
+// TabSleeper — sleeps background tabs to save RAM, warns about heavy tabs
 interface SleepableTab {
   id: string
   url: string
@@ -23,7 +23,7 @@ export function createTabSleeper(opts: SleeperOptions = {}) {
 
   function effectiveLastActive(tab: SleepableTab): number {
     const tracked = lastActiveMap.get(tab.id)
-    // tracker là nguồn sự thật; lastActive trong tab chỉ là fallback nếu chưa có
+    // the tracker is the source of truth; tab.lastActive is only a fallback when untracked
     if (tracked !== undefined) return tracked
     return tab.lastActive ?? Date.now()
   }
@@ -34,10 +34,10 @@ export function createTabSleeper(opts: SleeperOptions = {}) {
     const warnings: string[] = []
 
     for (const tab of tabs) {
-      // cảnh báo RAM nặng
+      // warn about heavy RAM usage
       if ((tab.memoryMB ?? 0) > heavyMemoryMB) warnings.push(tab.id)
 
-      // không sleep tab active hoặc whitelist
+      // never sleep the active tab or whitelisted tabs
       if (tab.id === activeTabId) continue
       if (whitelist.includes(tab.id)) continue
 

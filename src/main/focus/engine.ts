@@ -1,4 +1,4 @@
-// Focus Engine — chặn web xao nhãng khi bật Focus Mode
+// Focus Engine — block distracting websites when Focus Mode is on
 export interface FocusCheckResult {
   blocked: boolean
   reason?: 'focus'
@@ -39,7 +39,7 @@ export function createFocusEngine(opts: FocusOptions): FocusEngine {
     const host = hostOf(url)
     if (!host) return { blocked: false }
 
-    // whitelist trước (pattern có thể là domain hoặc domain/path)
+    // whitelist first (pattern can be a domain or domain/path)
     for (const w of whitelist) {
       const wHost = w.split('/')[0]
       const wPath = w.includes('/') ? w.slice(w.indexOf('/') + 1) : ''

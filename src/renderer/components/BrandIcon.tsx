@@ -1,6 +1,6 @@
 import React from 'react'
-// Favicon màu đầy đủ chính hãng từ Google s2 service (giống Chrome new tab dùng)
-// Nguồn: https://www.google.com/s2/favicons?domain=<domain>&sz=128
+// Full-color brand favicons from Google's s2 service (same one Chrome's new tab uses)
+// Source: https://www.google.com/s2/favicons?domain=<domain>&sz=128
 import googleIcon from '../icons/brands/google.png'
 import youtubeIcon from '../icons/brands/youtube.png'
 import facebookIcon from '../icons/brands/facebook.png'
@@ -21,7 +21,7 @@ export const BRANDS: Record<string, string> = {
   zalo: zaloIcon,
 }
 
-// Render favicon PNG màu thương hiệu
+// Render brand-colored favicon PNG
 export function BrandIcon({ name, size = 24 }: { name: string; size?: number }) {
   const src = BRANDS[name]
   if (!src) return null

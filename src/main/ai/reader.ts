@@ -1,15 +1,15 @@
-// AI — PageReader: trích xuất nội dung trang web để đưa cho LLM
+// AI — PageReader: extracts page content to feed the LLM
 import type { WebContents } from 'electron'
 
 export const MAX_PAGE_CHARS = 30000
 
-/** Lấy text chính của trang qua executeJavaScript (giới hạn ký tự) */
+/** Get the page's main text via executeJavaScript (char limit) */
 export async function extractPageText(wc: WebContents, maxChars = MAX_PAGE_CHARS): Promise<string> {
   try {
     const script = `
       (() => {
         const MAX = ${maxChars};
-        // Ưu tiên main content nếu có
+        // Prefer main content when present
         const main = document.querySelector('main, article, [role="main"]');
         const source = main || document.body;
         const text = (source ? source.innerText : '').replace(/\\s+/g, ' ').trim();
@@ -26,7 +26,7 @@ export async function extractPageText(wc: WebContents, maxChars = MAX_PAGE_CHARS
   }
 }
 
-/** Lấy title + URL trang */
+/** Get the page title + URL */
 export async function extractPageMeta(wc: WebContents): Promise<{ title: string; url: string }> {
   try {
     const title = wc.getTitle() || ''

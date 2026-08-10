@@ -45,7 +45,7 @@ export function StatusBar({ status }: { status: string }) {
   )
 }
 
-// Hook quản lý toast + status
+// Hook managing toasts + status
 export function useFeedback() {
   const [toasts, setToasts] = useState<{ id: number; msg: string; type?: string }[]>([])
   const [status, setStatus] = useState('')
@@ -57,7 +57,7 @@ export function useFeedback() {
   }
 
   useEffect(() => {
-    // tự ẩn status sau 5s
+    // auto-hide status after 5s
     if (!status) return
     const t = setTimeout(() => setStatus(''), 5000)
     return () => clearTimeout(t)

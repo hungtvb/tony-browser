@@ -41,9 +41,9 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
     <div style={styles.sidebar}>
       <div style={styles.header}>
         <span>☰ Spaces</span>
-        <button className="apple-focus" style={styles.newBtn} onClick={onNewTab} title="Tab mới">+</button>
+        <button className="apple-focus" style={styles.newBtn} onClick={onNewTab} title="New Tab">+</button>
       </div>
-      {tabs.length === 0 && <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '12px 10px' }}>Chưa có tab</div>}
+      {tabs.length === 0 && <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '12px 10px' }}>No tabs yet</div>}
       {tabs.map(t => (
         <button key={t.id} className="apple-focus"
           style={{ ...styles.tab, ...(t.id === activeId ? styles.active : {}) }}

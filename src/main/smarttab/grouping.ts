@@ -1,4 +1,4 @@
-// Smart Tab — nhóm tab, lưu/khôi phục session
+// Smart Tab — groups tabs, saves/restores sessions
 import type { TabState } from '../../shared/types'
 import type { Tab } from '../tabs/TabManager'
 
@@ -22,11 +22,11 @@ export interface SmartTab {
 
 const THEME_KEYWORDS: Record<string, string[]> = {
   '💻 Code & Dev': ['github.com', 'gitlab.com', 'stackoverflow', 'npm', 'jsfiddle', 'codesandbox'],
-  '📄 Docs & Văn phòng': ['docs.google', 'sheets', 'slides', 'notion', 'office.com', 'dropbox'],
-  '🎬 Giải trí': ['youtube', 'netflix', 'spotify', 'tiktok', 'twitch'],
+  '📄 Docs & Office': ['docs.google', 'sheets', 'slides', 'notion', 'office.com', 'dropbox'],
+  '🎬 Entertainment': ['youtube', 'netflix', 'spotify', 'tiktok', 'twitch'],
   '📧 Email': ['mail.', 'gmail', 'outlook', 'yahoo.com/mail'],
-  '🛒 Mua sắm': ['shopee', 'lazada', 'tiki', 'amazon', 'shopify'],
-  '📰 Tin tức': ['news', 'vnexpress', 'dantri', 'tuoitre', 'zalo', 'vlog'],
+  '🛒 Shopping': ['shopee', 'lazada', 'tiki', 'amazon', 'shopify'],
+  '📰 News': ['news', 'vnexpress', 'dantri', 'tuoitre', 'zalo', 'vlog'],
 }
 
 export function createSmartTab(): SmartTab {
@@ -37,7 +37,7 @@ export function createSmartTab(): SmartTab {
   function groupByDomain(tabs: TabState[]): GroupedTab[] {
     const map = new Map<string, TabState[]>()
     for (const t of tabs) {
-      const host = hostOf(t.url) || 'khác'
+      const host = hostOf(t.url) || 'other'
       const list = map.get(host) ?? []
       list.push(t)
       map.set(host, list)
@@ -51,7 +51,7 @@ export function createSmartTab(): SmartTab {
     for (const [theme, kws] of Object.entries(THEME_KEYWORDS)) {
       if (kws.some(k => full.includes(k))) return theme
     }
-    return '🌐 Khác'
+    return '🌐 Other'
   }
 
   function groupByTheme(tabs: Tab[]): GroupedTab[] {
@@ -67,7 +67,7 @@ export function createSmartTab(): SmartTab {
 
   function saveSession(tabs: Tab[], name?: string): TabSession {
     return {
-      name: name ?? `Phiên ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`,
+      name: name ?? `Session ${new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`,
       createdAt: Date.now(),
       tabs: tabs.map(t => ({ url: t.url, title: t.title || t.url })),
     }
