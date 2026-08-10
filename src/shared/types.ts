@@ -135,4 +135,9 @@ export interface TonyAPI {
     speak: (tabId?: string) => Promise<{ ok: boolean; error?: string; text?: string }>
     stop: () => Promise<{ ok: boolean }>
   }
+  save: {
+    page: (url: string, title: string, container?: string) => Promise<{ id: string; url: string; title: string; container: string; savedAt: number }>
+    list: () => Promise<{ id: string; url: string; title: string; container: string; savedAt: number }[]>
+    remove: (id: string) => Promise<boolean>
+  }
 }

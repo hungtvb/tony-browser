@@ -68,6 +68,11 @@ const api: TonyAPI = {
     speak: (tabId?: string) => ipcRenderer.invoke('tts:speak', tabId) as Promise<any>,
     stop: () => ipcRenderer.invoke('tts:stop') as Promise<any>,
   },
+  save: {
+    page: (url: string, title: string, container?: string) => ipcRenderer.invoke('save:page', url, title, container) as Promise<any>,
+    list: () => ipcRenderer.invoke('save:list') as Promise<any[]>,
+    remove: (id: string) => ipcRenderer.invoke('save:remove', id) as Promise<boolean>,
+  },
 }
 
 contextBridge.exposeInMainWorld('tony', api)

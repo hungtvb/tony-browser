@@ -1,5 +1,7 @@
 // Đăng ký các IPC handler giữa renderer ↔ main
-import { ipcMain, BrowserWindow, WebContentsView } from 'electron'
+import { ipcMain, BrowserWindow, WebContentsView, app } from 'electron'
+import * as fs from 'fs'
+import * as path from 'path'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
 import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
@@ -7,6 +9,7 @@ import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
 import { createSessionStore, createSessionPersist, type SessionTab } from './save/session-store'
+import { createCollection } from './save/collection'
 import blocklistDomains from './privacy/blocklist.json'
 import type { TabState, PrivacyStats, AIConfig, AIStatus, AIRequestParams, TabSessionInfo } from '../shared/types'
 import type { createTabManager } from './tabs/TabManager'
@@ -391,6 +394,40 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     return true
   })
   ipcMain.handle('session:restore', () => session.restoreSession())
+
+  // ─── save page collection (fix #57) ───
+  // the "Save page" button used to only toast success — nothing was persisted.
+  // collection.ts existed with tests but was never imported; wire it now: module
+  // instance + JSON file in userData (same pattern as saveSessionToDisk in index.ts),
+  // loaded at boot so previously saved pages survive restarts.
+  const collection = createCollection()
+  function collectionFile() {
+    return path.join(app.getPath('userData'), 'collection.json')
+  }
+  function loadCollectionFromDisk() {
+    try {
+      const json = fs.readFileSync(collectionFile(), 'utf-8')
+      collection.load(json)
+    } catch { /* no collection file yet — start empty */ }
+  }
+  function persistCollection() {
+    try {
+      fs.mkdirSync(path.dirname(collectionFile()), { recursive: true })
+      fs.writeFileSync(collectionFile(), collection.save(), 'utf-8')
+    } catch { /* disk write failed — keep in-memory copy */ }
+  }
+  loadCollectionFromDisk()
+  ipcMain.handle('save:page', (_e, url: string, title: string, container?: string) => {
+    const saved = collection.add(url, title, container ?? 'default')
+    persistCollection()
+    return saved
+  })
+  ipcMain.handle('save:list', () => collection.list())
+  ipcMain.handle('save:remove', (_e, id: string) => {
+    collection.remove(id)
+    persistCollection()
+    return true
+  })
 
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))
