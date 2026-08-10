@@ -115,7 +115,10 @@ app.whenReady().then(() => {
   }
   mainWindow = createMainWindow(openTabInMain)
   attachPrivacy(mainWindow, deps, () => focusController)
-  registerIpc(deps, { smartPersistFile: smartTabSessionsFile() })
+  registerIpc(deps, {
+    smartPersistFile: smartTabSessionsFile(),
+    undoPersistFile: path.join(app.getPath('userData'), 'undo-close.json'),
+  })
 
   // resize cửa sổ → layout lại mọi view (full + split) theo kích thước mới
   mainWindow.on('resize', () => layoutViews())

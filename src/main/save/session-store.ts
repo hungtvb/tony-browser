@@ -8,17 +8,21 @@ export interface SessionTab {
   container?: string
 }
 
-export function createSessionStore() {
-  const closed: SessionTab[] = []
+export function createSessionStore(persist?: SessionPersist<SessionTab>) {
+  // load stack undo từ disk (nếu có persist) — giữ tối đa 50 phần tử như recordClosed
+  const closed: SessionTab[] = (persist?.load() ?? []).slice(0, 50)
   let snapshot: SessionTab[] | null = null
 
   function recordClosed(tab: SessionTab) {
     closed.unshift(tab)
     if (closed.length > 50) closed.pop()
+    persist?.save(closed)
   }
 
   function popClosed(): SessionTab | null {
-    return closed.shift() ?? null
+    const tab = closed.shift() ?? null
+    persist?.save(closed)
+    return tab
   }
 
   function closedCount(): number {
