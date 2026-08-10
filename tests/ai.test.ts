@@ -19,20 +19,20 @@ describe('AIService', () => {
   })
 
   it('throws when asking without config', async () => {
-    await expect(service.ask({ text: 'hi', mode: 'chat' })).rejects.toThrow(/chưa được cấu hình|Thiếu/)
+    await expect(service.ask({ text: 'hi', mode: 'chat' })).rejects.toThrow(/not configured|Missing/)
   })
 
   it('calls chat/completions and returns content', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: 'Xin chào!' } }] }),
+      json: async () => ({ choices: [{ message: { content: 'Hello!' } }] }),
     })
     vi.stubGlobal('fetch', fetchMock)
 
     service.setConfig({ baseUrl: 'https://api.example.com/v1', apiKey: 'secret', model: 'gpt-x' })
-    const out = await service.ask({ text: 'chào', mode: 'chat' })
+    const out = await service.ask({ text: 'hello', mode: 'chat' })
 
-    expect(out).toBe('Xin chào!')
+    expect(out).toBe('Hello!')
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/v1/chat/completions',
       expect.objectContaining({
@@ -42,7 +42,7 @@ describe('AIService', () => {
     )
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
     expect(body.model).toBe('gpt-x')
-    expect(body.messages[1].content).toBe('chào')
+    expect(body.messages[1].content).toBe('hello')
   })
 
   it('handles API errors', async () => {
@@ -54,13 +54,13 @@ describe('AIService', () => {
   it('includes page text in summarize mode', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: 'Tóm tắt' } }] }),
+      json: async () => ({ choices: [{ message: { content: 'Summary' } }] }),
     })
     vi.stubGlobal('fetch', fetchMock)
     service.setConfig({ baseUrl: 'https://api.example.com/v1', apiKey: 'k', model: 'm' })
-    await service.ask({ text: '', mode: 'summarizePage' }, 'Đây là nội dung trang dài...')
+    await service.ask({ text: '', mode: 'summarizePage' }, 'This is the long page content...')
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
-    expect(body.messages[1].content).toContain('Đây là nội dung trang')
-    expect(body.messages[1].content).toContain('NỘI DUNG TRANG')
+    expect(body.messages[1].content).toContain('This is the long page content')
+    expect(body.messages[1].content).toContain('PAGE CONTENT')
   })
 })

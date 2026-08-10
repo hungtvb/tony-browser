@@ -1,4 +1,4 @@
-// Split View — tính bounds chia màn hình cho 2 tab song song
+// Split View — compute bounds that split the screen between 2 side-by-side tabs
 export interface Bounds { x: number; y: number; width: number; height: number }
 
 export function computeSplitBounds(

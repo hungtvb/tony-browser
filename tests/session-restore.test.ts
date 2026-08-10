@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { openRestoredTabs } from '../src/main/save/session-restore'
 
-describe('Session restore — mở toàn bộ tab đã lưu (không cắt magic number)', () => {
-  it('restore đủ 12+ tab mà session lưu (không slice(0,10))', () => {
+describe('Session restore — opens all saved tabs (no magic-number cutoff)', () => {
+  it('restores all 12+ tabs saved in the session (no slice(0,10))', () => {
     const saved = Array.from({ length: 15 }, (_, i) => ({
       url: `https://site${i}.com`,
       title: `Site ${i}`,
@@ -15,7 +15,7 @@ describe('Session restore — mở toàn bộ tab đã lưu (không cắt magic 
     expect(opened[14]).toBe('https://site14.com')
   })
 
-  it('restore theo đúng thứ tự session lưu (tab 11+ không bị rớt)', () => {
+  it('restores in the exact order the session saved (tabs 11+ are not dropped)', () => {
     const saved = Array.from({ length: 12 }, (_, i) => ({
       url: `https://tab${i}.com`,
       title: `Tab ${i}`,
@@ -27,7 +27,7 @@ describe('Session restore — mở toàn bộ tab đã lưu (không cắt magic 
     expect(opened).toContain('https://tab11.com')
   })
 
-  it('session rỗng → không mở tab nào', () => {
+  it('empty session → opens no tabs', () => {
     const opened: string[] = []
     const count = openRestoredTabs([], (s) => opened.push(s.url))
     expect(count).toBe(0)

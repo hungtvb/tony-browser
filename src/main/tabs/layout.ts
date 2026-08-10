@@ -1,8 +1,8 @@
-// Layout chung cho WebContentsView — tính bounds theo kích thước cửa sổ hiện tại
-// Dùng cho cả resize, split, mở/đóng tab. Tránh setBounds thủ công rải rác.
+// Shared layout for WebContentsView — computes bounds from the current window size
+// Used for resize, split, open/close tab alike. Avoids scattered manual setBounds calls.
 import { computeSplitBounds, type Bounds } from './split'
 
-/** Số view đang hiển thị: 1 (full) hoặc 2 (split) */
+/** Number of visible views: 1 (full) or 2 (split) */
 export function layoutBounds(
   viewCount: 1 | 2,
   winWidth: number,
@@ -14,9 +14,9 @@ export function layoutBounds(
 }
 
 /**
- * Tính bounds cho danh sách view theo trạng thái split hiện tại.
- * splitIds: danh sách id tab đang split (độ dài 2 → split; 1 → full).
- * Trả về mảng bounds cùng độ dài với số view hiển thị.
+ * Compute bounds for a list of views based on the current split state.
+ * splitIds: list of tab ids currently split (length 2 → split; 1 → full).
+ * Returns a bounds array of the same length as the number of visible views.
  */
 export function computeLayoutBounds(
   splitIds: string[],
@@ -29,10 +29,10 @@ export function computeLayoutBounds(
 }
 
 /**
- * Lập kế hoạch layout cho TẤT CẢ tab: tab nào hiển thị, bounds ra sao, tab nào ẩn.
- * Bounds gán theo vị trí trong DANH SÁCH HIỂN THỊ (full → [activeId], split → splitIds),
- * KHÔNG theo index của tab trong tm.list() — tránh lỗi gán nhầm bounds khi active
- * tab không phải tab đầu danh sách (bug #14 còn sót).
+ * Plan the layout for ALL tabs: which tab is visible, its bounds, which tab is hidden.
+ * Bounds are assigned by position in the VISIBLE LIST (full → [activeId], split → splitIds),
+ * NOT by the tab's index in tm.list() — avoids misassigning bounds when the active
+ * tab is not the first in the list (leftover bug #14).
  */
 export function planLayout(
   tabIds: string[],
@@ -42,7 +42,7 @@ export function planLayout(
   winHeight: number,
   toolbarHeight = 92,
 ): { id: string; bounds: Bounds; visible: boolean }[] {
-  // split chỉ khi đủ 2 id còn tồn tại trong tabIds — nếu 1 id đã chết (đóng tab giữa chừng) thì coi là full
+  // split only when both ids still exist in tabIds — if one id is gone (tab closed mid-way) treat as full
   const split = splitIds.length >= 2 && splitIds.every(id => tabIds.includes(id))
   const showIds = split ? splitIds : [activeId]
   const bounds = computeLayoutBounds(showIds, winWidth, winHeight, toolbarHeight)

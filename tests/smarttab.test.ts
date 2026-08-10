@@ -37,8 +37,8 @@ describe('SmartTab grouping', () => {
 
   it('round-trips sessions (save/restore)', () => {
     const g = createSmartTab()
-    const session = g.saveSession(tabs as any[], 'Buổi sáng')
-    expect(session.name).toBe('Buổi sáng')
+    const session = g.saveSession(tabs as any[], 'Morning')
+    expect(session.name).toBe('Morning')
     expect(session.tabs.length).toBe(5)
     const restored = g.restoreSession(session)
     expect(restored.map(t => t.url)).toEqual(tabs.map(t => t.url))
@@ -67,21 +67,21 @@ describe('SmartTabController persist', () => {
 
   it('saves session to disk and loads back on restart', () => {
     const c = new SmartTabController(persist)
-    c.saveSession([tab('https://github.com', 'GitHub')] as any, 'sáng')
-    c.saveSession([tab('https://mail.google.com', 'Gmail'), tab('https://docs.google.com', 'Docs')] as any, 'chiều')
+    c.saveSession([tab('https://github.com', 'GitHub')] as any, 'morning')
+    c.saveSession([tab('https://mail.google.com', 'Gmail'), tab('https://docs.google.com', 'Docs')] as any, 'evening')
     expect(c.listSessions().length).toBe(2)
 
-    // "restart app" — controller mới với cùng persist
+    // "restart app" — new controller with the same persist
     const c2 = new SmartTabController(persist)
     const loaded = c2.listSessions()
     expect(loaded.length).toBe(2)
-    expect(loaded[0].name).toBe('chiều') // mới nhất trước
-    expect(loaded.map(s => s.name)).toEqual(['chiều', 'sáng'])
-    const gmail = loaded.find(s => s.name === 'chiều')!
+    expect(loaded[0].name).toBe('evening') // newest first
+    expect(loaded.map(s => s.name)).toEqual(['evening', 'morning'])
+    const gmail = loaded.find(s => s.name === 'evening')!
     expect(gmail.tabs.map(t => t.url)).toEqual(['https://mail.google.com', 'https://docs.google.com'])
   })
 
-  it('persist.save được gọi mỗi lần saveSession (ghi disk)', () => {
+  it('persist.save is called on every saveSession (writes disk)', () => {
     const c = new SmartTabController(persist)
     expect(saved).toBe(0)
     c.saveSession([tab('https://youtube.com', 'YT')] as any, 'x')
@@ -89,16 +89,16 @@ describe('SmartTabController persist', () => {
     expect(saved).toBe(2)
   })
 
-  it('cap 10 sessions vẫn giữ khi persist (persist nhận list đã cắt)', () => {
+  it('cap of 10 sessions persists (persist receives the truncated list)', () => {
     const c = new SmartTabController(persist)
     for (let i = 0; i < 15; i++) c.saveSession([tab(`https://site${i}.com`, `S${i}`)] as any, `s${i}`)
     expect(c.listSessions().length).toBe(10)
-    expect(mem.length).toBe(10) // persist thấy đúng list đã cap
+    expect(mem.length).toBe(10) // persist sees the correctly capped list
     const c2 = new SmartTabController(persist)
     expect(c2.listSessions().length).toBe(10)
   })
 
-  it('file hỏng (JSON invalid) → load trả [] không crash', () => {
+  it('corrupt file (invalid JSON) → load returns [] without crashing', () => {
     const badPersist = {
       save: () => {},
       load: () => { throw new Error('JSON.parse: unexpected token') },
@@ -107,7 +107,7 @@ describe('SmartTabController persist', () => {
     expect(new SmartTabController(badPersist).listSessions()).toEqual([])
   })
 
-  it('createSessionPersist thật: save ghi file, load đọc lại, file hỏng → []', () => {
+  it('real createSessionPersist: save writes file, load reads it back, corrupt file → []', () => {
     const p = createSessionPersist<TabSessionInfo>(file)
     const list: TabSessionInfo[] = [
       { name: 'a', createdAt: 1, tabs: [{ url: 'https://a.com', title: 'A' }] },
@@ -120,6 +120,6 @@ describe('SmartTabController persist', () => {
     fs.writeFileSync(file, '{corrupt json!!!', 'utf-8')
     expect(p.load()).toEqual([])
     fs.rmSync(file, { force: true })
-    expect(p.load()).toEqual([]) // file không tồn tại → []
+    expect(p.load()).toEqual([]) // file does not exist → []
   })
 })

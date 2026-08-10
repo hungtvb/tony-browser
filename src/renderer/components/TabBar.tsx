@@ -63,7 +63,7 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
   return (
     <div style={styles.bar} onWheel={handleWheel}>
       <button className="apple-focus" style={{ ...styles.plus, ...(hoverPlus ? { background: 'rgba(255,255,255,0.1)', transform: 'scale(1.08)' } : {}) }}
-        title="Tab mới (Ctrl+T)" onClick={() => onNewTab?.()}
+        title="New Tab (Ctrl+T)" onClick={() => onNewTab?.()}
         onMouseEnter={() => setHoverPlus(true)} onMouseLeave={() => setHoverPlus(false)}>+</button>
       {tabs.map(t => (
         <button

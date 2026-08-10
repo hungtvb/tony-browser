@@ -1,4 +1,4 @@
-// AI — Service: gọi LLM API (OpenAI-compatible) để trả lời/tóm tắt
+// AI — Service: calls the LLM API (OpenAI-compatible) to answer/summarize
 import type { AIConfig, AIRequestParams } from '../../shared/types'
 
 export class AIService {
@@ -21,13 +21,13 @@ export class AIService {
     return this._busy
   }
 
-  /** Gọi LLM chat completions, trả text cuối */
+  /** Call the LLM chat completions endpoint, return the final text */
   async ask(params: AIRequestParams, pageText?: string): Promise<string> {
     const cfg = this.config
-    if (!cfg) throw new Error('AI chưa được cấu hình')
-    if (!this.configured) throw new Error('Thiếu baseUrl/apiKey/model')
+    if (!cfg) throw new Error('AI is not configured')
+    if (!this.configured) throw new Error('Missing baseUrl/apiKey/model')
 
-    // act-mode phải chờ LLM plan lâu hơn → 120s; chat/summarize 30s
+    // act-mode needs longer to wait for the LLM plan → 120s; chat/summarize 30s
     const timeoutMs = params.mode === 'act' ? 120_000 : 30_000
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -58,16 +58,16 @@ export class AIService {
 
       if (!res.ok) {
         const errText = (await res.text()).slice(0, 200)
-        throw new Error(`LLM API lỗi ${res.status}: ${errText}`)
+        throw new Error(`LLM API error ${res.status}: ${errText}`)
       }
 
       const data = (await res.json()) as any
       const content: string = data?.choices?.[0]?.message?.content ?? ''
       return content.trim()
     } catch (e) {
-      // abort do timeout → lỗi rõ ràng thay vì "This operation was aborted"
+      // abort due to timeout → clear error instead of "This operation was aborted"
       if (ctrl.signal.aborted) {
-        throw new Error(`LLM API timeout sau ${timeoutMs / 1000}s`)
+        throw new Error(`LLM API timed out after ${timeoutMs / 1000}s`)
       }
       throw e
     } finally {
@@ -77,33 +77,34 @@ export class AIService {
   }
 
   private systemPrompt(): string {
-    return `Bạn là Kenzo, trợ lý AI trong "Tony Browser". Trả lời ngắn gọn, súc tích, đúng trọng tâm.
-Khi được yêu cầu tóm tắt trang web, hãy đưa ra bản tóm tắt mạch lạc bằng tiếng Việt (hoặc ngôn ngữ người dùng dùng), nếu trang là tiếng Anh thì tóm tắt bằng tiếng Việt có giữ nguyên thuật ngữ chuyên môn quan trọng. Không bịa thông tin không có trong nội dung cung cấp.`
+    return `You are Kenzo, the AI assistant inside "Tony Browser". Answer concisely, precisely and to the point.
+When asked to summarize a webpage, give a coherent summary in Vietnamese (or the language the user is using); if the page is in English, summarize in Vietnamese while keeping important technical terms. Do not invent information that is not in the provided content.`
   }
 
   private buildUserMessage(params: AIRequestParams, pageText?: string): string {
     const { mode, text } = params
     if (mode === 'summarizePage') {
-      return `Tóm tắt trang web sau (title/url và nội dung):
-—— NỘI DUNG TRANG ——
-${pageText || '(không đọc được nội dung)'}
-—— HẾT ——
-Yêu cầu: đưa tóm tắt rõ ràng (3-6 gạch đầu dòng) bằng tiếng Việt.`
+      return `Summarize the following webpage (title/url and content):
+—— PAGE CONTENT ——
+${pageText || '(could not read the content)'}
+—— END ——
+Requirement: provide a clear summary (3-6 bullet points) in Vietnamese.`
     }
     if (mode === 'summarizeAll') {
-      return `Đây là nội dung nhiều tab đang mở trong trình duyệt. Tổng hợp thành 1 báo cáo gọn theo từng tab, bằng tiếng Việt:
-${pageText || '(không có nội dung)'}`
+      return `Here is the content of several open tabs in the browser. Combine it into a compact per-tab report, in Vietnamese:
+${pageText || '(no content)'}`
     }
     // chat mode
     return pageText
-      ? `Người dùng hỏi: """${text}"""
+      ? `The user asks: """${text}"""
 
-Dưới đây là nội dung trang hiện tại (có thể liên quan câu hỏi):
+Below is the current page content (may be relevant to the question):
+
 """
 ${pageText}
 """
 
-Trả lời giúp người dùng.`
+Please help the user.`
       : text
   }
 }

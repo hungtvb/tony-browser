@@ -52,7 +52,7 @@ describe('Session store', () => {
   })
 })
 
-describe('Session store with disk persist (fix #34 — undo-close qua restart)', () => {
+describe('Session store with disk persist (fix #34 — undo-close across restart)', () => {
   function makeFakePersist(seed: SessionTab[] = []): SessionPersist<SessionTab> {
     let data: SessionTab[] = seed.map(t => ({ ...t }))
     return {
@@ -61,21 +61,21 @@ describe('Session store with disk persist (fix #34 — undo-close qua restart)',
     }
   }
 
-  it('restores undo stack from disk on restart — LIFO qua restart', () => {
+  it('restores undo stack from disk on restart — LIFO across restart', () => {
     const persist = makeFakePersist()
     const store1 = createSessionStore(persist)
     store1.recordClosed({ id: 'a', url: 'https://a.com', title: 'A' })
     store1.recordClosed({ id: 'b', url: 'https://b.com', title: 'B' })
 
-    // mô phỏng restart: store mới cùng persist instance (disk)
+    // simulate restart: a new store with the same persist instance (disk)
     const store2 = createSessionStore(persist)
     expect(store2.closedCount()).toBe(2)
-    expect(store2.popClosed()?.id).toBe('b') // tab đóng gần nhất
-    expect(store2.popClosed()?.id).toBe('a') // rồi tab cũ hơn — LIFO giữ qua restart
+    expect(store2.popClosed()?.id).toBe('b') // most recently closed tab
+    expect(store2.popClosed()?.id).toBe('a') // then the older tab — LIFO preserved across restart
     expect(store2.closedCount()).toBe(0)
   })
 
-  it('persists after popClosed — undo xong rồi restart vẫn đúng', () => {
+  it('persists after popClosed — undo then restart still works', () => {
     const persist = makeFakePersist()
     const store1 = createSessionStore(persist)
     store1.recordClosed({ id: 'a', url: 'https://a.com', title: 'A' })

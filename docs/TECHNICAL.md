@@ -1,17 +1,17 @@
 # Tony Browser — Technical Design Document
 
 > Version 0.1 — 07/08/2026
-> Tác giả: Kenzo (cho Đại ca hungtvb)
+> Author: Kenzo (for Boss hungtvb)
 
 ---
 
-## 1. Tổng quan (Overview)
+## 1. Overview
 
-**Tony Browser** là trình duyệt desktop dựa trên Electron, điểm khác biệt là có **trợ lý AI tích hợp** (đọc trang, tóm tắt, tự thao tác) cùng các tính năng hiện đại: Focus Mode, Privacy built-in, Smart Tabs, tối ưu RAM.
+**Tony Browser** is a desktop browser built on Electron; its differentiator is the **built-in AI assistant** (read pages, summarize, automate actions) plus modern features: Focus Mode, built-in Privacy, Smart Tabs, RAM optimization.
 
-**Mục tiêu MVP:** Browser dùng được thật — mở tab, duyệt web, chặn quảng cáo — kèm trợ lý AI tóm tắt trang & toàn bộ tab.
+**MVP goal:** A browser that actually works — open tabs, browse the web, block ads — plus an AI assistant that summarizes a page & all tabs.
 
-## 2. Kiến trúc tổng thể (Architecture)
+## 2. Overall Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -33,21 +33,21 @@
               └──────────────────┘
 ```
 
-### 2.1 Thành phần chính
+### 2.1 Main components
 
-| Module | Vị trí | Trách nhiệm |
+| Module | Location | Responsibility |
 |---|---|---|
-| **TabManager** | `src/main/tabs/` | Tạo/đóng/chuyển tab dùng `WebContentsView`, giữ state tab |
-| **TabBar + AddressBar** | `src/renderer/` | UI điều khiển (React) |
-| **AI Service** | `src/main/ai/` | Gọi LLM API, prompt template, stream response |
-| **Page Reader** | `src/main/ai/reader.ts` | Trích xuất nội dung trang (text, title, links) |
-| **PrivacyFilter** | `src/main/privacy/` | Chặn ads/tracker qua `session.webRequest` + blocklist |
-| **FocusEngine** | `src/main/focus/` | Chặn URL xao nhãng theo lịch/whitelist |
-| **SmartTab** | `src/main/smarttab/` | Nhóm tab theo domain/chủ đề, lưu/khôi phục session |
-| **TabSleeper** | `src/main/perf/` | Đóng băng tab nền (discard), báo RAM |
-| **SessionStore** | `src/main/storage/` | Lưu settings, sessions, blocklist (JSON/electron-store) |
+| **TabManager** | `src/main/tabs/` | Creates/closes/switches tabs with `WebContentsView`, keeps tab state |
+| **TabBar + AddressBar** | `src/renderer/` | Control UI (React) |
+| **AI Service** | `src/main/ai/` | Calls the LLM API, prompt templates, streams responses |
+| **Page Reader** | `src/main/ai/reader.ts` | Extracts page content (text, title, links) |
+| **PrivacyFilter** | `src/main/privacy/` | Blocks ads/trackers via `session.webRequest` + blocklist |
+| **FocusEngine** | `src/main/focus/` | Blocks distracting URLs per schedule/whitelist |
+| **SmartTab** | `src/main/smarttab/` | Groups tabs by domain/topic, saves/restores sessions |
+| **TabSleeper** | `src/main/perf/` | Freezes background tabs (discard), reports RAM |
+| **SessionStore** | `src/main/storage/` | Saves settings, sessions, blocklist (JSON/electron-store) |
 
-### 2.2 Luồng IPC (giao tiếp renderer ↔ main)
+### 2.2 IPC flow (renderer ↔ main communication)
 
 ```
 Renderer                          Main
@@ -60,52 +60,52 @@ Renderer                          Main
   └────────────────────────────────┘
 ```
 
-Toàn bộ qua `ipcRenderer.invoke` / `ipcMain.handle` (an toàn, contextIsolation bật).
+Everything goes through `ipcRenderer.invoke` / `ipcMain.handle` (secure, contextIsolation enabled).
 
-## 3. Công nghệ (Tech Stack)
+## 3. Tech Stack
 
-| Thành phần | Chọn | Lý do |
+| Component | Choice | Reason |
 |---|---|---|
-| Desktop shell | **Electron 31+** | Trưởng thành, WebContentsView ổn định |
+| Desktop shell | **Electron 31+** | Mature, stable WebContentsView |
 | UI | **React 18 + TypeScript + Vite** | Dev speed, type safety |
-| Tab container | **WebContentsView** | Thay BrowserView (deprecated), mỗi tab 1 view |
-| Storage | **electron-store** (JSON) | Đơn giản cho settings/session |
-| LLM API | **OpenAI-compatible HTTP** (cấu hình base_url + key trong Settings) | Linh hoạt, dùng được 9router/mọi provider |
-| Blocklist | **EasyList/AdGuard DNS filter lists** (fetch + cache) | Chuẩn ngành, cập nhật tự động |
-| Test | **Vitest** (unit) + **Playwright** (e2e tùy chọn) | Nhẹ, cùng hệ TypeScript |
+| Tab container | **WebContentsView** | Replaces BrowserView (deprecated), one view per tab |
+| Storage | **electron-store** (JSON) | Simple for settings/session |
+| LLM API | **OpenAI-compatible HTTP** (base_url + key configured in Settings) | Flexible, works with any router/provider |
+| Blocklist | **EasyList/AdGuard DNS filter lists** (fetch + cache) | Industry standard, auto-updated |
+| Test | **Vitest** (unit) + **Playwright** (optional e2e) | Lightweight, same TypeScript ecosystem |
 
-## 4. Thiết kế chi tiết các tính năng
+## 4. Detailed feature design
 
-### 4.1 Trợ lý AI (#1)
-- **Entry:** Nút 🪄 trên thanh địa chỉ + shortcut `Ctrl+J` → mở AI Panel (panel phải, có thể gọi từ bất kỳ tab nào).
-- **Luồng:** User gõ lệnh → `PageReader` lấy text trang hiện tại (giới hạn ~30k ký tự) → prompt template → LLM stream → hiển thị markdown.
-- **Actions (nâng cao):** AI trả về JSON action `{type: "click"|"fill"|"navigate", ...}` → main process thực thi qua `webContents.executeJavaScript` (tự động hóa cơ bản).
-- **Cấu hình:** base URL, API key, model trong Settings; lưu bằng electron-store.
+### 4.1 AI Assistant (#1)
+- **Entry:** 🪄 button on the address bar + `Ctrl+J` shortcut → opens the AI Panel (right panel, callable from any tab).
+- **Flow:** User types a command → `PageReader` grabs the current page text (capped at ~30k characters) → prompt template → LLM stream → renders markdown.
+- **Actions (advanced):** AI returns a JSON action `{type: "click"|"fill"|"navigate", ...}` → main process executes it via `webContents.executeJavaScript` (basic automation).
+- **Configuration:** base URL, API key, model in Settings; persisted with electron-store.
 
 ### 4.2 Focus Mode (#2)
-- Bật/tắt qua icon 🧘 trên toolbar hoặc lịch (ví dụ 9h–18h).
-- Khi bật: URL trong blocklist focus → hiển thị trang "Bạn đang tập trung 💪" thay vì tải nội dung.
-- Whitelist (ngoại lệ) cấu hình được.
-- Pomodoro nhắc nghỉ: notification sau 25/45 phút.
+- Toggle via the 🧘 icon on the toolbar or on a schedule (e.g. 9am–6pm).
+- When on: URLs in the focus blocklist → show a "You're in focus 💪" page instead of loading content.
+- Whitelist (exceptions) is configurable.
+- Pomodoro break reminders: notification after 25/45 minutes.
 
 ### 4.3 Privacy (#4)
-- `session.webRequest.onBeforeRequest` chặn request khớp blocklist (EasyList + tracker domains).
-- Chặn popup + notification spam (`setPermissionRequestHandler`).
-- Toggle bật/tắt, thống kê "Đã chặn X request".
+- `session.webRequest.onBeforeRequest` blocks requests matching the blocklist (EasyList + tracker domains).
+- Blocks popups + notification spam (`setPermissionRequestHandler`).
+- Toggle on/off, shows "Blocked X requests" stats.
 
 ### 4.4 Smart Tabs (#5)
-- Nhóm tự động theo domain + heuristic chủ đề (title keywords).
-- Lưu/khôi phục toàn bộ phiên (tên phiên, timestamp).
-- Tìm tab bằng text: search title+url+content-snippet.
+- Auto-groups by domain + topic heuristics (title keywords).
+- Saves/restores whole sessions (session name, timestamp).
+- Finds tabs by text: search title+url+content-snippet.
 
-### 4.5 Tóm tắt nhanh mọi tab (#6)
-- Nút 📋 "Tóm tắt tất cả": đọc title + text (rút gọn) từng tab qua IPC → AI tổng hợp 1 báo cáo → copy/share được.
+### 4.5 Quick summary of all tabs (#6)
+- 📋 "Summarize all" button: reads each tab's title + text (truncated) via IPC → AI compiles one report → copy/shareable.
 
-### 4.6 Tối ưu RAM/Pin (#7)
-- Tab nền không hoạt động 10 phút → `webContents.forcefullyCrashRenderer()`? Không — dùng `webContents.setBackgroundThrottling(true)` + đưa URL vào danh sách discard, reload khi activate (giống "Sleeping tabs" của Edge).
-- Tab ngốn RAM > 500MB cảnh báo.
+### 4.6 RAM/Battery optimization (#7)
+- Background tab idle for 10 minutes → `webContents.forcefullyCrashRenderer()`? No — use `webContents.setBackgroundThrottling(true)` + add the URL to the discard list, reload on activation (like Edge's "Sleeping tabs").
+- Warn when a tab uses > 500MB RAM.
 
-## 5. Cấu trúc thư mục (Target Structure)
+## 5. Folder structure (target)
 
 ```
 tony-browser/
@@ -115,7 +115,7 @@ tony-browser/
 ├── src/
 │   ├── main/
 │   │   ├── index.ts               # app lifecycle, window
-│   │   ├── ipc.ts                 # đăng ký tất cả IPC handlers
+│   │   ├── ipc.ts                 # registers all IPC handlers
 │   │   ├── tabs/                  # TabManager, Tab
 │   │   ├── ai/                    # AIService, reader.ts, actions.ts
 │   │   ├── privacy/               # blocklist.ts, filters.ts
@@ -132,33 +132,33 @@ tony-browser/
 │   │   ├── components/            # TabBar, AddressBar, AIPanel, ...
 │   │   └── hooks/                 # useTabs, useAI...
 │   └── shared/
-│       └── types.ts               # IPC contract types (dùng chung)
+│       └── types.ts               # IPC contract types (shared)
 └── tests/                          # vitest unit tests
 ```
 
-## 6. Quyết định Engine (đã duyệt 07/08/2026)
+## 6. Engine decision (approved 07/08/2026)
 
-**Chọn: Electron + Chromium/Blink. KHÔNG đổi sang Tauri.**
+**Chosen: Electron + Chromium/Blink. NOT switching to Tauri.**
 
-Lý do:
-1. Tính năng chủ lực #1 (AI thao tác trang) cần kiểm soát sâu từng trang — `executeJavaScript`, `webRequest`, CDP. Tauri/WebView hệ thống không hỗ trợ mức này.
-2. Privacy (#4), Focus (#2), Smart Tabs (#5) đều xây trên API Chromium.
-3. Điểm yếu RAM của Electron được giải quyết bằng chính tính năng #7 (TabSleeper) — biến thành điểm bán.
-4. **Playwright = thư viện phụ trợ** cho AI agent (phase 4), không phải thay thế shell.
+Reasons:
+1. Core feature #1 (AI page automation) needs deep per-page control — `executeJavaScript`, `webRequest`, CDP. System Tauri/WebView cannot support this level.
+2. Privacy (#4), Focus (#2), Smart Tabs (#5) are all built on Chromium APIs.
+3. Electron's RAM weakness is solved by feature #7 itself (TabSleeper) — turning it into a selling point.
+4. **Playwright = helper library** for the AI agent (phase 4), not a shell replacement.
 
-## 7. Rủi ro & Quyết định
+## 7. Risks & decisions
 
-| Rủi ro | Ảnh hưởng | Giảm thiểu |
+| Risk | Impact | Mitigation |
 |---|---|---|
-| WebContentsView + React state phức tạp | Bug đồng bộ tab | 1 nguồn truth TabManager, events → renderer |
-| LLM key lộ trong source | An ninh | Chỉ lưu local settings, không commit |
-| Blocklist lớn chậm lọc | Lag duyệt web | Filter offline (uBlock-style) sau, bắt đầu bằng map đơn giản |
-| Server headless khó test GUI | Khó verify UI | Unit test logic thuần (Vitest), GUI test bằng tay/máy Đại ca |
+| Complex WebContentsView + React state | Tab sync bugs | Single source of truth TabManager, events → renderer |
+| LLM key leaked in source | Security | Only store in local settings, never commit |
+| Large blocklist slows filtering | Browsing lag | Offline filter (uBlock-style) later, start with a simple map |
+| Headless server hard to test GUI | Hard to verify UI | Unit-test pure logic (Vitest), GUI tested by hand/on Boss's machine |
 
-## 7. Phạm vi phiên bản
+## 7. Version scope
 
-- **v0.1 (hiện tại):** skeleton build được, Electron chạy.
-- **v0.2:** Tab + AddressBar dùng được, duyệt web thật.
+- **v0.1 (current):** skeleton builds, Electron runs.
+- **v0.2:** Tab + AddressBar usable, real web browsing.
 - **v0.3:** Privacy blocklist, Focus Mode.
-- **v0.4:** AI assistant (tóm tắt trang + toàn bộ tab), Smart Tabs, TabSleeper.
-- **v0.5:** AI actions (tự thao tác), polish, packaging (electron-builder).
+- **v0.4:** AI assistant (summarize page + all tabs), Smart Tabs, TabSleeper.
+- **v0.5:** AI actions (automation), polish, packaging (electron-builder).

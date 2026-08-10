@@ -1,4 +1,4 @@
-// Shared types — IPC contract giữa main/preload/renderer
+// Shared types — IPC contract between main/preload/renderer
 
 export interface TabState {
   id: string
@@ -31,7 +31,7 @@ export interface PrivacyStats {
 
 export interface AIAskParams {
   text: string
-  tabId?: string // nếu có → đọc nội dung tab đó
+  tabId?: string // if provided → read that tab's content
   mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act'
 }
 

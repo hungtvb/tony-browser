@@ -50,11 +50,11 @@ export default function SearchOverlay({ onSelect, onClose }: {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.box} onClick={e => e.stopPropagation()}>
-        <input ref={inputRef} style={styles.input} placeholder="Tìm tab đang mở... (Ctrl+Shift+F)" value={query}
+        <input ref={inputRef} style={styles.input} placeholder="Search open tabs... (Ctrl+Shift+F)" value={query}
           onChange={e => setQuery(e.target.value)} onKeyDown={onKey} />
-        <div style={styles.hint}>{results.length} kết quả · ↑↓ chọn · Enter mở · Esc đóng</div>
+        <div style={styles.hint}>{results.length} results · ↑↓ select · Enter open · Esc close</div>
         <div style={styles.list}>
-          {query && results.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>Không tìm thấy tab</div>}
+          {query && results.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>No tabs found</div>}
           {results.map((t, i) => (
             <div key={t.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)} onClick={() => { onSelect(t.id); onClose() }}>

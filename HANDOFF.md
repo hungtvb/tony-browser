@@ -1,16 +1,16 @@
 # 🤝 HANDOFF Protocol — Tony ⇄ Kenzo
 
-> Contract giữa **Tony** (reviewer / supervisor, Hermes Agent) và **Kenzo** (coding bot).
-> Mọi review comment, GitHub issue, và PR reply trong repo này PHẢI tuân theo protocol này.
-> Mục đích: Kenzo luôn biết chính xác việc cần làm; Tony luôn biết chính xác cái gì đã xong.
+> Contract between **Tony** (reviewer / supervisor, Hermes Agent) and **Kenzo** (coding bot).
+> Every review comment, GitHub issue, and PR reply in this repo MUST follow this protocol.
+> Goal: Kenzo always knows exactly what to do; Tony always knows exactly what is done.
 
 ---
 
-## 1️⃣ Chiều Tony → Kenzo (review PR / GitHub issue)
+## 1️⃣ Direction Tony → Kenzo (PR review / GitHub issue)
 
-Áp dụng cho: **mọi review comment trên PR** và **mọi issue improvement** do Tony tạo.
+Applies to: **every review comment on a PR** and **every improvement issue** created by Tony.
 
-### Review comment trên PR — format:
+### Review comment on PR — format:
 
 ```markdown
 ## Code Review Summary
@@ -18,93 +18,93 @@
 **Verdict: Approve / Comment / Changes requested**
 
 ### 🔴 Critical
-- **src/x.ts:42** — mô tả lỗi + tác động
+- **src/x.ts:42** — error description + impact
 
 ### ⚠️ Warnings
-- **src/y.ts:88** — mô tả vấn đề
+- **src/y.ts:88** — problem description
 
 ### 💡 Suggestions
-- **src/z.ts:10** — gợi ý cải thiện
+- **src/z.ts:10** — improvement suggestion
 
 ### ✅ Looks Good
-- Phần nào ổn, giữ nguyên
+- Which parts are fine, keep as is
 
 ---
 
 📋 **HANDOFF FOR KENZO:**
-1. `src/x.ts:42` — fix race condition: dùng `AbortController` thay vì flag boolean
-2. `tests/y.test.ts` — thêm test cho empty input (3 case: `""`, `null`, whitespace)
-3. `src/z.ts:10` — gộp helper trùng với `src/utils.ts:34`
+1. `src/x.ts:42` — fix race condition: use `AbortController` instead of a boolean flag
+2. `tests/y.test.ts` — add tests for empty input (3 cases: `""`, `null`, whitespace)
+3. `src/z.ts:10` — merge the helper that duplicates `src/utils.ts:34`
 ```
 
-- **Mỗi mục handoff = 1 việc** với file + dòng + cách sửa gợi ý rõ ràng.
-- Kenzo chỉ cần đọc "HANDOFF FOR KENZO" là làm được ngay, không cần đoán.
+- **Each handoff item = 1 task** with a clear file + line + suggested fix.
+- Kenzo only needs to read "HANDOFF FOR KENZO" to start working, no guessing needed.
 
-### Issue improvement — format:
+### Improvement issue — format:
 
 ```markdown
-**Title:** `Improvement: <chủ đề rõ ràng>`
+**Title:** `Improvement: <clear topic>`
 
-## Vấn đề
-Mô tả ngắn gọn vấn đề / cải thiện tiềm năng.
+## Problem
+Short description of the problem / potential improvement.
 
-## Liên quan
+## Related
 - File: `src/xxx.ts:12-30`
-- PR gốc: #N
+- Original PR: #N
 
-## Đề xuất
-Hướng làm cụ thể, từng bước.
+## Suggested fix
+Concrete, step-by-step approach.
 
-📋 **HANDOFF FOR KENZO:** <việc cần làm, file, cách kiểm chứng>
+📋 **HANDOFF FOR KENZO:** <task, file, how to verify>
 ```
 
 ---
 
-## 2️⃣ Chiều Kenzo → Tony (PR updated / reply)
+## 2️⃣ Direction Kenzo → Tony (PR updated / reply)
 
-Áp dụng cho: **comment Kenzo để lại trên PR** sau khi sửa, để Tony biết đối chiếu.
+Applies to: **the comment Kenzo leaves on the PR** after fixing, so Tony knows what to compare.
 
-### Format — ghi ở comment đầu tiên của Kenzo khi cập nhật PR:
+### Format — written in Kenzo's first comment when updating a PR:
 
 ```markdown
 ✅ HANDOFF TO TONY — PR #N updated
 
-## Đã xử lý
-- [x] #1 race condition `src/x.ts:42` → dùng AbortController (commit abc1234)
-- [x] #2 test empty input `tests/y.test.ts` → +3 test pass
-- [ ] #3 chưa làm `src/z.ts:10` — cần Tony giải thích thêm
+## Handled
+- [x] #1 race condition `src/x.ts:42` → used AbortController (commit abc1234)
+- [x] #2 empty input tests `tests/y.test.ts` → +3 tests pass
+- [ ] #3 not done `src/z.ts:10` — need more explanation from Tony
 
-## Chỗ cần Tony xem lại
-- `src/w.ts:66` — đổi logic theo issue #5 nhưng chưa chắc đúng
-- Gộp 2 hàm helper — muốn Tony xác nhận trước khi merge
+## Needs Tony's review
+- `src/w.ts:66` — changed logic per issue #5 but not sure it is correct
+- Merging 2 helper functions — want Tony's confirmation before merging
 
-## Câu hỏi
-1. Issue "Improvement: debounce command palette" — làm trước hay sau merge PR này?
-2. Có nên thêm CI Windows không?
+## Questions
+1. Issue "Improvement: debounce command palette" — do it before or after this PR is merged?
+2. Should we add Windows CI?
 ```
 
-### Quy tắc cho Kenzo
-- **Mỗi mục trong "HANDOFF FOR KENZO" trước đó của Tony PHẢI được respond** bằng 1 dòng checkbox ở "Đã xử lý" — không để sót im lặng.
-- `[x]` = đã làm (kèm commit), `[ ]` = chưa làm + lý do.
-- "Chỗ cần Tony xem lại" = điểm Kenzo không tự tin, muốn Tony soi kỹ lần review tới.
-- "Câu hỏi" = quyết định ưu tiên cần Tony/Đại ca chốt.
+### Rules for Kenzo
+- **Every item in Tony's previous "HANDOFF FOR KENZO" MUST be responded to** with a checkbox line under "Handled" — never leave it silently unaddressed.
+- `[x]` = done (with commit), `[ ]` = not done + reason.
+- "Needs Tony's review" = points Kenzo is not confident about, wants Tony to scrutinize in the next review.
+- "Questions" = priority decisions that need Tony/Đại ca to settle.
 
 ---
 
-## 3️⃣ Vòng lặp chuẩn
+## 3️⃣ Standard loop
 
 ```
-Kenzo tạo PR
-   → Tony review (mỗi 30 phút, cron tự động) + để HANDOFF FOR KENZO
-   → Kenzo sửa + reply HANDOFF TO TONY (đối chiếu từng checkbox)
-   → Tony review lại: đối chiếu [x]/[ ] với diff mới
-   → Sạch → approve (+ issue improvement nếu đáng giá)
+Kenzo creates PR
+   → Tony reviews (every 30 minutes, automated cron) + leaves HANDOFF FOR KENZO
+   → Kenzo fixes + replies HANDOFF TO TONY (matching each checkbox)
+   → Tony re-reviews: compares [x]/[ ] with the new diff
+   → Clean → approve (+ improvement issue if worthwhile)
 ```
 
-## 4️⃣ Nguyên tắc chung
+## 4️⃣ General principles
 
-- **Không im lặng:** mỗi handoff phải có response, dù là "chưa làm vì lý do X".
-- **Cụ thể:** luôn có file + dòng (+ commit khi xong).
-- **Không spam:** tối đa 1-2 issue improvement mỗi lần review; không tạo issue trùng.
-- **Không bịa:** issue/improvement chỉ tạo từ cải thiện thực tế quan sát được trong code.
-- **Tiếng Việt** cho phần mô tả, giữ nguyên tên file/function/code bằng tiếng Anh.
+- **No silence:** every handoff must get a response, even "not done because of reason X".
+- **Specific:** always include file + line (+ commit when done).
+- **No spam:** at most 1-2 improvement issues per review; do not create duplicate issues.
+- **No fabrication:** issues/improvements are only created from real, observable improvements in the code.
+- **English** for descriptions; keep file/function/code names in English as-is.

@@ -1,9 +1,9 @@
-// Privacy filters — URL pattern (tầng 2) + cosmetic CSS (tầng 3)
+// Privacy filters — URL pattern (layer 2) + cosmetic CSS (layer 3)
 export interface UrlFilter {
   shouldBlock(url: string): boolean
 }
 
-// Pattern heuristic chặn URL quảng cáo/tracker
+// Heuristic patterns that block ad/tracker URLs
 const URL_PATTERNS = [
   /[\/.]ads\./, /[\/.]adservice\./, /[\/.]adserver\./, /[\/.]adnxs\./,
   /[\/.]doubleclick\./, /[\/.]googlesyndication\./, /[\/.]googleadservices\./,
@@ -19,7 +19,7 @@ export function createUrlFilter(): UrlFilter {
     shouldBlock(url: string): boolean {
       try {
         const lower = url.toLowerCase()
-        // không chặn chính trang người dùng truy cập (chỉ chặn sub-resources)
+        // do not block the page the user is visiting (only block sub-resources)
         if (URL_PATTERNS.some(p => p.test(lower))) return true
         return false
       } catch {
@@ -29,7 +29,7 @@ export function createUrlFilter(): UrlFilter {
   }
 }
 
-// Cosmetic filter — CSS ẩn element quảng cáo trên trang
+// Cosmetic filter — CSS that hides ad elements on the page
 const COSMETIC_RULES = [
   '[class*="advert"]', '[class*="ads-"]', '[class*="ad-banner"]',
   '[id*="advert"]', '[id*="ad-banner"]', '[id*="banner-ad"]',
@@ -50,7 +50,7 @@ export function createCosmeticFilter() {
     return COSMETIC_RULES.join(',\n') + ' {\n  display: none !important;\n}\n'
   }
 
-  // script injection ẩn ads sau khi trang load
+  // script injection hides ads after the page loads
   function injectScript(): string {
     return `
       (() => {

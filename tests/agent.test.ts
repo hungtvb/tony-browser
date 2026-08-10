@@ -7,7 +7,7 @@ describe('AgentCore', () => {
 
   beforeEach(() => {
     adapter = {
-      snapshot: vi.fn(async () => 'HTML: <button id="buy">Mua ngay</button>'),
+      snapshot: vi.fn(async () => 'HTML: <button id="buy">Buy now</button>'),
       exec: vi.fn(async () => ({ ok: true })),
     }
     agent = createAgentCore(adapter)
@@ -21,13 +21,14 @@ describe('AgentCore', () => {
 
   it('reports when no valid actions found', async () => {
     const result = await agent.run([])
-    expect(result.summary).toContain('Không tìm thấy')
+    expect(result.summary).toContain('Could not determine the action')
     expect(adapter.exec).not.toHaveBeenCalled()
   })
 
   it('does not expose dead plan() — snapshot available via adapter.snapshot() (fix #61)', async () => {
-    // 🔴 RED trước: plan() là API chết (chỉ trả adapter.snapshot(), không dùng goal, không gọi LLM,
-    // production không ai gọi). Fix #61: bỏ khỏi return object của createAgentCore.
+    // 🔴 RED first: plan() was a dead API (it only returned adapter.snapshot(), never used
+    // goal, never called the LLM, nothing in production called it). Fix #61: removed it from
+    // createAgentCore's return object.
     expect(agent).not.toHaveProperty('plan')
   })
 
@@ -47,10 +48,10 @@ describe('AgentCore', () => {
   it('rejects navigate with non-http(s) scheme (file://, javascript:)', async () => {
     const result = await agent.run([{ type: 'navigate', value: 'file:///etc/passwd' }])
     expect(adapter.exec).not.toHaveBeenCalled()
-    expect(result.summary).toContain('từ chối')
+    expect(result.summary).toContain('rejected')
     const js = await agent.run([{ type: 'navigate', value: 'javascript:alert(1)' }])
     expect(adapter.exec).not.toHaveBeenCalled()
-    expect(js.summary).toContain('từ chối')
+    expect(js.summary).toContain('rejected')
   })
 
   it('allows navigate with http/https', async () => {
@@ -59,8 +60,8 @@ describe('AgentCore', () => {
     expect(result.actionsTaken).toContain('navigate https://example.com')
   })
 
-  it('wait không ngốn MAX_ACTIONS — bị skip, không count, không exec (fix #33)', async () => {
-    // 8 click thật + 4 wait lẫn vào → chỉ 8 click được exec, wait không chiếm slot
+  it('wait does not consume MAX_ACTIONS — skipped, not counted, not executed (fix #33)', async () => {
+    // 8 real clicks + 4 waits mixed in → only 8 clicks are executed, wait takes no slot
     const actions = [
       ...Array.from({ length: 8 }, (_, i) => ({ type: 'click' as const, selector: `#btn${i}` })),
       { type: 'wait' as const, value: '1000' },
@@ -75,28 +76,28 @@ describe('AgentCore', () => {
     expect(result.summary).not.toContain('MAX_ACTIONS')
   })
 
-  it('rejects selector chứa ký tự không an toàn — prompt injection guard (fix #33)', async () => {
+  it('rejects selectors with unsafe characters — prompt injection guard (fix #33)', async () => {
     const badSelectors = [
-      '#buy;alert(1)',        // dấu ;
-      '#buy`;alert(1)//',     // backtick — phá vỡ template literal của executeJavaScript
-      '#buy\nwindow.alert(1)', // xuống dòng
+      '#buy;alert(1)',        // semicolon
+      '#buy`;alert(1)//',     // backtick — breaks the template literal of executeJavaScript
+      '#buy\nwindow.alert(1)', // newline
     ]
     for (const sel of badSelectors) {
       const result = await agent.run([{ type: 'click', selector: sel }])
       expect(adapter.exec).not.toHaveBeenCalled()
-      expect(result.summary).toContain('từ chối')
+      expect(result.summary).toContain('rejected')
       expect(result.summary).toContain('selector')
     }
   })
 
-  it('rejects selector quá dài (> 200 ký tự)', async () => {
+  it('rejects over-long selectors (> 200 chars)', async () => {
     const long = '#btn' + 'a'.repeat(250)
     const result = await agent.run([{ type: 'click', selector: long }])
     expect(adapter.exec).not.toHaveBeenCalled()
-    expect(result.summary).toContain('từ chối')
+    expect(result.summary).toContain('rejected')
   })
 
-  it('vẫn exec bình thường với selector hợp lệ', async () => {
+  it('still executes normally with valid selectors', async () => {
     const result = await agent.run([{ type: 'click', selector: '#buy' }, { type: 'scroll', selector: undefined }])
     expect(adapter.exec).toHaveBeenCalledWith('click', '#buy', undefined)
     expect(adapter.exec).toHaveBeenCalledWith('scroll', '', undefined)
@@ -106,7 +107,7 @@ describe('AgentCore', () => {
 
 describe('parseActions', () => {
   it('parses raw LLM reply inside fenced code with trailing prose', () => {
-    const text = '```json\n[{"type":"click","selector":"#buy"}]\n```\nĐã thực hiện xong, còn lại: [1,2] mục và [3] việc khác.'
+    const text = '```json\n[{"type":"click","selector":"#buy"}]\n```\nDone, remaining: [1,2] items and [3] other tasks.'
     expect(parseActions(text)).toEqual([{ type: 'click', selector: '#buy', value: undefined }])
   })
 
@@ -117,12 +118,12 @@ describe('parseActions', () => {
   })
 
   it('returns empty for junk', () => {
-    expect(parseActions('Xin lỗi, tôi không hiểu')).toEqual([])
+    expect(parseActions('Sorry, I do not understand')).toEqual([])
   })
 
   it('keeps numeric value (scroll/size params) as string — regression from reviewer warning', () => {
-    // 🔴 Regression cũ: `value: typeof obj.value === 'string' ? obj.value : undefined`
-    // drop value number (vd 800) → adapter fallback 400px/1000ms dù LLM yêu cầu khác
+    // 🔴 Old regression: `value: typeof obj.value === 'string' ? obj.value : undefined`
+    // dropped numeric value (e.g. 800) → adapter fell back to 400px/1000ms even when the LLM asked for something else
     expect(parseActions('[{"type":"scroll","value":800}]')).toEqual([
       { type: 'scroll', selector: undefined, value: '800' },
     ])
@@ -131,8 +132,8 @@ describe('parseActions', () => {
     ])
   })
 
-  it('filters out wait actions — wait không còn là action hợp lệ (fix #33: no-op từng ngốn slot MAX_ACTIONS)', () => {
-    // wait bị loại khỏi ACTION_TYPES → LLM trả wait bị lọc từ parse, không tới run()
+  it('filters out wait actions — wait is no longer a valid action (fix #33: the no-op used to consume a MAX_ACTIONS slot)', () => {
+    // wait removed from ACTION_TYPES → wait returned by the LLM is filtered during parse, never reaches run()
     expect(parseActions('[{"type":"wait","value":2000}]')).toEqual([])
     expect(parseActions('[{"type":"wait","value":2000},{"type":"click","selector":"#buy"}]')).toEqual([
       { type: 'click', selector: '#buy', value: undefined },
@@ -140,14 +141,14 @@ describe('parseActions', () => {
   })
 
   it('prefers action array over numeric array appearing earlier in prose — reviewer nit', () => {
-    // Nit: step 3 cũ trả array parse được ĐẦU TIÊN → prose "[1,2]" nuốt mất action thật
-    const text = 'Kết quả: [1,2] mục. Các bước: [{"type":"click","selector":"#buy","value":800}]'
+    // Nit: old step 3 returned the FIRST parseable array → prose "[1,2]" swallowed the real action
+    const text = 'Result: [1,2] items. Steps: [{"type":"click","selector":"#buy","value":800}]'
     expect(parseActions(text)).toEqual([
       { type: 'click', selector: '#buy', value: '800' },
     ])
   })
 
   it('falls back to first parseable array when no action array found', () => {
-    expect(parseActions('Kết quả: [1,2] mục')).toEqual([])
+    expect(parseActions('Result: [1,2] items')).toEqual([])
   })
 })

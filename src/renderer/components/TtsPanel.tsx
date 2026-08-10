@@ -34,9 +34,9 @@ export default function TtsPanel({ tab, onClose, onSave }: {
   }, [])
 
   async function speak() {
-    if (speaking) { speechSynthesis.cancel(); setSpeaking(false); setStatus('Đã dừng'); return }
+    if (speaking) { speechSynthesis.cancel(); setSpeaking(false); setStatus('Stopped'); return }
     const res = await window.tony?.tts.speak(tab?.id)
-    if (!res?.ok) { setStatus(res?.error ?? 'Lỗi'); return }
+    if (!res?.ok) { setStatus(res?.error ?? 'Error'); return }
     const u = new SpeechSynthesisUtterance(res.text!)
     u.lang = 'vi-VN'
     u.rate = 1
@@ -44,23 +44,23 @@ export default function TtsPanel({ tab, onClose, onSave }: {
     utterRef.current = u
     speechSynthesis.speak(u)
     setSpeaking(true)
-    setStatus('Đang đọc bài viết...')
+    setStatus('Reading article...')
   }
 
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.box} onClick={e => e.stopPropagation()}>
-        <div style={styles.title}>📖 Đọc bài viết / Lưu trang</div>
+        <div style={styles.title}>📖 Read article / Save page</div>
         <div style={styles.row}>
           <button className="apple-focus" style={{ ...styles.btn, ...(speaking ? styles.red : styles.blue) }} onClick={speak}>
-            {speaking ? '⏹ Dừng đọc' : '🔊 Đọc bài'}
+            {speaking ? '⏹ Stop reading' : '🔊 Read article'}
           </button>
-          <button className="apple-focus" style={{ ...styles.btn, ...styles.dark }} onClick={onSave}>💾 Lưu trang</button>
+          <button className="apple-focus" style={{ ...styles.btn, ...styles.dark }} onClick={onSave}>💾 Save page</button>
         </div>
         <div style={styles.row}>
-          <button className="apple-focus" style={{ ...styles.btn, ...styles.dark }} onClick={onClose}>✕ Đóng</button>
+          <button className="apple-focus" style={{ ...styles.btn, ...styles.dark }} onClick={onClose}>✕ Close</button>
         </div>
-        <div style={styles.status}>{status || 'Nghe bài viết bằng giọng nói tiếng Việt'}</div>
+        <div style={styles.status}>{status || 'Listen to articles in Vietnamese voice'}</div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-// Đăng ký các IPC handler giữa renderer ↔ main
+// Register IPC handlers between renderer ↔ main
 import { ipcMain, BrowserWindow, WebContentsView, app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -25,24 +25,24 @@ export interface IpcDeps {
   trackView: (tabId: string, view: WebContentsView | null) => void
   getActiveView: (tabId: string) => WebContentsView | undefined
   createRealView: (url: string, container?: string) => WebContentsView
-  /** layout lại mọi view theo kích thước cửa sổ + trạng thái split hiện tại (index.ts) */
+  /** re-layout every view per the window size + current split state (index.ts) */
   layoutViews: () => void
-  /** đọc/ghi trạng thái split (index.ts giữ state gốc, ipc là nơi duy nhất sửa) */
+  /** read/write split state (index.ts owns the source state; ipc is the only writer) */
   getSplitIds: () => string[]
   setSplitIds: (ids: string[]) => void
-  /** FocusController dùng chung — attachPrivacy chặn request + registerIpc expose IPC phải cùng 1 instance */
+  /** Shared FocusController — attachPrivacy blocking requests + registerIpc exposing IPC must use the same instance */
   getFocus: () => FocusController
 }
 
-// Privacy filter state — dùng chung cho MỌI session (default + container)
+// Privacy filter state — shared by EVERY session (default + container)
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
 
-/** các session đã gắn webRequest filter rồi — tránh attach 2 lần (defaultSession vừa qua attachPrivacy vừa qua createTabView) */
+/** sessions that already have a webRequest filter — avoid attaching twice (defaultSession goes through both attachPrivacy and createTabView) */
 const attachedSessions = new Set<Electron.Session>()
 
-/** nguồn FocusController dùng chung — attachPrivacy đăng ký để createTabView (container) cũng chặn được Focus Mode */
+/** shared FocusController source — registered by attachPrivacy so createTabView (container) can also block Focus Mode */
 let focusProvider: (() => FocusController | null) | undefined
 
 type TM = ReturnType<typeof createTabManager>
@@ -52,9 +52,9 @@ function tabToState(t: any): TabState {
 }
 
 /**
- * Gắn webRequest filter (adblock + urlFilter + YouTube ad-strip + Focus Mode) cho 1 session bất kỳ.
- * Dùng chung cho defaultSession (attachPrivacy) và session phân vùng container (createTabView).
- * Guard Set đảm bảo mỗi session chỉ attach đúng 1 lần.
+ * Attach a webRequest filter (adblock + urlFilter + YouTube ad-strip + Focus Mode) to any session.
+ * Shared by defaultSession (attachPrivacy) and container-partitioned sessions (createTabView).
+ * The guard Set ensures each session is attached exactly once.
  */
 export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => FocusController | null) {
   if (attachedSessions.has(ses)) return
@@ -64,7 +64,7 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
   const bl = createBlocklist(blocklistDomains)
   const urlFilter = createUrlFilter()
 
-  // Focus Mode — quyết định chặn riêng (counter riêng, không lẫn adblock)
+  // Focus Mode — separate block decision (own counter, not mixed with adblock)
   const focusBlocker: FocusBlocker = createFocusBlocker({ blocklist: provider?.()?.getState().blocklist ?? [] })
 
   ses.webRequest.onBeforeRequest({ urls: ['*://*/*'] }, (details, callback) => {
@@ -73,7 +73,7 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
       blockedCount++
       blocked = true
     }
-    // Focus Mode — chặn trang xao nhãng (đồng bộ trạng thái với controller dùng chung)
+    // Focus Mode — block distracting sites (state synced with the shared controller)
     const focus = provider?.()
     if (focus) {
       focusBlocker.setEnabled(focus.enabled)
@@ -92,7 +92,7 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     }
   })
 
-  // Bóc ads khỏi YouTube player response (filterResponseData sửa nội dung)
+  // Strip ads from the YouTube player response (filterResponseData rewrites the body)
   ses.webRequest.onBeforeRequest(
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
@@ -105,7 +105,7 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
           const body = Buffer.concat(chunks).toString('utf-8')
           const stripped = stripPlayerResponse(body)
           filter.write(stripped ?? body)
-        } catch { /* nếu lỗi giữ nguyên */ }
+        } catch { /* keep the original body on error */ }
         filter.end()
       })
       filter.on('error', () => { try { filter.end() } catch { /* ignore */ } })
@@ -117,12 +117,12 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
 export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
   const { session } = win.webContents
   listSize = createBlocklist(blocklistDomains).size
-  // đăng ký nguồn FocusController dùng chung — createTabView attach cho container cũng dùng được
+  // register the shared FocusController source — createTabView's attach for containers uses it too
   focusProvider = getFocus
   attachWebRequestFilters(session, getFocus)
 }
 
-// Injectable cosmetic filter dùng trong trackView (mỗi tab mới)
+// Injectable cosmetic filter used in trackView (each new tab)
 export function createCosmeticInjector() {
   const cosmetic = createCosmeticFilter()
   return function attachToWebContents(wc: any) {
@@ -142,7 +142,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     ? createSessionPersist<TabSessionInfo>(opts.smartPersistFile)
     : undefined
 
-  // ─── undo-close persist (disk) — stack đóng tab giữ qua restart ───
+  // ─── undo-close persist (disk) — closed-tab stack survives restarts ───
   const undoPersist = opts?.undoPersistFile
     ? createSessionPersist<SessionTab>(opts.undoPersistFile)
     : undefined
@@ -152,7 +152,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   ipcMain.handle('tabs:open', (_e, url: string, container?: string, favicon?: string) => {
     const tab = tm.open(url, container ?? 'default', favicon)
-    // tạo view thật
+    // create the real view
     const view = deps.createRealView(tab.url, tab.container)
     deps.trackView(tab.id, view)
     const w = win()
@@ -180,7 +180,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── reader ───
   ipcMain.handle('reader:extract', async (_e, tabId?: string) => {
     const view = tabId ? deps.getActiveView(tabId) : undefined
-    if (!view) return { ok: false, error: 'Không có tab' }
+    if (!view) return { ok: false, error: 'No tab' }
     try {
       // In-page extraction (issue #55): run the extractor inside the page and
       // return only the article payload — no full-page HTML over IPC.
@@ -189,7 +189,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       const article = JSON.parse(json) as { title: string; content: string; length: number }
       return { ok: true, article }
     } catch (e: any) {
-      return { ok: false, error: e?.message ?? 'Lỗi trích xuất' }
+      return { ok: false, error: e?.message ?? 'Extraction error' }
     }
   })
 
@@ -203,7 +203,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       deps.trackView(id, null)
     }
     tm.close(id)
-    // thoát split nếu đóng 1 trong 2 tab đang split — tránh layoutViews tính split với id đã chết
+    // exit split if one of the two split tabs is closed — prevent layoutViews from computing a split with a dead id
     const cur = deps.getSplitIds()
     if (cur.includes(id)) {
       deps.setSplitIds(cur.filter(x => x !== id))
@@ -224,15 +224,15 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── pip ───
   ipcMain.handle('pip:start', async (_e, tabId?: string) => {
     const view = tabId ? deps.getActiveView(tabId) : undefined
-    if (!view) return { ok: false, error: 'Không có tab' }
+    if (!view) return { ok: false, error: 'No tab' }
     try {
       const res = (await view.webContents.executeJavaScript(`
         (() => {
           const v = document.querySelector('video');
-          if (!v) return { ok: false, error: 'Không tìm thấy video' };
-          if (!('requestPictureInPicture' in v)) return { ok: false, error: 'Trình duyệt không hỗ trợ PiP' };
+          if (!v) return { ok: false, error: 'Video not found' };
+          if (!('requestPictureInPicture' in v)) return { ok: false, error: 'Browser does not support PiP' };
           v.requestPictureInPicture().then(() => {
-            // xoá class khi video thoát PiP để tránh video ẩn
+            // remove the attribute when the video exits PiP so it does not stay hidden
             v.removeAttribute('webkit-playsinline');
           }).catch(e => {});
           return { ok: true };
@@ -240,13 +240,13 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       `)) as { ok: boolean; error?: string }
       return res
     } catch (e: any) {
-      return { ok: false, error: e?.message ?? 'Lỗi PiP' }
+      return { ok: false, error: e?.message ?? 'PiP error' }
     }
   })
 
   ipcMain.handle('pip:stop', async (_e, tabId?: string) => {
     const view = tabId ? deps.getActiveView(tabId) : undefined
-    if (!view) return { ok: false, error: 'Không có tab' }
+    if (!view) return { ok: false, error: 'No tab' }
     try {
       await view.webContents.executeJavaScript(`
         (() => {
@@ -254,12 +254,12 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
             document.exitPictureInPicture().catch(e => {});
             return { ok: true };
           }
-          return { ok: false, error: 'Không có video PiP' };
+          return { ok: false, error: 'No PiP video' };
         })()
       `)
       return { ok: true }
     } catch (e: any) {
-      return { ok: false, error: e?.message ?? 'Lỗi thoát PiP' }
+      return { ok: false, error: e?.message ?? 'Exit PiP error' }
     }
   })
 
@@ -293,7 +293,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
         }
       })
     }
-    // ẩn/hiện view theo active — layout tập trung cũng cập nhật bounds/visibility
+    // show/hide views by active tab — the centralized layout also updates bounds/visibility
     deps.layoutViews()
     broadcastTabs()
     return true
@@ -345,13 +345,13 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   })
 
   // ─── split view ───
-  // state split do index.ts giữ (nơi layoutViews cần đọc) — ipc chỉ sửa qua setter
+  // split state owned by index.ts (what layoutViews reads) — ipc only changes it via the setter
   const setSplit = (ids: string[]) => deps.setSplitIds(ids)
   ipcMain.handle('tabs:split', (_e, aId: string, bId: string | null) => {
     const w = win()
     if (!w) return { ok: false }
     if (!bId) {
-      // thoát split — layout lại full view active
+      // exit split — re-layout the active view full
       setSplit([])
       deps.layoutViews()
       return { ok: true }
@@ -365,15 +365,15 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── save page + tts ───
   ipcMain.handle('tts:speak', async (_e, tabId?: string) => {
     const view = tabId ? deps.getActiveView(tabId) : undefined
-    if (!view) return { ok: false, error: 'Không có tab' }
+    if (!view) return { ok: false, error: 'No tab' }
     try {
       const text = (await view.webContents.executeJavaScript(`
         (() => { const s = document.body ? document.body.innerText.slice(0, 4000) : ''; return s })()
       `)) as string
-      if (!text.trim()) return { ok: false, error: 'Trang không có nội dung đọc' }
+      if (!text.trim()) return { ok: false, error: 'Page has no readable content' }
       return { ok: true, text: text.trim() }
     } catch (e: any) {
-      return { ok: false, error: e?.message ?? 'Lỗi TTS' }
+      return { ok: false, error: e?.message ?? 'TTS error' }
     }
   })
   ipcMain.handle('tts:stop', () => ({ ok: true }))
@@ -381,14 +381,14 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── session restore ───
   const session = createSessionStore(undoPersist)
 
-  // record tab bị đóng để undo
+  // record the closed tab for undo
   ipcMain.handle('tabs:recordClosed', (_e, tab: any) => {
     session.recordClosed({ id: tab.id, url: tab.url, title: tab.title, container: tab.container, favicon: tab.favicon })
     return session.closedCount()
   })
   ipcMain.handle('tabs:undoClose', () => session.popClosed())
   ipcMain.handle('tabs:closedCount', () => session.closedCount())
-  // snapshot session hiện tại
+  // snapshot the current session
   ipcMain.handle('session:save', () => {
     session.saveSession(tm.list().map(t => ({
       id: t.id, url: t.url, title: t.title, container: t.container, favicon: t.favicon,
@@ -511,7 +511,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   })
   ipcMain.handle('sleeper:activity', (_e, id: string) => sleeper.recordActivity(id))
 
-  // helper broadcast — dùng webContents send của window
+  // broadcast helper — uses the window's webContents.send
   function broadcastTabs() {
     const w = win()
     if (w && !w.webContents.isDestroyed()) {

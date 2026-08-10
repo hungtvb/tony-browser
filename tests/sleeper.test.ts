@@ -10,7 +10,7 @@ describe('TabSleeper', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
-    sleeper = createTabSleeper({ idleMs: 10 * 60 * 1000 }) // 10 phút
+    sleeper = createTabSleeper({ idleMs: 10 * 60 * 1000 }) // 10 minutes
   })
 
   it('reports sleeping tabs after idle threshold', () => {

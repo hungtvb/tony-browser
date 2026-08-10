@@ -29,7 +29,7 @@ describe('YouTube ad request detection', () => {
   })
 })
 
-describe('YouTube player response stripping (bóc ads khỏi video)', () => {
+describe('YouTube player response stripping (removes ads from video)', () => {
   it('removes adPlacements from player response', () => {
     const resp = {
       playerAds: { adPlacements: [{ adSlot: 'x' }] },

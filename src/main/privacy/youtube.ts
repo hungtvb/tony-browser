@@ -1,4 +1,4 @@
-// Chặn quảng cáo YouTube — chặn request ads + bóc ads khỏi player response
+// Block YouTube ads — block ad requests + strip ads from the player response
 export interface AdUrlResult { ad: boolean }
 
 const AD_PATTERNS = [
@@ -21,7 +21,7 @@ export function isYouTubeAdRequest(url: string): boolean {
   }
 }
 
-// Bóc ads khỏi YouTube player response (gỡ adPlacements + adBreaks)
+// Strip ads from the YouTube player response (remove adPlacements + adBreaks)
 export function stripPlayerResponse(json: string): string | null {
   try {
     const data = JSON.parse(json)

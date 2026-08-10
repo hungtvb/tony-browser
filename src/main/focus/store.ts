@@ -1,4 +1,4 @@
-// Focus Mode — persist state ra disk (pattern theo ai/store.ts)
+// Focus Mode — persist state to disk (pattern follows ai/store.ts)
 import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -35,6 +35,6 @@ export function saveFocusState(state: FocusState): void {
     fs.mkdirSync(path.dirname(p), { recursive: true })
     fs.writeFileSync(p, JSON.stringify(state, null, 2))
   } catch (e) {
-    console.error('Không lưu được focus state:', e)
+    console.error('Could not save focus state:', e)
   }
 }

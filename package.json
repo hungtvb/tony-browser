@@ -1,7 +1,7 @@
 {
   "name": "tony-browser",
   "version": "0.11.4",
-  "description": "Tony Browser — trình duyệt web thông minh có trợ lý AI",
+  "description": "Tony Browser — smart web browser with AI assistant",
   "main": "out/main/index.js",
   "build": {
     "appId": "com.tonybrowser.app",

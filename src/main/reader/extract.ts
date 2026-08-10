@@ -1,16 +1,16 @@
-// Reader Mode — trích nội dung sạch từ HTML trang web
+// Reader Mode — extract clean content from page HTML
 export interface ArticleResult {
   title: string
   content: string
   length: number
 }
 
-// Các thẻ/phần tử cần xoá cả khối (mở + nội dung + đóng)
+// Tags/elements to remove entirely (open + content + close)
 const BLOCK_TAGS = [
   'script', 'style', 'noscript', 'iframe', 'svg', 'canvas',
   'nav', 'header', 'footer', 'aside', 'form',
 ]
-// Các class/id chứa quảng cáo, menu, phụ trợ
+// Classes/ids containing ads, menus, auxiliary content
 const REMOVE_CLASSES = [
   'ad', 'ads', 'advert', 'banner', 'popup', 'modal', 'cookie', 'newsletter',
   'related', 'menu', 'nav', 'footer', 'header', 'sidebar', 'share', 'social', 'author',
@@ -42,7 +42,7 @@ export function extractArticle(html: string): ArticleResult {
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i)
   if (titleMatch) title = titleMatch[1].trim()
 
-  // Ưu tiên <article>, rồi #content/.main, rồi body
+  // Prefer <article>, then #content/.main, then body
   let contentHtml = ''
   const article = html.match(/<article[\s\S]*?<\/article>/i)
   if (article) {
@@ -53,12 +53,12 @@ export function extractArticle(html: string): ArticleResult {
     else contentHtml = html
   }
 
-  // Xoá các phần tử phụ trợ trong content (block tags)
+  // Remove auxiliary elements inside content (block tags)
   for (const tag of BLOCK_TAGS) {
     contentHtml = contentHtml.replace(new RegExp(`<${tag}[\\s\\S]*?</${tag}>`, 'gi'), ' ')
   }
 
-  // Xoá các phần tử có class/id chứa từ quảng cáo/phụ trợ
+  // Remove elements whose class/id contains ad/auxiliary keywords
   for (const cls of REMOVE_CLASSES) {
     contentHtml = contentHtml.replace(
       new RegExp(`<[a-z]+[^>]*(?:class|id)="[^"]*${cls}[^"]*"[^>]*>[\\s\\S]*?</[a-z]+>`, 'gi'),

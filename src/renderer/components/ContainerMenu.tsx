@@ -16,11 +16,11 @@ const styles: Record<string, React.CSSProperties> = {
 }
 
 const ITEMS = [
-  { id: 'default', label: 'Mặc định' },
-  { id: 'work', label: 'Công việc' },
-  { id: 'personal', label: 'Cá nhân' },
-  { id: 'banking', label: 'Ngân hàng' },
-  { id: 'social', label: 'Mạng xã hội' },
+  { id: 'default', label: 'Default' },
+  { id: 'work', label: 'Work' },
+  { id: 'personal', label: 'Personal' },
+  { id: 'banking', label: 'Banking' },
+  { id: 'social', label: 'Social' },
 ]
 
 export default function ContainerMenu({ onPick, onClose }: {
@@ -30,7 +30,7 @@ export default function ContainerMenu({ onPick, onClose }: {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.menu} onClick={e => e.stopPropagation()}>
-        <div style={styles.title}>Mở tab mới trong container</div>
+        <div style={styles.title}>Open new tab in container</div>
         {ITEMS.map(i => (
           <div key={i.id} style={styles.item} onClick={() => onPick('', i.id)}>
             <span style={{ ...styles.dot, background: CONTAINER_COLORS[i.id] ?? '#6b7280' }} />
