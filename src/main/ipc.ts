@@ -465,9 +465,27 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── sleeper ───
   const sleeper = new SleeperController()
   ipcMain.handle('sleeper:evaluate', async () => {
+    // feed real per-tab memory into the controller so the heavy-tab RAM warning can fire (fix #68)
+    const tabs = tm.list()
+    const views = await Promise.all(tabs.map(async (t) => {
+      const v = deps.getActiveView(t.id)
+      let memoryMB = 0
+      if (v && !v.webContents.isDestroyed()) {
+        try {
+          // Electron 31: WebContents has no per-content getProcessMemoryInfo; use the OS pid
+          // of the renderer against app.getAppMetrics() (pid → memory.workingSetSize, KB of RAM)
+          const pid = v.webContents.getOSProcessId()
+          const metric = app.getAppMetrics().find(m => m.pid === pid)
+          memoryMB = metric ? Math.round(metric.memory.workingSetSize / 1024) : 0
+        } catch {
+          // view mid-teardown — treat as 0 (no warning)
+        }
+      }
+      return { id: t.id, memoryMB }
+    }))
     // pass a live getter for activeId so the controller re-validates after the async
     // onSleep (a tab activated mid-teardown must not be marked sleeping — race guard)
-    return sleeper.evaluate(tm.list(), () => tm.activeId, [], undefined, async (id) => {
+    return sleeper.evaluate(tabs, () => tm.activeId, [], views, async (id) => {
       // race guard: never close the view of the tab that just became active
       if (id === tm.activeId) return
       const view = deps.getActiveView(id)
