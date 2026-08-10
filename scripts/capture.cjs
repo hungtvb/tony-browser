@@ -1,4 +1,4 @@
-// Script chụp màn hình — capture.cjs (CommonJS thuần)
+// Tony Browser screenshot script — capture.cjs (pure CommonJS)
 const { app, BrowserWindow } = require('electron')
 const fs = require('fs')
 
@@ -13,7 +13,7 @@ app.whenReady().then(async () => {
   })
 
   if (mode === 'app') {
-    // chạy app thật (main process) — load renderer built
+    // run the real app (main process) — load the built renderer
     await win.loadFile(require('path').join(__dirname, '../out/renderer/index.html'))
   } else {
     await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
@@ -21,15 +21,15 @@ app.whenReady().then(async () => {
         <div style="padding:30px">
           <h1>🌐 Tony Browser</h1>
           <p>Electron ${process.versions.electron} · Chromium ${process.versions.chrome}</p>
-          <h2>Kiểm tra code chạy thật</h2>
+          <h2>Verify the code actually runs</h2>
           <ul>
-            <li>TabManager: mở tab, đóng tab, chuyển tab</li>
-            <li>Privacy: chặn ads/tracker</li>
-            <li>AI Assistant: tóm tắt trang</li>
+            <li>TabManager: open tab, close tab, switch tab</li>
+            <li>Privacy: block ads/trackers</li>
+            <li>AI Assistant: summarize pages</li>
             <li>Focus Mode, Smart Tabs, TabSleeper</li>
           </ul>
-          <p style="color:#4ade80">✅ App khởi động thành công — ${new Date().toLocaleString('vi-VN')}</p>
-          <p style="color:#6b7280">Ngày: ${new Date().toString()}</p>
+          <p style="color:#4ade80">✅ App started successfully — ${new Date().toLocaleString('en-US')}</p>
+          <p style="color:#6b7280">Date: ${new Date().toString()}</p>
         </div>
       </body></html>
     `))
