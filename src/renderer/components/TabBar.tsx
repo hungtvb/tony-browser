@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { CONTAINER_COLORS } from '../../shared/types'
+import { isMiddleClickClose, wheelDeltaToDirection, nextTabId, createWheelGate } from '../tabGestures'
 
 interface Tab { id: string; title: string; url: string; loading?: boolean; container?: string }
 
@@ -44,9 +45,19 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [hoverPlus, setHoverPlus] = useState(false)
+  // Issue #48: throttle wheel tab-switching so a fast spin doesn't jump several tabs
+  const wheelGate = useRef(createWheelGate(150))
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const dir = wheelDeltaToDirection(e)
+    if (!dir || !wheelGate.current()) return
+    e.preventDefault()
+    const next = nextTabId(tabs.map(t => t.id), activeId, dir)
+    if (next && next !== activeId) onSelect(next)
+  }
 
   return (
-    <div style={styles.bar}>
+    <div style={styles.bar} onWheel={handleWheel}>
       <button className="apple-focus" style={{ ...styles.plus, ...(hoverPlus ? { background: 'rgba(255,255,255,0.1)', transform: 'scale(1.08)' } : {}) }}
         title="Tab mới (Ctrl+T)" onClick={() => onNewTab?.()}
         onMouseEnter={() => setHoverPlus(true)} onMouseLeave={() => setHoverPlus(false)}>+</button>
@@ -60,6 +71,13 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
             ...(hoverId === t.id && t.id !== activeId ? { background: 'rgba(255,255,255,0.08)' } : {}),
           }}
           onClick={() => onSelect(t.id)}
+          onAuxClick={(e) => {
+            // Issue #48: middle-click closes the tab (preventDefault stops Linux auto-scroll)
+            if (isMiddleClickClose(e)) {
+              e.preventDefault()
+              onClose(t.id)
+            }
+          }}
           onMouseEnter={() => setHoverId(t.id)}
           onMouseLeave={() => setHoverId(null)}
           title={t.url}
