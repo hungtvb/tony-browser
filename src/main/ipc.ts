@@ -21,7 +21,7 @@ export interface IpcDeps {
   getTabManager: () => ReturnType<typeof createTabManager>
   trackView: (tabId: string, view: WebContentsView | null) => void
   getActiveView: (tabId: string) => WebContentsView | undefined
-  createRealView: (url: string) => WebContentsView
+  createRealView: (url: string, container?: string) => WebContentsView
   /** layout lại mọi view theo kích thước cửa sổ + trạng thái split hiện tại (index.ts) */
   layoutViews: () => void
   /** đọc/ghi trạng thái split (index.ts giữ state gốc, ipc là nơi duy nhất sửa) */
@@ -255,13 +255,31 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
-    // đánh thức tab nếu đang ngủ (TabSleeper) — gỡ throttle để tab chạy bình thường
-    if (sleeper.isSleeping(id)) {
-      const view = deps.getActiveView(id)
+    // wake the tab if sleeping (TabSleeper) — the view was closed on sleep → rebuild + reload original url.
+    // Also wake while teardown is still pending: the activation must not be silently dropped (race guard).
+    if (sleeper.isSleeping(id) || sleeper.isPendingSleep(id)) {
       sleeper.wake(id, (wid) => {
         const wv = deps.getActiveView(wid)
         if (wv && !wv.webContents.isDestroyed()) {
           try { wv.webContents.setBackgroundThrottling(false) } catch {}
+        } else {
+          // view was closed on sleep (RAM freed) → rebuild from the original url
+          const tab = tm.get(wid)
+          if (tab) {
+            try {
+              // pass the container through intact — waking a container tab must rebuild the view in the
+              // SAME partition (persist:container-*) not defaultSession (review warning 1)
+              const view = deps.createRealView(tab.url, tab.container)
+              deps.trackView(wid, view)
+              const w = win()
+              if (w && !w.isDestroyed()) attachView(w, view)
+            } catch (err) {
+              // recreate failed (e.g. webContents not ready) — layoutViews cannot recover a tab with no
+              // view in viewByTab; log + requeue so the next tabs:activate retries the recreate
+              console.warn('[sleeper] recreate view failed for tab', wid, err)
+              sleeper.requeueSleep(wid)
+            }
+          }
         }
       })
     }
@@ -363,11 +381,30 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   // ─── sleeper ───
   const sleeper = new SleeperController()
-  ipcMain.handle('sleeper:evaluate', () => {
-    return sleeper.evaluate(tm.list(), tm.activeId, [], undefined, (id) => {
+  ipcMain.handle('sleeper:evaluate', async () => {
+    // pass a live getter for activeId so the controller re-validates after the async
+    // onSleep (a tab activated mid-teardown must not be marked sleeping — race guard)
+    return sleeper.evaluate(tm.list(), () => tm.activeId, [], undefined, async (id) => {
+      // race guard: never close the view of the tab that just became active
+      if (id === tm.activeId) return
       const view = deps.getActiveView(id)
       if (view && !view.webContents.isDestroyed()) {
-        try { view.webContents.setBackgroundThrottling(true) } catch {}
+        // Electron 31 has no webContents.discard() → close() the renderer to really free RAM,
+        // untrack the view (wake rebuilds it from the original url). setBackgroundThrottling is a default no-op.
+        // detach BEFORE close — like tabs:close, so a destroyed view is never left as a contentView child (review warning 2)
+        const w = win()
+        if (w) detachView(w, view)
+        let closed = false
+        try { view.webContents.close({ waitForBeforeUnload: false }); closed = true } catch {
+          try { view.webContents.close(); closed = true } catch { /* both close attempts failed */ }
+        }
+        if (closed) {
+          deps.trackView(id, null)
+        } else if (w && !w.isDestroyed()) {
+          // close failed on both attempts — the view is detached but alive: re-attach it so
+          // the tab stays visible instead of lingering as an invisible detached view (review suggestion)
+          attachView(w, view)
+        }
       }
     })
   })
@@ -380,10 +417,10 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       w.webContents.send('tabs:changed', tm.list().map(tabToState))
     }
   }
-  // layout sau khi số lượng view thay đổi (mở tab) — attachView đã set bounds lần đầu,
-  // gọi lại để mọi view (kể cả split) có bounds nhất quán theo layout tập trung
+  // layout after the view count changed (tab opened) — attachView already set bounds once,
+  // call again so every view (including split) gets consistent bounds from the centralized layout
   function layoutAfterChange() {
-    try { deps.layoutViews() } catch { /* view chưa sẵn sàng — bỏ qua */ }
+    try { deps.layoutViews() } catch { /* view not ready yet — ignore */ }
   }
   tm.on('changed', broadcastTabs)
 
