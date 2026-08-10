@@ -193,9 +193,14 @@ export default function App() {
       {searchOpen && <SearchOverlay onSelect={activate} onClose={() => setSearchOpen(false)} />}
       {ttsOpen && (
         <TtsPanel tab={active} onClose={() => setTtsOpen(false)}
-          onSave={() => {
+          onSave={async () => {
             if (active) {
-              toast('✅ Đã lưu: ' + (active.title || active.url), 'success')
+              try {
+                await window.tony?.save.page(active.url, active.title, active.container)
+                toast('✅ Saved: ' + (active.title || active.url), 'success')
+              } catch {
+                toast('❌ Save failed', 'error')
+              }
             }
             setTtsOpen(false)
           }} />

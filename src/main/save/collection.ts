@@ -1,4 +1,4 @@
-// Save page — bộ sưu tập trang đã lưu (in-memory, JSON serialize)
+// Save page — collection of saved pages (in-memory, JSON-serialized)
 export interface SavedPage {
   id: string
   url: string
