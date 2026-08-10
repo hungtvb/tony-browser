@@ -45,8 +45,8 @@ function extractPath(svg: string): string {
   return m ? m[1] : ''
 }
 
-export default function UIcon({ name, size = 18, title }: {
-  name: string; size?: number; title?: string
+export default function UIcon({ name, size = 18, title, color = '#fff' }: {
+  name: string; size?: number; title?: string; color?: string
 }) {
   const d = extractPath(ICONS[name] || aiIcon)
   return (
@@ -54,7 +54,7 @@ export default function UIcon({ name, size = 18, title }: {
       width={size}
       height={size}
       viewBox="0 -960 960 960"
-      fill="#fff"
+      fill={color}
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: 'block', flexShrink: 0 }}
       aria-label={title || name}

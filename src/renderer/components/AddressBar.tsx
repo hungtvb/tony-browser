@@ -59,7 +59,7 @@ export default function AddressBar({ onNavigate, onOpenAI, onReader, onPip, onSp
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && go()}
       />
-      <button className="apple-focus" style={styles.btn} onClick={go}><UIcon name="arrow" size={14} /></button>
+      <button className="apple-focus" style={styles.btn} onClick={go}><UIcon name="arrow" size={14} color="#0a0a0a" /></button>
       {onReader && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'reader' ? styles.aiHover : {}) }} title="Reader Mode" onClick={onReader} onMouseEnter={() => setHoverBtn('reader')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="reader" size={18} /></button>}
       {onPip && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'pip' ? styles.aiHover : {}) }} title="Picture-in-Picture" onClick={onPip} onMouseEnter={() => setHoverBtn('pip')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="pip" size={18} /></button>}
       {onSplit && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'split' ? styles.aiHover : {}) }} title="Split View" onClick={onSplit} onMouseEnter={() => setHoverBtn('split')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="split" size={18} /></button>}
