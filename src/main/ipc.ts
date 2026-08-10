@@ -179,9 +179,11 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     const view = tabId ? deps.getActiveView(tabId) : undefined
     if (!view) return { ok: false, error: 'Không có tab' }
     try {
-      const html = (await view.webContents.executeJavaScript('document.documentElement.outerHTML')) as string
-      const { extractArticle } = await import('./reader/extract')
-      const article = extractArticle(html)
+      // In-page extraction (issue #55): run the extractor inside the page and
+      // return only the article payload — no full-page HTML over IPC.
+      const { buildExtractScript } = await import('./reader/inject')
+      const json = (await view.webContents.executeJavaScript(buildExtractScript())) as string
+      const article = JSON.parse(json) as { title: string; content: string; length: number }
       return { ok: true, article }
     } catch (e: any) {
       return { ok: false, error: e?.message ?? 'Lỗi trích xuất' }
