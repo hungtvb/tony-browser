@@ -5,12 +5,12 @@ import { BrandIcon } from './BrandIcon'
 const styles: Record<string, React.CSSProperties> = {
   wrap: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    height: '100%', background: 'radial-gradient(ellipse at top, rgba(0,113,227,0.10), transparent 55%)',
+    height: '100%', background: 'radial-gradient(ellipse at top, rgba(212,255,64,0.08), transparent 55%)',
     padding: 40,
   },
   greetingWrap: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 },
   greeting: { fontSize: 40, fontWeight: 700, letterSpacing: '-0.8px', background: 'linear-gradient(180deg,#fff, rgba(255,255,255,0.7))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-  wave: { color: 'var(--apple-blue)', display: 'flex' },
+  wave: { color: 'var(--apple-blue)', display: 'flex', filter: 'drop-shadow(0 0 6px rgba(212,255,64,0.5))' },
   sub: { fontSize: 14, color: 'var(--apple-text-tertiary)', marginBottom: 40, letterSpacing: '-0.2px' },
   grid: {
     display: 'grid', gridTemplateColumns: 'repeat(4, 104px)', gap: 16,
@@ -19,11 +19,11 @@ const styles: Record<string, React.CSSProperties> = {
   tile: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '18px 8px 14px',
     borderRadius: 'var(--apple-radius-xl)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)',
-    background: 'rgba(28,28,30,0.55)', transition: 'all 0.25s var(--ease-out)', userSelect: 'none',
+    background: 'rgba(212,255,64,0.05)', transition: 'all 0.25s var(--ease-out)', userSelect: 'none',
   },
   tileHover: {
-    background: 'rgba(28,28,30,0.95)', borderColor: 'rgba(0,113,227,0.5)',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.4)', transform: 'translateY(-3px)',
+    background: 'rgba(28,30,26,0.95)', borderColor: 'rgba(212,255,64,0.45)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4), 0 0 16px rgba(212,255,64,0.15)', transform: 'translateY(-3px)',
   },
   icon: {
     width: 48, height: 48, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',

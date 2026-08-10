@@ -6,10 +6,10 @@ interface Tab { id: string; title: string; url: string; container?: string }
 const styles: Record<string, React.CSSProperties> = {
   bar: {
     display: 'flex', gap: 4, padding: '8px 12px', minHeight: 44,
-    background: 'var(--apple-glass)',
-    backdropFilter: 'saturate(180%) blur(20px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(14,16,12,0.38)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(212,255,64,0.12)',
+    backdropFilter: 'saturate(180%) blur(24px)',
+    WebkitBackdropFilter: 'saturate(180%) blur(24px)',
     alignItems: 'center', overflowX: 'auto',
   },
   tab: {

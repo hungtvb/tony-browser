@@ -23,6 +23,12 @@ export function createMainWindow(onOpenExternal?: (url: string) => void): Browse
     },
   })
 
+  // Native glass: acrylic/mica on Windows 11, vibrancy on macOS (Linux falls back)
+  try {
+    const material = win.setBackgroundMaterial ? 'acrylic' : undefined
+    if (material) win.setBackgroundMaterial(material as 'acrylic')
+  } catch { /* unsupported platform — keep solid dark */ }
+
   // window.open / target=_blank → không mở cửa sổ Electron raw; mở tab mới nếu http(s)
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAllowedUrl(url) && onOpenExternal) onOpenExternal(url)
