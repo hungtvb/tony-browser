@@ -31,6 +31,25 @@ describe('Session store', () => {
   it('returns empty when no session saved', () => {
     expect(store.restoreSession()).toEqual([])
   })
+
+  it('keeps favicon through the undo-close round-trip (issue #52)', () => {
+    store.recordClosed({
+      id: 'a', url: 'https://a.com', title: 'A',
+      favicon: 'data:image/png;base64,AAAA',
+    })
+    const tab = store.popClosed()
+    expect(tab?.favicon).toBe('data:image/png;base64,AAAA')
+  })
+
+  it('restored session snapshot keeps favicon (issue #52)', () => {
+    store.saveSession([
+      { id: 'a', url: 'https://a.com', title: 'A', favicon: 'data:image/png;base64,BBBB' },
+      { id: 'b', url: 'https://b.com', title: 'B' },
+    ])
+    const restored = store.restoreSession()
+    expect(restored[0].favicon).toBe('data:image/png;base64,BBBB')
+    expect(restored[1].favicon).toBeUndefined()
+  })
 })
 
 describe('Session store with disk persist (fix #34 — undo-close qua restart)', () => {

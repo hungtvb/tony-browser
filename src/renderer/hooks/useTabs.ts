@@ -21,8 +21,8 @@ export function useTabs() {
     })
   }, [])
 
-  function open(url: string, container?: string) {
-    window.tony?.tabs.open(url, container ?? 'default').then(t => setActiveId(t.id))
+  function open(url: string, container?: string, favicon?: string) {
+    window.tony?.tabs.open(url, container ?? 'default', favicon).then(t => setActiveId(t.id))
   }
   function openInContainer(url: string, container: string) {
     window.tony?.tabs.openContainer(url, container).then(t => setActiveId(t.id))

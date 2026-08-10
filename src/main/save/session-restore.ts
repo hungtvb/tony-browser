@@ -3,6 +3,7 @@ export interface RestorableTab {
   url: string
   title?: string
   container?: string
+  favicon?: string
 }
 
 /**

@@ -29,10 +29,14 @@ export function createTabManager(factory: ViewFactory) {
   let activeId = ''
   let counter = 0
 
-  function open(url: string, container = 'default'): Tab {
+  function open(url: string, container = 'default', favicon?: string): Tab {
     const id = `tab-${++counter}-${Date.now()}`
     const view = factory(id)
-    const tab: Tab = { id, url, title: 'New Tab', loading: true, view, container, lastActive: Date.now() }
+    const tab: Tab = {
+      id, url, title: 'New Tab', loading: true, view, container,
+      lastActive: Date.now(),
+      ...(favicon !== undefined ? { favicon } : {}),
+    }
     tabs.set(id, tab)
     activeId = id
     view.loadURL(url)

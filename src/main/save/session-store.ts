@@ -6,6 +6,7 @@ export interface SessionTab {
   url: string
   title: string
   container?: string
+  favicon?: string
 }
 
 export function createSessionStore(persist?: SessionPersist<SessionTab>) {

@@ -79,7 +79,7 @@ export interface TonyAPI {
   platform: string
   getAppInfo: () => { electron: string; chrome: string }
   tabs: {
-    open: (url: string, container?: string) => Promise<TabState>
+    open: (url: string, container?: string, favicon?: string) => Promise<TabState>
     openContainer: (url: string, container: string) => Promise<TabState>
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
@@ -88,7 +88,7 @@ export interface TonyAPI {
     search: (q: string) => Promise<TabState[]>
     split: (aId: string, bId: string | null) => Promise<{ ok: boolean }>
     splitState: () => Promise<string[]>
-    undoClose: () => Promise<{ id: string; url: string; title: string; container?: string } | null>
+    undoClose: () => Promise<{ id: string; url: string; title: string; container?: string; favicon?: string } | null>
     closedCount: () => Promise<number>
     nav: {
       back: () => Promise<boolean>

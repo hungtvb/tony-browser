@@ -68,7 +68,7 @@ export default function App() {
       else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 't') {
         e.preventDefault()
         window.tony?.tabs.undoClose().then(t => {
-          if (t) { open(t.url, t.container); toast('Đã khôi phục tab: ' + t.title, 'success') }
+          if (t) { open(t.url, t.container, t.favicon); toast('Đã khôi phục tab: ' + t.title, 'success') }
         }).catch(() => {})
       }
       // Ctrl/Cmd+W đóng tab
