@@ -1,5 +1,6 @@
 // Quản lý cửa sổ chính + attach WebContentsView cho tab
 import { BrowserWindow, WebContentsView, session } from 'electron'
+import { attachWebRequestFilters } from './ipc'
 import path from 'path'
 
 export const TOOLBAR_HEIGHT = 92 // TabBar (42) + AddressBar (50)
@@ -74,6 +75,10 @@ export function createTabView(url: string, container = 'default'): WebContentsVi
     },
   })
   applyPermissions(ses)
+  // Fix #37 — container tab không còn bypass privacy filter + Focus Mode:
+  // gắn webRequest filter cho session phân vùng (guard Set trong attachWebRequestFilters
+  // đảm bảo defaultSession đã được attachPrivacy xử lý thì không attach lại lần nữa)
+  attachWebRequestFilters(ses)
   view.setVisible(false)
   view.webContents.loadURL(url).catch(() => {
     view.webContents.loadURL('data:text/html,<h1 style="font-family:sans-serif">Không tải được trang</h1>')
