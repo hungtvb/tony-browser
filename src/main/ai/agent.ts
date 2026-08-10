@@ -11,7 +11,9 @@ export interface AgentResult {
 
 export type ParsedAction = { type: string; selector?: string; value?: string }
 
-const ACTION_TYPES = new Set(['click', 'type', 'scroll', 'navigate', 'wait'])
+// 'wait' đã bị loại khỏi ACTION_TYPES (fix #33): nhánh no-op cũ chỉ `taken.push('wait')` mà không
+// exec — dead code ngốn 1 slot MAX_ACTIONS. Adapter vẫn giữ case 'wait' (defensive cho lời gọi trực tiếp).
+const ACTION_TYPES = new Set(['click', 'type', 'scroll', 'navigate'])
 
 /** Giới hạn số action AI được thực hiện trong 1 lần run — chặn prompt injection bắt AI loop/hành động dài */
 export const MAX_ACTIONS = 8
@@ -74,12 +76,21 @@ export function parseActions(input: string | string[]): ParsedAction[] {
 }
 
 export function createAgentCore(adapter: PageAdapter) {
+  // Guard selector trước khi nội suy vào executeJavaScript — chặn prompt injection
+  // (trang độc hại điều khiển LLM trả selector chứa payload). Cùng phong cách nhánh
+  // navigate bị từ chối: trả summary rõ ràng, không exec.
+  function isSafeSelector(sel: string): boolean {
+    return sel.length <= 200 && !/[;`\n]/.test(sel)
+  }
+
   async function run(actions: ParsedAction[]): Promise<AgentResult> {
     if (actions.length === 0) {
       return { summary: 'Không tìm thấy thao tác hợp lệ (cần JSON như {"type":"click","selector":"..."})', actionsTaken: [] }
     }
     const taken: string[] = []
     for (const a of actions) {
+      // wait không còn là action hợp lệ — skip không count, không exec (không ngốn MAX_ACTIONS)
+      if (a.type === 'wait') continue
       if (taken.length >= MAX_ACTIONS) {
         return { summary: `Đã thực hiện ${taken.length} thao tác (dừng ở MAX_ACTIONS=${MAX_ACTIONS}): ${taken.join(' → ')}`, actionsTaken: taken }
       }
@@ -91,14 +102,14 @@ export function createAgentCore(adapter: PageAdapter) {
         taken.push(`navigate ${a.value}`)
         continue
       }
-      if (a.type === 'wait') {
-        taken.push('wait')
-        continue
+      const sel = a.selector ?? ''
+      if (sel && !isSafeSelector(sel)) {
+        return { summary: `${a.type} bị từ chối: selector chứa ký tự không an toàn (; backtick hoặc xuống dòng) hoặc dài > 200 (nhận '${sel.slice(0, 80)}')`, actionsTaken: taken }
       }
-      const res = await adapter.exec(a.type, a.selector ?? '', a.value)
-      taken.push(`${a.type} ${a.selector ?? ''}`)
+      const res = await adapter.exec(a.type, sel, a.value)
+      taken.push(`${a.type} ${sel}`)
       if (!res.ok) {
-        return { summary: `Lỗi khi thực hiện ${a.type} ${a.selector}: ${res.error ?? 'không rõ'}`, actionsTaken: taken }
+        return { summary: `Lỗi khi thực hiện ${a.type} ${sel}: ${res.error ?? 'không rõ'}`, actionsTaken: taken }
       }
     }
     return { summary: `Đã thực hiện ${taken.length} thao tác: ${taken.join(' → ')}`, actionsTaken: taken }
