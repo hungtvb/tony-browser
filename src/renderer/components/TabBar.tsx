@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CONTAINER_COLORS } from '../../shared/types'
 
-interface Tab { id: string; title: string; url: string; container?: string }
+interface Tab { id: string; title: string; url: string; loading?: boolean; container?: string }
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -22,6 +22,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   active: { background: 'rgba(212,255,64,0.18)', color: '#fff' },
   dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'transform 0.2s var(--ease-out)' },
+  // Issue #43: border-based spinner replaces the container dot while the tab is loading
+  spinner: {
+    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+    border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff',
+    animation: 'tony-spin 0.8s linear infinite',
+  },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },
   plus: {
@@ -58,7 +64,7 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
           onMouseLeave={() => setHoverId(null)}
           title={t.url}
         >
-          <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
+          <span style={t.loading ? styles.spinner : { ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
           {t.title}
           <span style={{ ...styles.close, ...(hoverId === t.id || t.id === activeId ? styles.closeHover : {}) }}
             onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>
