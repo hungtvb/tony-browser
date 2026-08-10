@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CONTAINER_COLORS } from '../../shared/types'
 
-interface Tab { id: string; title: string; url: string; container?: string }
+interface Tab { id: string; title: string; url: string; favicon?: string; container?: string }
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -22,6 +22,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   active: { background: 'rgba(212,255,64,0.18)', color: '#fff' },
   dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'transform 0.2s var(--ease-out)' },
+  // Issue #46: 16px favicon, rounded 3px; tiny container dot kept as status marker next to it
+  favicon: { width: 16, height: 16, borderRadius: 3, flexShrink: 0, objectFit: 'contain', background: 'rgba(255,255,255,0.08)' },
+  miniDot: { width: 4, height: 4, borderRadius: '50%', flexShrink: 0, position: 'absolute', right: -1, bottom: -1, boxShadow: '0 0 2px rgba(0,0,0,0.6)' },
+  faviconWrap: { position: 'relative', display: 'inline-flex', flexShrink: 0 },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },
   plus: {
@@ -58,7 +62,15 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
           onMouseLeave={() => setHoverId(null)}
           title={t.url}
         >
-          <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
+          {t.favicon ? (
+            <span style={styles.faviconWrap}>
+              <img src={t.favicon} style={styles.favicon} alt="" draggable={false}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              <span style={{ ...styles.miniDot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
+            </span>
+          ) : (
+            <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
+          )}
           {t.title}
           <span style={{ ...styles.close, ...(hoverId === t.id || t.id === activeId ? styles.closeHover : {}) }}
             onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>

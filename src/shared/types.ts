@@ -6,6 +6,7 @@ export interface TabState {
   title: string
   loading: boolean
   container: string
+  favicon?: string
 }
 
 export interface AIConfig {

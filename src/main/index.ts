@@ -2,6 +2,7 @@
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import { createMainWindow, ensureSession, createTabView, attachView, TOOLBAR_HEIGHT } from './window'
 import { planLayout } from './tabs/layout'
+import { attachFaviconEvents } from './tabs/faviconEvents'
 import { createTabManager } from './tabs/TabManager'
 import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from './ipc'
 import { FocusController } from './focus/controller'
@@ -82,6 +83,12 @@ const deps: IpcDeps = {
       const t = tm.get(tabId)
       if (t) { t.title = title; tm.broadcast() }
     })
+    attachFaviconEvents(view.webContents, (favicon) => {
+      const t = tm.get(tabId)
+      if (!t) return
+      t.favicon = favicon
+      tm.broadcast()
+    })
   },
   getActiveView: (tabId: string) => viewByTab.get(tabId),
   createRealView: (url: string, container?: string) => createTabView(url, container),
@@ -106,6 +113,12 @@ app.whenReady().then(() => {
     view.webContents.on('page-title-updated', (_e, title) => {
       const t = tm.get(tab.id)
       if (t) { t.title = title; tm.broadcast() }
+    })
+    attachFaviconEvents(view.webContents, (favicon) => {
+      const t = tm.get(tab.id)
+      if (!t) return
+      t.favicon = favicon
+      tm.broadcast()
     })
     if (mainWindow) {
       attachView(mainWindow, view)
@@ -134,6 +147,12 @@ app.whenReady().then(() => {
       view.webContents.on('page-title-updated', (_e, title) => {
         const t = tm.get(tab.id)
         if (t) { t.title = title; tm.broadcast() }
+      })
+      attachFaviconEvents(view.webContents, (favicon) => {
+        const t = tm.get(tab.id)
+        if (!t) return
+        t.favicon = favicon
+        tm.broadcast()
       })
     })
     const w = BrowserWindow.getAllWindows()[0]
