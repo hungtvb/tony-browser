@@ -23,7 +23,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: { padding: '8px 14px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)', color: '#0a0a0a', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
   actions: { display: 'flex', gap: 6, padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' },
   chip: {
-    padding: '4px 12px', borderRadius: 980, background: 'rgba(255,255,255,0.08)',
+    padding: '4px 12px', borderRadius: 980,
     color: 'rgba(255,255,255,0.85)', fontSize: 11, cursor: 'pointer', border: 'none', background: 'rgba(255,255,255,0.09)',
   },
   settings: { background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, margin: '0 14px', marginTop: 10 },
