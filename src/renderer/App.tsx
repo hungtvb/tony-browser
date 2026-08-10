@@ -147,13 +147,13 @@ export default function App() {
       {paletteOpen && (
         <CommandPalette
           commands={[
-            { id: 'newtab', icon: '➕', label: 'Tab mới', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
-            { id: 'search', icon: '🔍', label: 'Tìm tab đang mở', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
-            { id: 'focus', icon: '🧘', label: 'Bật/tắt Focus Mode', run: () => { const el = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('Focus')); el?.click() } },
-            { id: 'reader', icon: '📖', label: 'Reader Mode', run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })) },
-            { id: 'ai', icon: '🪄', label: 'Mở Trợ lý AI', hint: 'Ctrl+K', run: () => setAiOpen(true) },
-            { id: 'pip', icon: '🎬', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
-            { id: 'layout', icon: '📐', label: `Đổi layout: ${layout === 'side' ? 'Ngang' : 'Dọc'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
+            { id: 'newtab', icon: 'tab', label: 'Tab mới', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
+            { id: 'search', icon: 'search', label: 'Tìm tab đang mở', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
+            { id: 'focus', icon: 'focus', label: 'Bật/tắt Focus Mode', run: () => { const el = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('Focus')); el?.click() } },
+            { id: 'reader', icon: 'reader', label: 'Reader Mode', run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })) },
+            { id: 'ai', icon: 'ai', label: 'Mở Trợ lý AI', hint: 'Ctrl+K', run: () => setAiOpen(true) },
+            { id: 'pip', icon: 'pip', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
+            { id: 'layout', icon: 'layout', label: `Đổi layout: ${layout === 'side' ? 'Ngang' : 'Dọc'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
           ]}
           onClose={() => setPaletteOpen(false)}
         />

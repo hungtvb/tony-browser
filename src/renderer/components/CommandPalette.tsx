@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
@@ -67,7 +68,7 @@ export default function CommandPalette({ commands, onClose }: {
             <div key={c.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)}
               onClick={() => { c.run(); onClose() }}>
-              <span style={styles.icon}>{c.icon}</span>
+              <span style={styles.icon}><UIcon name={c.icon} size={16} color={i === idx ? '#0a0a0a' : 'rgba(255,255,255,0.7)'} /></span>
               <span>{c.label}</span>
               {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: 'rgba(0,0,0,0.6)', borderColor: 'rgba(0,0,0,0.2)' } : {}) }}>{c.hint}</span>}
             </div>
