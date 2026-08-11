@@ -1,9 +1,9 @@
-// Script chụp màn hình Tony Browser — capture.ts
+// Tony Browser screenshot script — capture.ts
 import { app, BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
 
-// Biến env: CAPTURE_PATH (nơi lưu ảnh), CAPTURE_MS (thời gian chờ render)
+// Env vars: CAPTURE_PATH (image output location), CAPTURE_MS (render wait time)
 const outPath = process.env.CAPTURE_PATH || '/tmp/tony-capture.png'
 const waitMs = Number(process.env.CAPTURE_MS || 4000)
 
@@ -20,14 +20,14 @@ app.whenReady().then(async () => {
       <div style="padding:30px">
         <h1>🌐 Tony Browser</h1>
         <p>Electron ${process.versions.electron} · Chromium ${process.versions.chrome}</p>
-        <h2>Kiểm tra code chạy thật</h2>
+        <h2>Verify the code actually runs</h2>
         <ul>
-          <li>TabManager: mở tab, đóng tab, chuyển tab</li>
-          <li>Privacy: chặn ads/tracker</li>
-          <li>AI Assistant: tóm tắt trang</li>
+          <li>TabManager: open tab, close tab, switch tab</li>
+          <li>Privacy: block ads/trackers</li>
+          <li>AI Assistant: summarize pages</li>
           <li>Focus Mode, Smart Tabs, TabSleeper</li>
         </ul>
-        <p style="color:#4ade80">✅ App khởi động thành công — ${new Date().toLocaleString('vi-VN')}</p>
+        <p style="color:#4ade80">✅ App started successfully — ${new Date().toLocaleString('en-US')}</p>
       </div>
     </body></html>
   `))

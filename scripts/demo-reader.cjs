@@ -1,30 +1,30 @@
-// Script demo Reader Mode — chứng minh extract hoạt động thật
+// Reader Mode demo script — proves extraction actually works
 const { extractArticle } = require('../out/main/reader/extract.js')
 
 const html = `<!DOCTYPE html>
-<html><head><title>Bài báo test — Tony Browser Reader</title></head><body>
-  <nav>Menu chính · Tin tức · Thể thao</nav>
+<html><head><title>Test article — Tony Browser Reader</title></head><body>
+  <nav>Main menu · News · Sports</nav>
   <script>alert('ads script')</script>
-  <div class="banner-ad">QUẢNG CÁO MUA HÀNG GIẢM GIÁ 50%</div>
+  <div class="banner-ad">AD: SHOPPING SALE 50% OFF</div>
   <div id="content">
-    <h1>Việt Nam hút vốn đầu tư công nghệ năm 2026</h1>
-    <p>Ngành công nghệ Việt Nam tiếp tục tăng trưởng mạnh mẽ trong năm qua.</p>
-    <p>Nhiều doanh nghiệp nội địa đã huy động được vốn đầu tư quốc tế.</p>
-    <p>Chính phủ đặt mục tiêu 10 tỷ USD đầu tư công nghệ vào 2030.</p>
+    <h1>Vietnam attracts tech investment in 2026</h1>
+    <p>Vietnam's tech industry kept growing strongly over the past year.</p>
+    <p>Many local companies have raised international investment.</p>
+    <p>The government targets $10B of tech investment by 2030.</p>
   </div>
-  <aside>Quảng cáo bên cạnh</aside>
-  <footer>© 2026 Báo test</footer>
+  <aside>Sidebar ad</aside>
+  <footer>© 2026 Test news</footer>
 </body></html>`
 
 const result = extractArticle(html)
 
-console.log('=== READER MODE EXTRACT — KẾT QUẢ THỰC ===')
+console.log('=== READER MODE EXTRACT — ACTUAL RESULTS ===')
 console.log('Title:', result.title)
 console.log('Content:', result.content)
 console.log('Length:', result.length)
 console.log('')
-console.log('Kiểm tra:')
-console.log('  - Có "QUẢNG CÁO" trong content?', result.content.includes('QUẢNG CÁO'))
-console.log('  - Có "Menu chính" trong content?', result.content.includes('Menu chính'))
-console.log('  - Có "alert" trong content?', result.content.includes('alert'))
-console.log('  -> Content SẠCH:', !result.content.includes('QUẢNG CÁO') && !result.content.includes('Menu chính') && !result.content.includes('alert'))
+console.log('Checks:')
+console.log('  - Contains "AD:" in content?', result.content.includes('AD:'))
+console.log('  - Contains "Main menu" in content?', result.content.includes('Main menu'))
+console.log('  - Contains "alert" in content?', result.content.includes('alert'))
+console.log('  -> Content CLEAN:', !result.content.includes('AD:') && !result.content.includes('Main menu') && !result.content.includes('alert'))

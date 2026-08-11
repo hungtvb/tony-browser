@@ -1,4 +1,4 @@
-// Demo chống quảng cáo — chụp trang mẫu có ads, chứng minh cosmetics block
+// Ad-blocking demo — captures a mock page with ads to prove cosmetic blocking
 const { app, BrowserWindow } = require('electron')
 const fs = require('fs')
 const path = require('path')
@@ -12,26 +12,26 @@ const mockPage = `<!DOCTYPE html>
 .article{max-width:700px;line-height:1.7;font-size:16px;color:#d1d5db}
 .content-safe{background:#1a1d24;padding:20px;border-radius:8px;border:1px solid #2a2d36}</style></head>
 <body>
-  <div class="advert">📢 QUẢNG CÁO: Mua ngay giảm 50%!!</div>
-  <div class="sponsored">Sponsored — Tài trợ bởi...</div>
-  <div id="banner-ad">Banner quảng cáo 728x90</div>
+  <div class="advert">📢 AD: BUY NOW 50% OFF!!</div>
+  <div class="sponsored">Sponsored by ...</div>
+  <div id="banner-ad">Banner ad 728x90</div>
   <div class="content-safe">
-    <h2>Nội dung bài viết thật</h2>
-    <p class="dataframe">Ngành công nghệ Việt Nam tiếp tục phát triển mạnh mẽ trong năm 2026.</p>
+    <h2>Real article content</h2>
+    <p class="dataframe">Vietnam's tech industry keeps growing strongly in 2026.</p>
   </div>
-  <div class="advert">📢 QUẢNG CÁO 2</div>
+  <div class="advert">📢 AD 2</div>
 </body></html>`
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ width: 900, height: 700, show: false })
 
-  // Trang trước khi chặn
+  // Page before blocking
   await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(mockPage))
   await new Promise(r => setTimeout(r, 1500))
   const before = await win.webContents.capturePage()
   fs.writeFileSync('/tmp/ev-capture/ad-before.png', before.toPNG())
 
-  // Inject cosmetic filter (tự viết rules giống src/main/privacy/filters.ts)
+  // Inject cosmetic filter (rules mirror src/main/privacy/filters.ts)
   const COSMETIC_RULES = [
     '[class*="advert"]', '[class*="ads-"]', '[class*="ad-banner"]',
     '[id*="advert"]', '[id*="ad-banner"]', '[id*="banner-ad"]',
