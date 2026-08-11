@@ -11,6 +11,7 @@ import SearchOverlay from './components/SearchOverlay'
 import TtsPanel from './components/TtsPanel'
 import SpeedDial from './components/SpeedDial'
 import SavedPages from './components/SavedPages'
+import StackView from './components/StackView'
 import { ToastStack, StatusBar, useFeedback } from './components/Feedback'
 import { useTabs } from './hooks/useTabs'
 import { nextPhase, phaseStyle, type ProgressPhase } from './progress'
@@ -42,6 +43,8 @@ export default function App() {
   const [ttsOpen, setTtsOpen] = useState(false)
   // Issue #85 — saved-pages collection panel (read/delete side of save:* API)
   const [savedOpen, setSavedOpen] = useState(false)
+  // Issue #86 — stack-by-domain view consuming window.tony.tabs.stacks()
+  const [stackOpen, setStackOpen] = useState(false)
   const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, isLoading: false })
   // Issue #72 — ids of heavy-RAM tabs; fed by the proactive 'sleeper:warnings' event
   // (FeatureBar subscribes via onWarned) + the polled evaluate() fallback.
@@ -225,11 +228,13 @@ export default function App() {
             { id: 'pip', icon: '🎬', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
             { id: 'layout', icon: '📐', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
             { id: 'saved', icon: '🔖', label: 'Saved pages', run: () => setSavedOpen(true) },
+            { id: 'stacks', icon: '🗂', label: 'Stack tabs by domain', run: () => setStackOpen(true) },
           ]}
           onClose={() => setPaletteOpen(false)}
         />
       )}
       {searchOpen && <SearchOverlay onSelect={activate} onClose={() => setSearchOpen(false)} />}
+      {stackOpen && <StackView onSelect={activate} onClose={() => setStackOpen(false)} />}
       {savedOpen && <SavedPages onClose={() => setSavedOpen(false)} />}
       {ttsOpen && (
         <TtsPanel tab={active} onClose={() => setTtsOpen(false)}
