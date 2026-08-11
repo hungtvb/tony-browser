@@ -1,4 +1,4 @@
-// Session store — undo closed tabs (Ctrl+Shift+T) + save/restore session
+// Session store — undo closed tabs (Ctrl+Shift+T)
 import * as fs from 'fs'
 
 export interface SessionTab {
@@ -12,7 +12,6 @@ export interface SessionTab {
 export function createSessionStore(persist?: SessionPersist<SessionTab>) {
   // load the undo stack from disk (if persist is provided) — keep at most 50 entries like recordClosed
   const closed: SessionTab[] = (persist?.load() ?? []).slice(0, 50)
-  let snapshot: SessionTab[] | null = null
 
   function recordClosed(tab: SessionTab) {
     closed.unshift(tab)
@@ -30,19 +29,7 @@ export function createSessionStore(persist?: SessionPersist<SessionTab>) {
     return closed.length
   }
 
-  function saveSession(tabs: SessionTab[]) {
-    snapshot = tabs.map(t => ({ ...t }))
-  }
-
-  function restoreSession(): SessionTab[] {
-    return snapshot ? snapshot.map(t => ({ ...t })) : []
-  }
-
-  function clearSession() {
-    snapshot = null
-  }
-
-  return { recordClosed, popClosed, closedCount, saveSession, restoreSession, clearSession }
+  return { recordClosed, popClosed, closedCount }
 }
 
 // Persist the session list to disk as JSON (used for SmartTab sessions)

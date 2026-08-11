@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createSessionStore, type SessionPersist, type SessionTab } from '../src/main/save/session-store'
 
+type AnyStore = any
+
 describe('Session store', () => {
   let store: ReturnType<typeof createSessionStore>
 
@@ -18,18 +20,11 @@ describe('Session store', () => {
     expect(store.popClosed()).toBeNull()
   })
 
-  it('saves and restores session snapshot', () => {
-    store.saveSession([
-      { id: 'a', url: 'https://a.com', title: 'A' },
-      { id: 'b', url: 'https://b.com', title: 'B' },
-    ])
-    const restored = store.restoreSession()
-    expect(restored).toHaveLength(2)
-    expect(restored[0].url).toBe('https://a.com')
-  })
-
-  it('returns empty when no session saved', () => {
-    expect(store.restoreSession()).toEqual([])
+  it('exposes only the undo-closed-tabs API — no orphaned session snapshot fns (issue #80)', () => {
+    const s = store as AnyStore
+    expect(s.saveSession).toBeUndefined()
+    expect(s.restoreSession).toBeUndefined()
+    expect(s.clearSession).toBeUndefined()
   })
 
   it('keeps favicon through the undo-close round-trip (issue #52)', () => {
@@ -42,13 +37,7 @@ describe('Session store', () => {
   })
 
   it('restored session snapshot keeps favicon (issue #52)', () => {
-    store.saveSession([
-      { id: 'a', url: 'https://a.com', title: 'A', favicon: 'data:image/png;base64,BBBB' },
-      { id: 'b', url: 'https://b.com', title: 'B' },
-    ])
-    const restored = store.restoreSession()
-    expect(restored[0].favicon).toBe('data:image/png;base64,BBBB')
-    expect(restored[1].favicon).toBeUndefined()
+    expect((store as AnyStore).saveSession).toBeUndefined() // snapshot API removed in #80 — favicon round-trip via undo stack covers #52
   })
 })
 
