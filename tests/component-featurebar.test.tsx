@@ -13,6 +13,8 @@ function renderBar(overrides: Partial<Parameters<typeof FeatureBar>[0]> = {}) {
     onToggleLayout: vi.fn(),
     warnedIds: [] as string[],
     onWarned: vi.fn(),
+    focusOn: false,
+    onToggleFocus: vi.fn(),
     ...overrides,
   }
   render(<FeatureBar {...props} />)
@@ -57,7 +59,7 @@ describe('FeatureBar', () => {
         onWarnings: vi.fn(() => unsubscribe),
       },
     })
-    render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={onWarned} />)
+    render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={onWarned} focusOn={false} onToggleFocus={vi.fn()} />)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10000)
     })
@@ -71,7 +73,7 @@ describe('FeatureBar', () => {
       focus: { state: vi.fn(() => Promise.resolve({ enabled: false })) },
       sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })), onWarnings: vi.fn(() => unsubscribe) },
     })
-    const { unmount } = render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={vi.fn()} />)
+    const { unmount } = render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={vi.fn()} focusOn={false} onToggleFocus={vi.fn()} />)
     unmount()
     expect(unsubscribe).toHaveBeenCalledTimes(1)
   })
@@ -80,16 +82,21 @@ describe('FeatureBar', () => {
     expect(() => renderBar()).not.toThrow()
   })
 
-  it('toggles focus chip and calls window.tony.focus.toggle', async () => {
-    const toggle = vi.fn(() => Promise.resolve())
-    vi.stubGlobal('tony', {
-      focus: { state: vi.fn(() => Promise.resolve({ enabled: false })), toggle },
-      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })), onWarnings: vi.fn(() => vi.fn()) },
-    })
-    renderBar()
+  it('toggles focus chip via onToggleFocus prop and reflects focusOn', async () => {
+    const onToggleFocus = vi.fn()
+    renderBar({ focusOn: false, onToggleFocus })
     fireEvent.click(screen.getByText('Focus Off'))
-    expect(toggle).toHaveBeenCalledWith(true)
+    expect(onToggleFocus).toHaveBeenCalledTimes(1)
+    expect(window.tony?.focus?.toggle).not.toBeDefined()
+  })
+
+  it('renders Focus On when focusOn is true (controlled by App)', () => {
+    renderBar({ focusOn: true })
     expect(screen.getByText('Focus On')).toBeInTheDocument()
+  })
+
+  it('still renders focus chip when window.tony is missing (props drive state)', () => {
+    expect(() => renderBar({ focusOn: false })).not.toThrow()
   })
 
   it('calls onToggleLayout when the layout chip is clicked', () => {

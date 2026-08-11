@@ -35,17 +35,17 @@ const styles: Record<string, React.CSSProperties> = {
   brandVer: { fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 2 },
 }
 
-export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned }: {
+export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned, focusOn, onToggleFocus }: {
   layout: 'top' | 'side'
   onToggleLayout: () => void
   warnedIds: string[]
   onWarned: (ids: string[]) => void
+  focusOn: boolean
+  onToggleFocus: () => void
 }) {
-  const [focusOn, setFocusOn] = useState(false)
   const [sleeping, setSleeping] = useState(0)
 
   useEffect(() => {
-    window.tony?.focus.state().then(s => setFocusOn(s.enabled)).catch(() => {})
     const iv = setInterval(() => {
       window.tony?.sleeper.evaluate().then(r => {
         setSleeping(r.sleeping)
@@ -62,15 +62,9 @@ export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned
     return () => { clearInterval(iv); offWarnings?.() }
   }, [onWarned])
 
-  function toggleFocus() {
-    const next = !focusOn
-    setFocusOn(next)
-    window.tony?.focus.toggle(next)
-  }
-
   return (
     <div style={styles.bar}>
-      <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={toggleFocus}>
+      <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={onToggleFocus}>
         <UIcon name="focus" size={13} /> {focusOn ? 'Focus On' : 'Focus Off'}
       </button>
 <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tabs asleep</span>
