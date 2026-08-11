@@ -33,6 +33,32 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: '0 0 10px rgba(212,255,64,0.7)',
   },
   brandVer: { fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginLeft: 2 },
+  popover: {
+    position: 'absolute', top: 34, left: 14, zIndex: 90,
+    background: 'rgba(24,26,22,0.96)', border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10, padding: 12, minWidth: 280, boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+  },
+  section: { marginBottom: 10 },
+  sectionTitle: { fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'rgba(255,255,255,0.5)', margin: '0 0 6px' },
+  row: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 },
+  rowInput: {
+    flex: 1, padding: '3px 8px', borderRadius: 6, fontSize: 11, border: 'none',
+    background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.9)', outline: 'none',
+  },
+  addRow: { display: 'flex', gap: 6, alignItems: 'center' },
+  addInput: {
+    flex: 1, padding: '3px 8px', borderRadius: 6, fontSize: 11, border: 'none',
+    background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.9)', outline: 'none',
+  },
+  miniBtn: {
+    padding: '3px 9px', borderRadius: 6, fontSize: 11, border: 'none', cursor: 'pointer',
+    background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.85)',
+  },
+  removeBtn: {
+    padding: '1px 7px', borderRadius: 6, fontSize: 11, border: 'none', cursor: 'pointer',
+    background: 'rgba(255,69,58,0.25)', color: '#ff6961',
+  },
+  saveRow: { display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 8 },
 }
 
 export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned, focusOn, onToggleFocus }: {
@@ -44,6 +70,35 @@ export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned
   onToggleFocus: () => void
 }) {
   const [sleeping, setSleeping] = useState(0)
+  // Issue #92 — focus blocklist/whitelist editor (Option A: wire the UI).
+  // Loaded from focus.state(); saved via focus.setBlocklist/setWhitelist.
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [blocklist, setBlocklist] = useState<string[]>([])
+  const [whitelist, setWhitelist] = useState<string[]>([])
+  const [blockDraft, setBlockDraft] = useState('')
+  const [whiteDraft, setWhiteDraft] = useState('')
+  // lists as loaded from focus.state() — Save persists only if edited
+  const [loadedBlock, setLoadedBlock] = useState<string[]>([])
+  const [loadedWhite, setLoadedWhite] = useState<string[]>([])
+
+  const openEditor = () => {
+    window.tony?.focus.state().then(s => {
+      setBlocklist(s.blocklist ?? [])
+      setWhitelist(s.whitelist ?? [])
+      setLoadedBlock(s.blocklist ?? [])
+      setLoadedWhite(s.whitelist ?? [])
+    }).catch(() => {})
+    setEditorOpen(true)
+  }
+
+  const saveLists = () => {
+    const norm = (d: string) => d.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+    const blockNext = [...blocklist, ...(blockDraft ? [norm(blockDraft)] : [])].filter(Boolean)
+    const whiteNext = [...whitelist, ...(whiteDraft ? [norm(whiteDraft)] : [])].filter(Boolean)
+    if (blockNext.join() !== loadedBlock.join()) window.tony?.focus.setBlocklist(blockNext).catch(() => {})
+    if (whiteNext.join() !== loadedWhite.join()) window.tony?.focus.setWhitelist(whiteNext).catch(() => {})
+    setEditorOpen(false)
+  }
 
   useEffect(() => {
     const iv = setInterval(() => {
@@ -67,6 +122,45 @@ export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned
       <button className="apple-focus" style={{ ...styles.chip, ...(focusOn ? styles.active : {}) }} onClick={onToggleFocus}>
         <UIcon name="focus" size={13} /> {focusOn ? 'Focus On' : 'Focus Off'}
       </button>
+      <button className="apple-focus" style={styles.chip} onClick={openEditor} title="Edit focus lists">
+        <UIcon name="settings" size={13} /> Lists
+      </button>
+      {editorOpen && (
+        <div style={styles.popover} data-testid="focus-editor">
+          <div style={styles.section}>
+            <div style={styles.sectionTitle}>Blocklist</div>
+            {blocklist.map((d, i) => (
+              <div key={`b-${i}`} style={styles.row}>
+                <input style={styles.rowInput} value={d} readOnly />
+                <button style={styles.removeBtn} title="Remove domain" onClick={() => setBlocklist(blocklist.filter((_, j) => j !== i))}>✕</button>
+              </div>
+            ))}
+            <div style={styles.addRow}>
+              <input style={styles.addInput} placeholder="Add blocklist domain" value={blockDraft}
+                onChange={e => setBlockDraft(e.target.value)} />
+              <button style={styles.miniBtn} onClick={() => { setBlocklist([...blocklist, blockDraft.trim()]); setBlockDraft('') }}>Add</button>
+            </div>
+          </div>
+          <div style={styles.section}>
+            <div style={styles.sectionTitle}>Whitelist</div>
+            {whitelist.map((d, i) => (
+              <div key={`w-${i}`} style={styles.row}>
+                <input style={styles.rowInput} value={d} readOnly />
+                <button style={styles.removeBtn} title="Remove domain" onClick={() => setWhitelist(whitelist.filter((_, j) => j !== i))}>✕</button>
+              </div>
+            ))}
+            <div style={styles.addRow}>
+              <input style={styles.addInput} placeholder="Add whitelist domain" value={whiteDraft}
+                onChange={e => setWhiteDraft(e.target.value)} />
+              <button style={styles.miniBtn} onClick={() => { setWhitelist([...whitelist, whiteDraft.trim()]); setWhiteDraft('') }}>Add</button>
+            </div>
+          </div>
+          <div style={styles.saveRow}>
+            <button style={styles.miniBtn} onClick={() => setEditorOpen(false)}>Cancel</button>
+            <button style={{ ...styles.miniBtn, background: 'var(--apple-blue)', color: '#0a0a0a' }} onClick={saveLists}>Save</button>
+          </div>
+        </div>
+      )}
 <span style={styles.chipStatic}><UIcon name="sleep" size={13} /> {sleeping} tabs asleep</span>
       {warnedIds.length > 0 && <span style={{ ...styles.chipStatic, ...styles.warn }}><UIcon name="lock" size={13} /> {warnedIds.length} RAM-heavy tabs</span>}
       <button className="apple-focus" style={styles.chip} onClick={onToggleLayout} title="Switch tab layout">

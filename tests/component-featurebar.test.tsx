@@ -104,4 +104,54 @@ describe('FeatureBar', () => {
     fireEvent.click(screen.getByText('Horizontal'))
     expect(props.onToggleLayout).toHaveBeenCalledTimes(1)
   })
+
+  // ─── Issue #92 — focus blocklist/whitelist editor (Option A: wire the UI) ───
+  function stubFocusApi(over: { state?: any; setBlocklist?: any; setWhitelist?: any } = {}) {
+    vi.stubGlobal('tony', {
+      focus: {
+        state: over.state ?? vi.fn(() => Promise.resolve({ enabled: false, blocklist: [], whitelist: [] })),
+        setBlocklist: over.setBlocklist ?? vi.fn(() => Promise.resolve({})),
+        setWhitelist: over.setWhitelist ?? vi.fn(() => Promise.resolve({})),
+      },
+      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })), onWarnings: vi.fn(() => vi.fn()) },
+    })
+  }
+
+  it('opens the focus editor and shows blocklist/whitelist loaded from focus.state()', async () => {
+    stubFocusApi({ state: vi.fn(() => Promise.resolve({ enabled: false, blocklist: ['facebook.com'], whitelist: ['example.com'] })) })
+    renderBar()
+    fireEvent.click(screen.getByTitle('Edit focus lists'))
+    await act(async () => {})
+    expect(screen.getByDisplayValue('facebook.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('example.com')).toBeInTheDocument()
+  })
+
+  it('adds a domain to the blocklist and saves via window.tony.focus.setBlocklist', async () => {
+    const setBlocklist = vi.fn(() => Promise.resolve({}))
+    stubFocusApi({ setBlocklist, state: vi.fn(() => Promise.resolve({ enabled: false, blocklist: ['facebook.com'], whitelist: [] })) })
+    renderBar()
+    fireEvent.click(screen.getByTitle('Edit focus lists'))
+    await act(async () => {})
+    fireEvent.change(screen.getByPlaceholderText('Add blocklist domain'), { target: { value: 'twitter.com' } })
+    fireEvent.click(screen.getAllByText('Add')[0])
+    fireEvent.click(screen.getByText('Save'))
+    expect(setBlocklist).toHaveBeenCalledWith(['facebook.com', 'twitter.com'])
+  })
+
+  it('removes a domain from the whitelist and saves via window.tony.focus.setWhitelist', async () => {
+    const setWhitelist = vi.fn(() => Promise.resolve({}))
+    stubFocusApi({ setWhitelist, state: vi.fn(() => Promise.resolve({ enabled: false, blocklist: [], whitelist: ['example.com', 'docs.dev'] })) })
+    renderBar()
+    fireEvent.click(screen.getByTitle('Edit focus lists'))
+    await act(async () => {})
+    const removeButtons = screen.getAllByTitle('Remove domain')
+    expect(removeButtons).toHaveLength(2)
+    fireEvent.click(removeButtons[1])
+    fireEvent.click(screen.getByText('Save'))
+    expect(setWhitelist).toHaveBeenCalledWith(['example.com'])
+  })
+
+  it('saves without throwing when window.tony is missing (editor closed)', () => {
+    expect(() => renderBar()).not.toThrow()
+  })
 })
