@@ -34,7 +34,9 @@ const api: TonyAPI = {
       state: () => ipcRenderer.invoke('tabs:navState') as Promise<{ canGoBack: boolean; canGoForward: boolean; isLoading: boolean }>,
     },
     onChange: (cb: (tabs: TabState[]) => void) => {
-      ipcRenderer.on('tabs:changed', (_e, tabs: TabState[]) => cb(tabs))
+      const listener = (_e: unknown, tabs: TabState[]) => cb(tabs)
+      ipcRenderer.on('tabs:changed', listener)
+      return () => ipcRenderer.removeListener('tabs:changed', listener)
     },
   },
   privacy: {

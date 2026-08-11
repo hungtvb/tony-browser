@@ -96,7 +96,7 @@ export interface TonyAPI {
       reload: () => Promise<boolean>
       state: () => Promise<{ canGoBack: boolean; canGoForward: boolean; isLoading: boolean }>
     }
-    onChange: (cb: (tabs: TabState[]) => void) => void
+    onChange: (cb: (tabs: TabState[]) => void) => () => void
   }
   privacy: {
     stats: () => Promise<PrivacyStats>
