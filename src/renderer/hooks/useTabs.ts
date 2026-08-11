@@ -14,11 +14,12 @@ export function useTabs() {
       setActiveId(list.length ? list[list.length - 1].id : '')
       setReady(true)
     })
-    tony.tabs.onChange(list => {
+    const off = tony.tabs.onChange(list => {
       setTabs(list)
       // if the active tab was closed, select the last one
       setActiveId(prev => list.some(t => t.id === prev) ? prev : (list[list.length - 1]?.id ?? ''))
     })
+    return () => off?.()
   }, [])
 
   function open(url: string, container?: string, favicon?: string) {
