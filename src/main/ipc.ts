@@ -248,7 +248,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     const view = tabId ? deps.getActiveView(tabId) : undefined
     if (!view) return { ok: false, error: 'No tab' }
     try {
-      await view.webContents.executeJavaScript(`
+      const res = (await view.webContents.executeJavaScript(`
         (() => {
           if (document.pictureInPictureElement) {
             document.exitPictureInPicture().catch(e => {});
@@ -256,8 +256,8 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
           }
           return { ok: false, error: 'No PiP video' };
         })()
-      `)
-      return { ok: true }
+      `)) as { ok: boolean; error?: string }
+      return res
     } catch (e: any) {
       return { ok: false, error: e?.message ?? 'Exit PiP error' }
     }
