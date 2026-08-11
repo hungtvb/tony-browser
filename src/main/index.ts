@@ -153,18 +153,12 @@ app.whenReady().then(() => {
       const tab = tm.open(s.url, s.container ?? 'default', s.favicon)
       const view = createTabView(s.url, s.container ?? 'default')
       trackTabView(tab.id, view)
+      // Issue #82: attach EVERY restored view to the window, not just the first —
+      // otherwise tabs beyond the first stay invisible (never a child of contentView).
+      if (mainWindow) attachView(mainWindow, view)
     })
-    const w = BrowserWindow.getAllWindows()[0]
-    if (w) {
-      const first = tm.list()[0]
-      if (first) {
-        const v = viewByTab.get(first.id)
-        if (v) {
-          w.contentView.addChildView(v)
-          layoutViews()
-        }
-      }
-    }
+    // single centralized layout pass sets bounds/visibility consistently (hides non-active views)
+    layoutViews()
     tm.broadcast()
   }
 
