@@ -3,7 +3,11 @@ import type { WebContents } from 'electron'
 import type { PageAdapter } from './agent'
 
 function escapeSelector(sel: string): string {
-  return sel.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+  return sel
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$')
+    .replace(/'/g, "\\'")
 }
 
 export function createWebContentsAdapter(wc: () => WebContents | null): PageAdapter {
