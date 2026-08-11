@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { CONTAINER_COLORS } from '../../shared/types'
+import UIcon from './UIcon'
 import { isMiddleClickClose, wheelDeltaToDirection, nextTabId, createWheelGate } from '../tabGestures'
 
 interface Tab { id: string; title: string; url: string; favicon?: string; loading?: boolean; container?: string }
@@ -35,6 +36,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },
+  // Issue #72 — RAM badge on tabs whose id is in the warned set (proactive sleeper:warnings event)
+  ramBadge: {
+    fontSize: 10, fontWeight: 600, color: '#ff9f0a', background: 'rgba(255,159,10,0.16)',
+    borderRadius: 980, padding: '1px 6px', flexShrink: 0, letterSpacing: '-0.1px',
+  },
   plus: {
     padding: '4px 12px', background: 'transparent', border: 'none', borderRadius: 8,
     cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 16, lineHeight: 1,
@@ -42,8 +48,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
 }
 
-export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: {
+export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, onNewTab }: {
   tabs: Tab[]; activeId: string
+  warnedIds?: string[]
   onSelect: (id: string) => void; onClose: (id: string) => void
   onNewTab?: () => void
 }) {
@@ -98,6 +105,7 @@ export default function TabBar({ tabs, activeId, onSelect, onClose, onNewTab }: 
             <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
           )}
           {t.title}
+          {(warnedIds ?? []).includes(t.id) && <span style={styles.ramBadge} title="Heavy tab — high RAM usage"><UIcon name="lock" size={10} /> RAM</span>}
           <span style={{ ...styles.close, ...(hoverId === t.id || t.id === activeId ? styles.closeHover : {}) }}
             onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>
         </button>

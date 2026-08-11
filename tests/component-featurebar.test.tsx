@@ -1,10 +1,23 @@
 // @vitest-environment jsdom
-// FeatureBar renderer component (issue #77) — jsdom + testing-library.
-// Tests the chip surfaces that exist on main: focus toggle, sleeper poll
-// (RAM-heavy chip), layout toggle, and safe fallback when window.tony is missing.
+// FeatureBar renderer component (issue #77 + #72) — jsdom + testing-library.
+// Issue #72 changed the API: the warned set now lives in App state and arrives
+// via the `warnedIds` prop, fed by the proactive 'sleeper:warnings' event
+// (subscribed via onWarnings → returns an unsubscribe fn) + the poll fallback.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import FeatureBar from '../src/renderer/components/FeatureBar'
+
+function renderBar(overrides: Partial<Parameters<typeof FeatureBar>[0]> = {}) {
+  const props = {
+    layout: 'top' as const,
+    onToggleLayout: vi.fn(),
+    warnedIds: [] as string[],
+    onWarned: vi.fn(),
+    ...overrides,
+  }
+  render(<FeatureBar {...props} />)
+  return props
+}
 
 describe('FeatureBar', () => {
   beforeEach(() => {
@@ -12,61 +25,76 @@ describe('FeatureBar', () => {
   })
 
   afterEach(() => {
+    cleanup()
     vi.useRealTimers()
     vi.unstubAllGlobals()
   })
 
   it('renders focus chip, sleep count and brand', () => {
-    render(<FeatureBar layout="top" onToggleLayout={() => {}} />)
+    renderBar()
     expect(screen.getByText('Focus Off')).toBeInTheDocument()
     expect(screen.getByText(/tabs asleep/)).toBeInTheDocument()
     expect(screen.getByText(/Tony Browser/)).toBeInTheDocument()
   })
 
-  it('shows the RAM-heavy chip with the warned count from the sleeper poll', async () => {
-    vi.stubGlobal('tony', {
-      focus: { state: vi.fn(() => Promise.resolve({ enabled: false })) },
-      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 1, warnings: ['tab-a', 'tab-b'] })) },
-    })
-    render(<FeatureBar layout="top" onToggleLayout={() => {}} />)
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(10000)
-    })
+  it('shows the RAM-heavy chip from the warnedIds prop', () => {
+    renderBar({ warnedIds: ['tab-a', 'tab-b'] })
     expect(screen.getByText(/2 RAM-heavy tabs/)).toBeInTheDocument()
   })
 
-  it('does not render the RAM-heavy chip when the poll returns no warnings', async () => {
-    vi.stubGlobal('tony', {
-      focus: { state: vi.fn(() => Promise.resolve({ enabled: false })) },
-      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })) },
-    })
-    render(<FeatureBar layout="top" onToggleLayout={() => {}} />)
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(10000)
-    })
+  it('does not render the RAM-heavy chip when warnedIds is empty', () => {
+    renderBar({ warnedIds: [] })
     expect(screen.queryByText(/RAM-heavy tabs/)).not.toBeInTheDocument()
   })
 
+  it('forwards poll warnings to onWarned (fallback) and subscribes to the proactive event', async () => {
+    const onWarned = vi.fn()
+    const unsubscribe = vi.fn()
+    vi.stubGlobal('tony', {
+      focus: { state: vi.fn(() => Promise.resolve({ enabled: false })) },
+      sleeper: {
+        evaluate: vi.fn(() => Promise.resolve({ sleeping: 1, warnings: ['tab-a', 'tab-b'] })),
+        onWarnings: vi.fn(() => unsubscribe),
+      },
+    })
+    render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={onWarned} />)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10000)
+    })
+    expect(onWarned).toHaveBeenCalledWith(['tab-a', 'tab-b'])
+    expect(window.tony?.sleeper.onWarnings).toHaveBeenCalledWith(onWarned)
+  })
+
+  it('calls the unsubscribe fn returned by onWarnings on unmount (no listener leak)', async () => {
+    const unsubscribe = vi.fn()
+    vi.stubGlobal('tony', {
+      focus: { state: vi.fn(() => Promise.resolve({ enabled: false })) },
+      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })), onWarnings: vi.fn(() => unsubscribe) },
+    })
+    const { unmount } = render(<FeatureBar layout="top" onToggleLayout={vi.fn()} warnedIds={[]} onWarned={vi.fn()} />)
+    unmount()
+    expect(unsubscribe).toHaveBeenCalledTimes(1)
+  })
+
   it('does not throw when window.tony is missing (poll fallback)', () => {
-    expect(() => render(<FeatureBar layout="top" onToggleLayout={() => {}} />)).not.toThrow()
+    expect(() => renderBar()).not.toThrow()
   })
 
   it('toggles focus chip and calls window.tony.focus.toggle', async () => {
     const toggle = vi.fn(() => Promise.resolve())
     vi.stubGlobal('tony', {
       focus: { state: vi.fn(() => Promise.resolve({ enabled: false })), toggle },
-      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })) },
+      sleeper: { evaluate: vi.fn(() => Promise.resolve({ sleeping: 0, warnings: [] })), onWarnings: vi.fn(() => vi.fn()) },
     })
-    render(<FeatureBar layout="top" onToggleLayout={() => {}} />)
+    renderBar()
     fireEvent.click(screen.getByText('Focus Off'))
     expect(toggle).toHaveBeenCalledWith(true)
     expect(screen.getByText('Focus On')).toBeInTheDocument()
   })
 
   it('calls onToggleLayout when the layout chip is clicked', () => {
-    const onToggleLayout = vi.fn()
-    render(<FeatureBar layout="top" onToggleLayout={onToggleLayout} />)
+    const props = renderBar()
     fireEvent.click(screen.getByText('Horizontal'))
-    expect(onToggleLayout).toHaveBeenCalledTimes(1)
+    expect(props.onToggleLayout).toHaveBeenCalledTimes(1)
   })
 })

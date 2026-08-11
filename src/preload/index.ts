@@ -62,6 +62,13 @@ const api: TonyAPI = {
   sleeper: {
     evaluate: () => ipcRenderer.invoke('sleeper:evaluate') as Promise<any>,
     activity: (id: string) => ipcRenderer.invoke('sleeper:activity', id) as Promise<void>,
+    // Issue #72 — proactive heavy-tab RAM warning event (fires on warned-set transitions).
+    // Returns an unsubscribe fn so the renderer can remove the listener on unmount.
+    onWarnings: (cb: (ids: string[]) => void) => {
+      const listener = (_e: unknown, ids: string[]) => cb(ids)
+      ipcRenderer.on('sleeper:warnings', listener)
+      return () => ipcRenderer.removeListener('sleeper:warnings', listener)
+    },
   },
   reader: {
     extract: (tabId?: string) => ipcRenderer.invoke('reader:extract', tabId) as Promise<any>,

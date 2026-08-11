@@ -123,6 +123,7 @@ export interface TonyAPI {
   sleeper: {
     evaluate: () => Promise<SleeperStats>
     activity: (id: string) => Promise<void>
+    onWarnings: (cb: (ids: string[]) => void) => () => void
   }
   reader: {
     extract: (tabId?: string) => Promise<{ ok: boolean; error?: string; article?: { title: string; content: string; length: number } }>
