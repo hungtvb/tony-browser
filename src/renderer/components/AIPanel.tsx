@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import type { AIConfig } from '../../shared/types'
+import type { AIConfig, AIStatus } from '../../shared/types'
 
 const styles: Record<string, React.CSSProperties> = {
   panel: {
@@ -42,7 +42,18 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   const [manualActCommand, setManualActCommand] = useState('')
   const [config, setConfig] = useState<AIConfig>({ baseUrl: '', apiKey: '', model: '' })
 
-  useEffect(() => { window.tony?.ai.config().then(c => c && setConfig(c)) }, [])
+  // Issue #93 — wire the previously dead `ai:status` channel: show provider/model
+  // state on mount and keep it fresh after each config save.
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
+
+  useEffect(() => {
+    window.tony?.ai.config().then(c => c && setConfig(c))
+    window.tony?.ai.status().then(setAiStatus).catch(() => {})
+  }, [])
+
+  function refreshStatus() {
+    window.tony?.ai.status().then(setAiStatus).catch(() => {})
+  }
 
   async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act', text?: string) {
     if (busy) return
@@ -57,7 +68,7 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   }
 
   function saveCfg() {
-    window.tony?.ai.saveConfig(config).then(() => setShowSettings(false))
+    window.tony?.ai.saveConfig(config).then(() => { setShowSettings(false); refreshStatus() })
   }
 
   return (
@@ -95,6 +106,13 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       </div>
 
       <div style={styles.body}>
+        {aiStatus && (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 10, letterSpacing: '-0.08px' }}>
+            {aiStatus.configured
+              ? `⚙️ ${config.model || 'model not set'} · ${aiStatus.busy ? 'Busy' : 'Ready'}`
+              : '⚙️ Not configured — open settings to set up your AI provider'}
+          </div>
+        )}
         <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{out}</pre>
       </div>
 
