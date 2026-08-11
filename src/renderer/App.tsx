@@ -48,7 +48,29 @@ export default function App() {
   const prevWarned = useRef<string[]>([])
   // Issue #43: top progress bar phase driven by the ACTIVE tab loading state
   const [progressPhase, setProgressPhase] = useState<ProgressPhase>('idle')
+  // Issue #74 — focus mode state hoisted from FeatureBar so the command palette
+  // and the toolbar chip share one source of truth (no DOM scraping).
+  const [focusOn, setFocusOn] = useState(false)
   const { toasts, status, toast, setStatus } = useFeedback()
+
+  // Issue #74 — focus state sync: load initial value and keep the palette + chip in lockstep
+  useEffect(() => {
+    window.tony?.focus.state().then(s => setFocusOn(s.enabled)).catch(() => {})
+  }, [])
+
+  const toggleFocus = () => {
+    const next = !focusOn
+    setFocusOn(next)
+    window.tony?.focus.toggle(next)
+  }
+
+  // Issue #74 — single source of truth for reader extraction: used by the
+  // AddressBar button AND the command palette (no DOM scraping).
+  const openReader = () => {
+    window.tony?.reader.extract(activeId).then(r => {
+      if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })
+    }).catch(() => {})
+  }
 
   // CI screenshot hook: auto-open command palette when CAPTURE_PALETTE=1
   useEffect(() => {
@@ -139,7 +161,7 @@ export default function App() {
           onNewTab={() => setContainerMenu(true)} />
       )}
       <FeatureBar layout={layout} onToggleLayout={() => setLayout(l => l === 'top' ? 'side' : 'top')}
-        warnedIds={warnedIds} onWarned={setWarnedIds} />
+        warnedIds={warnedIds} onWarned={setWarnedIds} focusOn={focusOn} onToggleFocus={toggleFocus} />
       <AddressBar value={activeUrl} onCommit={open} onOpenAI={() => setAiOpen(true)}
         nav={{
           canGoBack: navState.canGoBack,
@@ -148,11 +170,7 @@ export default function App() {
           onForward: () => window.tony?.tabs.nav.forward().then(() => window.tony?.tabs.nav.state().then(setNavState).catch(() => {})).catch(() => {}),
           onReload: () => window.tony?.tabs.nav.reload().catch(() => {}),
         }}
-        onReader={() => {
-          window.tony?.reader.extract(activeId).then(r => {
-            if (r.ok && r.article) setReader({ title: r.article.title, content: r.article.content })
-          }).catch(() => {})
-        }}
+        onReader={openReader}
         onPip={() => window.tony?.pip.start(activeId)}
         onSplit={() => {
           const others = tabs.filter(t => t.id !== activeId)
@@ -198,8 +216,8 @@ export default function App() {
           commands={[
             { id: 'newtab', icon: '➕', label: 'New Tab', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
             { id: 'search', icon: '🔍', label: 'Search open tabs', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
-            { id: 'focus', icon: '🧘', label: 'Toggle Focus Mode', run: () => { const el = [...document.querySelectorAll('button')].find(b => b.textContent?.includes('Focus')); el?.click() } },
-            { id: 'reader', icon: '📖', label: 'Reader Mode', run: () => document.querySelector('[title="Reader Mode"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })) },
+            { id: 'focus', icon: '🧘', label: 'Toggle Focus Mode', run: toggleFocus },
+            { id: 'reader', icon: '📖', label: 'Reader Mode', run: openReader },
             { id: 'ai', icon: '🪄', label: 'Open AI Assistant', hint: 'Ctrl+K', run: () => setAiOpen(true) },
             { id: 'pip', icon: '🎬', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
             { id: 'layout', icon: '📐', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
