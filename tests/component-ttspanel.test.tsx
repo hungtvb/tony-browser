@@ -60,6 +60,9 @@ describe('TtsPanel (issue #88)', () => {
     await flushTicks()
     fireEvent.click(screen.getByText('⏹ Stop reading'))
     expect(speech.cancel).toHaveBeenCalled()
+    // Issue #91 — tts.stop is now consumed: stopping reading also calls the
+    // tts:stop IPC handler (previously orphaned, zero renderer call sites).
+    expect(window.tony!.tts.stop).toHaveBeenCalled()
     expect(screen.getByText('Stopped')).toBeInTheDocument()
     expect(screen.getByText('🔊 Read article')).toBeInTheDocument()
   })

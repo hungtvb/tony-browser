@@ -34,6 +34,9 @@ const styles: Record<string, React.CSSProperties> = {
 export default function App() {
   const { tabs, activeId, open, openInContainer, close, activate } = useTabs()
   const [privacy, setPrivacy] = useState<PrivacyStats>({ blocked: 0, listSize: 0 })
+  // Issue #91 — real UI control for privacy.toggle: the StatusBar Adblock chip.
+  // `privacyOn` mirrors the main-side filter state (toggle returns the new value).
+  const [privacyOn, setPrivacyOn] = useState(true)
   const [aiOpen, setAiOpen] = useState(false)
   const [containerMenu, setContainerMenu] = useState(false)
   const [layout, setLayout] = useState<'top' | 'side'>('top')
@@ -149,6 +152,15 @@ export default function App() {
     return () => clearInterval(iv)
   }, [])
 
+  // Issue #91 — Adblock chip in the StatusBar: wire privacy.toggle to a real UI
+  // interaction (previously orphaned). Toggle the main-side filter, reflect the
+  // returned state, and refresh stats so the counters match the new state.
+  async function togglePrivacy(on: boolean) {
+    const next = await window.tony?.privacy.toggle(on)
+    setPrivacyOn(next ?? on)
+    window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
+  }
+
   const active = tabs.find(t => t.id === activeId)
   const showSpeedDial = !active || !active.url || active.url === 'about:blank' || active.url.includes('google.com') && active.title === 'New Tab'
   // Issue #42: show placeholder (empty input) for new/blank tabs; otherwise the active tab URL
@@ -203,7 +215,8 @@ export default function App() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.64)', marginTop: 8 }}>{active.url}</div>
             </div>
           )}
-          <StatusBar status={`${status}${status ? ' · ' : ''}Blocked ${privacy.blocked} requests · ${privacy.listSize} domains`} />
+          <StatusBar status={`${status}${status ? ' · ' : ''}Blocked ${privacy.blocked} requests · ${privacy.listSize} domains`}
+            privacyOn={privacyOn} onTogglePrivacy={togglePrivacy} />
         </div>
       </div>
       {containerMenu && (

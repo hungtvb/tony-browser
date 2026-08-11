@@ -34,13 +34,33 @@ export function ToastStack({ toasts }: { toasts: { id: number; msg: string; type
   )
 }
 
-export function StatusBar({ status }: { status: string }) {
+export function StatusBar({ status, privacyOn, onTogglePrivacy }: {
+  status: string
+  privacyOn?: boolean
+  onTogglePrivacy?: (on: boolean) => void
+}) {
   // Hide when idle — only show the bar when there is something to report
-  if (!status) return null
+  if (!status && privacyOn === undefined) return null
   return (
-    <div style={styles.status}>
-      <UIcon name="privacy" size={11} title="shield" />
+    <div style={{ ...styles.status, ...(onTogglePrivacy ? { pointerEvents: 'auto' } : {}) }}>
+      {status && <UIcon name="privacy" size={11} title="shield" />}
       {status}
+      {privacyOn !== undefined && onTogglePrivacy && (
+        <button
+          className="apple-focus"
+          onClick={() => onTogglePrivacy(!privacyOn)}
+          style={{
+            marginLeft: 8, padding: '3px 10px', borderRadius: 980, fontSize: 11,
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+            background: privacyOn ? 'var(--apple-blue)' : 'rgba(255,255,255,0.12)',
+            color: privacyOn ? '#0a0a0a' : 'rgba(255,255,255,0.82)',
+            letterSpacing: '-0.08px', transition: 'all 0.15s ease',
+          }}
+        >
+          <UIcon name="privacy" size={11} title="shield" />
+          {privacyOn ? 'Adblock On' : 'Adblock Off'}
+        </button>
+      )}
     </div>
   )
 }
