@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { CONTAINER_COLORS } from '../../shared/types'
-
-interface Tab { id: string; title: string; url: string; container?: string }
+import { CONTAINER_COLORS, GroupedTabInfo, TabSessionInfo, TabState } from '../../shared/types'
 
 // Issue #87 — smarttab IPC family now has a real renderer consumer: the "Spaces"
 // panel below the tab list. Mode toggle (domain/theme) renders grouped tabs via
 // smarttab.groups(); session actions call smarttab.saveSession / sessions /
 // restoreSession (restored tabs are opened through tabs.open). All labels are
 // English (repo language rule). Falls back to the flat list when groups are empty.
-
-interface Group { label: string; tabs: Tab[] }
-interface SessionInfo { name: string; createdAt: number; tabs: { url: string; title: string }[] }
 
 const styles: Record<string, React.CSSProperties> = {
   sidebar: {
@@ -50,7 +45,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1, border: 'none', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)',
     borderRadius: 7, padding: '3px 0', fontSize: 11, cursor: 'pointer',
   },
-  modeActive: { background: 'rgba(41,151,255,0.25)', color: '#fff' },
+  modeActive: { background: 'rgba(255,255,255,0.14)', color: '#fff' },
   groupLabel: {
     padding: '6px 10px 2px', fontSize: 10.5, fontWeight: 600, color: 'rgba(255,255,255,0.4)',
     letterSpacing: '0.2px', textTransform: 'uppercase',
@@ -78,29 +73,44 @@ const styles: Record<string, React.CSSProperties> = {
 }
 
 export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }: {
-  tabs: Tab[]; activeId: string
+  tabs: TabState[]; activeId: string
   onSelect: (id: string) => void; onClose: (id: string) => void
   onNewTab: () => void
 }) {
   // Issue #87 — Spaces grouping state (domain/theme) + session list
   const [mode, setMode] = useState<'domain' | 'theme'>('domain')
-  const [groups, setGroups] = useState<Group[] | null>(null)
+  const [groups, setGroups] = useState<GroupedTabInfo[] | null>(null)
   const [showSessions, setShowSessions] = useState(false)
-  const [sessions, setSessions] = useState<SessionInfo[]>([])
+  const [sessions, setSessions] = useState<TabSessionInfo[]>([])
   const [sessionName, setSessionName] = useState('')
 
+  const refreshSessions = () => {
+    window.tony?.smarttab.sessions().then(setSessions).catch(() => setSessions([]))
+  }
+
   useEffect(() => {
-    window.tony?.smarttab.groups(mode).then(setGroups).catch(() => setGroups([]))
+    window.tony?.smarttab.groups(mode).then(setGroups).catch(err => {
+      console.warn('smarttab.groups failed:', err)
+      setGroups([])
+    })
   }, [mode])
 
   useEffect(() => {
-    window.tony?.smarttab.sessions().then(setSessions).catch(() => setSessions([]))
+    refreshSessions()
   }, [])
+
+  const saveSession = () => {
+    const name = sessionName.trim() || undefined
+    window.tony?.smarttab.saveSession(name)
+      .then(() => refreshSessions())
+      .catch(err => console.warn('smarttab.saveSession failed:', err))
+    setSessionName('')
+  }
 
   const restore = (name: string) => {
     window.tony?.smarttab.restoreSession(name).then(opened => {
       opened.forEach(t => window.tony?.tabs.open(t.url))
-    }).catch(() => {})
+    }).catch(err => console.warn('smarttab.restoreSession failed:', err))
   }
 
   // Flat list fallback: groups fetch may resolve empty (no tabs / grouping no-op)
@@ -116,6 +126,9 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
         <button className="apple-focus" style={{ ...styles.modeBtn, ...(mode === 'domain' ? styles.modeActive : {}) }} onClick={() => setMode('domain')}>By domain</button>
         <button className="apple-focus" style={{ ...styles.modeBtn, ...(mode === 'theme' ? styles.modeActive : {}) }} onClick={() => setMode('theme')}>By theme</button>
       </div>
+      {tabs.length === 0 && (
+        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '12px 10px' }}>No tabs yet</div>
+      )}
       {list.map(g => (
         <React.Fragment key={g.label || 'flat'}>
           {g.label && <div style={styles.groupLabel}>{g.label}</div>}
@@ -142,9 +155,9 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
           <div style={styles.sessionRow}>
             <input className="apple-focus" style={styles.sessionInput} placeholder="Session name (optional)"
               value={sessionName} onChange={e => setSessionName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { window.tony?.smarttab.saveSession(sessionName.trim() || undefined); setSessionName('') } }} />
+              onKeyDown={e => { if (e.key === 'Enter') saveSession() }} />
             <button className="apple-focus" style={styles.sessionBtn} title="Save session"
-              onClick={() => { window.tony?.smarttab.saveSession(sessionName.trim() || undefined); setSessionName('') }}>Save</button>
+              onClick={saveSession}>Save</button>
           </div>
           {sessions.length === 0 && <div style={styles.sessionEmpty}>No saved sessions</div>}
           {sessions.map(s => (

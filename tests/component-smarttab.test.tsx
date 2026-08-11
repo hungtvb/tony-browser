@@ -8,8 +8,8 @@ import Sidebar from '../src/renderer/components/Sidebar'
 import type { TonyAPI } from '../src/shared/types'
 
 const tabs = [
-  { id: 't1', title: 'GitHub', url: 'https://github.com/hungtvb/tony-browser', container: 'default' },
-  { id: 't2', title: 'YouTube', url: 'https://youtube.com/watch?v=1', container: 'personal' },
+  { id: 't1', title: 'GitHub', url: 'https://github.com/hungtvb/tony-browser', container: 'default', loading: false },
+  { id: 't2', title: 'YouTube', url: 'https://youtube.com/watch?v=1', container: 'personal', loading: false },
 ]
 
 const groups = [
@@ -114,5 +114,37 @@ describe('Sidebar smarttab Spaces UI', () => {
     await flush()
     fireEvent.click(screen.getByText('Show'))
     expect(screen.getByText('No saved sessions')).toBeInTheDocument()
+  })
+
+  // Tony review (PR #109): warning 1 — empty-state regression, "No tabs yet" hint must not be lost
+  it('shows the "No tabs yet" hint when there are no tabs (no empty void)', async () => {
+    mockSmarttab({ groups: [] })
+    render(
+      <Sidebar tabs={[]} activeId="" onSelect={vi.fn()} onClose={vi.fn()} onNewTab={vi.fn()} />
+    )
+    await flush()
+    expect(screen.getByText('No tabs yet')).toBeInTheDocument()
+  })
+
+  // Tony review (PR #109): warning 2 — sessions list must refresh after Save
+  it('re-fetches sessions after Save so a new session appears immediately', async () => {
+    const { saveFn, sessionsFn } = mockSmarttab()
+    sessionsFn
+      .mockResolvedValueOnce([
+        { name: 'Work', createdAt: 1700000000000, tabs: [{ url: 'https://github.com', title: 'GitHub' }] },
+      ])
+      .mockResolvedValueOnce([
+        { name: 'Work', createdAt: 1700000000000, tabs: [{ url: 'https://github.com', title: 'GitHub' }] },
+        { name: 'New One', createdAt: 1700000000001, tabs: [{ url: 'https://example.com', title: 'Example' }] },
+      ])
+    renderSidebar()
+    await flush()
+    fireEvent.click(screen.getByText('Show'))
+    fireEvent.change(screen.getByPlaceholderText('Session name (optional)'), { target: { value: 'New One' } })
+    fireEvent.click(screen.getByTitle('Save session'))
+    await flush()
+    expect(saveFn).toHaveBeenCalledWith('New One')
+    expect(sessionsFn).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('New One')).toBeInTheDocument()
   })
 })
