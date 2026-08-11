@@ -265,6 +265,16 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
+    // Issue #82: a restored tab (2..N) already has a live view in viewByTab that was never
+    // added as a child of the window (the restore path only attached the first tab's view) —
+    // defensively re-attach it so the tab displays instead of a blank content area.
+    // Also covers any future lazy-attach path where a tracked view is not a window child.
+    const activeView = deps.getActiveView(id)
+    const winNow = win()
+    if (activeView && !activeView.webContents.isDestroyed() && winNow && !winNow.isDestroyed()) {
+      const children = winNow.contentView.children as readonly unknown[]
+      if (!children.includes(activeView)) attachView(winNow, activeView)
+    }
     // wake the tab if sleeping (TabSleeper) — the view was closed on sleep → rebuild + reload original url.
     // Also wake while teardown is still pending: the activation must not be silently dropped (race guard).
     if (sleeper.isSleeping(id) || sleeper.isPendingSleep(id)) {
