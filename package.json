@@ -1,6 +1,6 @@
 {
   "name": "tony-browser",
-  "version": "0.11.4",
+  "version": "0.12.0",
   "description": "Tony Browser — smart web browser with AI assistant",
   "main": "out/main/index.js",
   "build": {
