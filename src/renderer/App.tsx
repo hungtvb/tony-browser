@@ -108,6 +108,12 @@ export default function App() {
 
   // Keyboard shortcuts
   useEffect(() => {
+    // Issue #115 — true when the keydown target is an editable field (input,
+    // textarea, contenteditable): global shortcuts must not fire while typing.
+    const isEditableTarget = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
+    }
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
       // Ctrl/Cmd+K command palette
@@ -121,8 +127,10 @@ export default function App() {
           if (t) { open(t.url, t.container, t.favicon); toast('Restored tab: ' + t.title, 'success') }
         }).catch(() => {})
       }
-      // Ctrl/Cmd+W close tab
-      else if ((e.ctrlKey || e.metaKey) && k === 'w') { e.preventDefault(); if (activeId) close(activeId) }
+      // Ctrl/Cmd+W close tab — Issue #115: ignored when focus is in an editable
+      // field (address bar, palette, AI panel) so typing Ctrl+W there never
+      // closes a tab.
+      else if ((e.ctrlKey || e.metaKey) && k === 'w' && !isEditableTarget(e)) { e.preventDefault(); if (activeId) close(activeId) }
       // Ctrl/Cmd+L focus address bar
       else if ((e.ctrlKey || e.metaKey) && k === 'l') {
         e.preventDefault()
