@@ -10,13 +10,14 @@ import { FocusController } from '../src/main/focus/controller'
 const electronMock = vi.hoisted(() => {
   const partitionSessions = new Map<string, any>()
   function makeFakeSession(): any {
-    const handlers: Array<{ filter: { urls: string[] }, handler: (details: any, cb: (r: any) => void) => void }> = []
+    const handlers: Array<{ type: string, filter: { urls: string[] }, handler: (details: any, cb: (r: any) => void) => void }> = []
     let permissionHandlerCalls = 0
     return {
       handlers,
       get permissionHandlerCalls() { return permissionHandlerCalls },
       webRequest: {
-        onBeforeRequest: (filter: any, handler: any) => { handlers.push({ filter, handler }) },
+        onBeforeRequest: (filter: any, handler: any) => { handlers.push({ type: 'onBeforeRequest', filter, handler }) },
+        onBeforeSendHeaders: (filter: any, handler: any) => { handlers.push({ type: 'onBeforeSendHeaders', filter, handler }) },
         filterResponseData: () => ({ on: () => {}, write: () => {}, end: () => {} }),
       },
       setPermissionRequestHandler: () => { permissionHandlerCalls++ },
@@ -55,16 +56,23 @@ beforeEach(() => {
 })
 
 function blockerOf(ses: any) {
-  return ses.handlers.find((h: any) => h.filter.urls.includes('*://*/*'))
+  return ses.handlers.find((h: any) => h.type === 'onBeforeRequest' && h.filter.urls.includes('*://*/*'))
+}
+
+function headersOf(ses: any) {
+  return ses.handlers.find((h: any) => h.type === 'onBeforeSendHeaders' && h.filter.urls.includes('*://*/*'))
 }
 
 describe('attachWebRequestFilters — partitioned session (container)', () => {
-  it('attaches both webRequest filters (blocker + YouTube strip) to the session', () => {
+  it('attaches all three webRequest filters (blocker + headers + YouTube strip) to the session', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
-    expect(ses.handlers).toHaveLength(2)
+    expect(ses.handlers).toHaveLength(3)
+    expect(ses.handlers[0].type).toBe('onBeforeRequest')
     expect(ses.handlers[0].filter.urls).toEqual(['*://*/*'])
-    expect(ses.handlers[1].filter.urls).toEqual([
+    expect(ses.handlers[1].type).toBe('onBeforeSendHeaders')
+    expect(ses.handlers[1].filter.urls).toEqual(['*://*/*'])
+    expect(ses.handlers[2].filter.urls).toEqual([
       '*://*.youtube.com/youtubei/v1/player*',
       '*://*.youtube.com/youtubei/v1/next*',
     ])
@@ -108,7 +116,38 @@ describe('attachWebRequestFilters — partitioned session (container)', () => {
     const ses = electronMock.makeFakeSession()
     attachWebRequestFilters(ses)
     attachWebRequestFilters(ses)
-    expect(ses.handlers).toHaveLength(2)
+    expect(ses.handlers).toHaveLength(3)
+  })
+
+  it('onBeforeSendHeaders sanitizes high-entropy headers when privacy is on (issue #123)', () => {
+    const ses = electronMock.makeFakeSession()
+    attachWebRequestFilters(ses)
+    let result: any = null
+    headersOf(ses).handler(
+      {
+        requestHeaders: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Sec-CH-UA': '"Chromium";v="131"',
+          'Sec-CH-UA-Platform': '"macOS"',
+          'Accept-Language': 'vi-VN,vi;q=0.9',
+          'Accept': 'text/html',
+        },
+      },
+      (r: any) => { result = r },
+    )
+    const h = result.requestHeaders
+    expect(h['User-Agent']).toMatch(/^Mozilla\/5\.0 AppleWebKit\/537\.36/)
+    expect(h['User-Agent']).not.toMatch(/Macintosh|Windows|Linux/)
+    expect(h['Sec-CH-UA']).toBeUndefined()
+    expect(h['Sec-CH-UA-Platform']).toBeUndefined()
+    expect(h['Accept-Language']).toBe('en-US,en;q=0.9')
+    expect(h['Accept']).toBe('text/html')
+  })
+
+  it('onBeforeSendHeaders is attached to container partitions too (fix #37 pattern)', () => {
+    createTabView('https://example.com', 'work')
+    const ses = electronMock.partitionSessions.get('persist:container-work')
+    expect(headersOf(ses)).toBeDefined()
   })
 })
 
@@ -140,7 +179,7 @@ describe('createTabView — container partition gets privacy filter attached (fi
     createTabView('https://a.com', 'work')
     createTabView('https://b.com', 'work')
     const ses = electronMock.partitionSessions.get('persist:container-work')
-    expect(ses.handlers).toHaveLength(2)
+    expect(ses.handlers).toHaveLength(3)
   })
 
   it('guard: createTabView twice on the same container session → setPermissionRequestHandler called once (fix #62)', () => {

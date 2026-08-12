@@ -5,6 +5,7 @@ import * as path from 'path'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
 import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
+import { sanitizeHeaders } from './privacy/headers'
 import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
@@ -90,6 +91,17 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     } else {
       callback({})
     }
+  })
+
+  // Fingerprinting protection (issue #123): strip/replace high-entropy request headers
+  // (User-Agent platform, Sec-CH-UA client hints, Accept-Language) on every request.
+  // Gated by the same privacy toggle as adblock — off → original headers pass through.
+  ses.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
+    if (!privacyFilterOn) {
+      callback({ requestHeaders: details.requestHeaders })
+      return
+    }
+    callback({ requestHeaders: sanitizeHeaders(details.requestHeaders) })
   })
 
   // Strip ads from the YouTube player response (filterResponseData rewrites the body)
