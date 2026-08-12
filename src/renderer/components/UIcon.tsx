@@ -1,70 +1,65 @@
 import React from 'react'
-// ?raw = Vite returns the real SVG CONTENT (not a URL)
-import focusIcon from '../icons/focus.svg?raw'
-import readerIcon from '../icons/reader.svg?raw'
-import pipIcon from '../icons/pip.svg?raw'
-import splitIcon from '../icons/split.svg?raw'
-import ttsIcon from '../icons/tts.svg?raw'
-import aiIcon from '../icons/ai.svg?raw'
-import privacyIcon from '../icons/privacy.svg?raw'
-import sleepIcon from '../icons/sleep.svg?raw'
-import searchIcon from '../icons/search.svg?raw'
-import tabIcon from '../icons/tab.svg?raw'
-import closeIcon from '../icons/close.svg?raw'
-import plusIcon from '../icons/plus.svg?raw'
-import settingsIcon from '../icons/settings.svg?raw'
-import saveIcon from '../icons/save.svg?raw'
-import undoIcon from '../icons/undo.svg?raw'
-import layoutIcon from '../icons/layout.svg?raw'
-import sendIcon from '../icons/send.svg?raw'
-import lockIcon from '../icons/lock.svg?raw'
-import lightbulbIcon from '../icons/lightbulb.svg?raw'
-import wavingIcon from '../icons/waving.svg?raw'
-import sparkleIcon from '../icons/sparkle.svg?raw'
-import openInNewIcon from '../icons/open_in_new.svg?raw'
-import gridIcon from '../icons/grid.svg?raw'
-import menuIcon from '../icons/menu.svg?raw'
-import arrowIcon from '../icons/arrow.svg?raw'
-import arrowBackIcon from '../icons/arrow_back.svg?raw'
-import arrowForwardIcon from '../icons/arrow_forward.svg?raw'
-import refreshIcon from '../icons/refresh.svg?raw'
+// UI icon pack — Remix Icon (line style, clean strokes) + Evernote 4-color category coding
+import {
+  RiFocus2Line, RiBook2Line, RiPictureInPicture2Line, RiLayoutColumnLine,
+  RiVolumeUpLine, RiSparkling2Line, RiShieldCheckLine, RiMoonLine,
+  RiSearchLine, RiLayoutGridLine, RiCloseLine, RiAddLine, RiSettings3Line,
+  RiSave3Line, RiArrowGoBackLine, RiSendPlaneLine, RiLockLine, RiLightbulbLine,
+  RiSparklingLine, RiExternalLinkLine, RiGridLine, RiMenuLine, RiArrowRightLine,
+  RiArrowLeftLine, RiRefreshLine, RiFullscreenLine, RiGlobeLine, RiFileTextLine,
+  RiBookmarkLine, RiRobotLine, RiAlertLine, RiStopCircleLine, RiCheckLine,
+  RiEyeLine, RiSunLine, RiStarLine, RiHeartLine, RiHomeLine, RiNotificationLine,
+  RiEmotionHappyLine,
+} from '@remixicon/react'
 
-// UI icon pack — Material Symbols Rounded (Google, free)
-// Inline SVG component (React.createElement from string path)
+type RemixIcon = React.ComponentType<{ size?: number | string; color?: string; title?: string }>
 
-export const ICONS: Record<string, string> = {
-  focus: focusIcon, reader: readerIcon, pip: pipIcon, split: splitIcon,
-  tts: ttsIcon, ai: aiIcon, privacy: privacyIcon, sleep: sleepIcon,
-  search: searchIcon, tab: tabIcon, close: closeIcon, plus: plusIcon,
-  settings: settingsIcon, save: saveIcon, undo: undoIcon, layout: layoutIcon,
-  send: sendIcon, lock: lockIcon,
-  lightbulb: lightbulbIcon, waving: wavingIcon, sparkle: sparkleIcon,
-  'open-in-new': openInNewIcon, grid: gridIcon, menu: menuIcon, arrow: arrowIcon,
-  'arrow-back': arrowBackIcon, 'arrow-forward': arrowForwardIcon, refresh: refreshIcon,
+export const ICONS: Record<string, RemixIcon> = {
+  focus: RiFocus2Line, reader: RiBook2Line, pip: RiPictureInPicture2Line, split: RiLayoutColumnLine,
+  tts: RiVolumeUpLine, ai: RiSparkling2Line, privacy: RiShieldCheckLine, sleep: RiMoonLine,
+  search: RiSearchLine, tab: RiLayoutGridLine, close: RiCloseLine, plus: RiAddLine,
+  settings: RiSettings3Line, save: RiSave3Line, undo: RiArrowGoBackLine,
+  layout: RiLayoutGridLine, send: RiSendPlaneLine, lock: RiLockLine, lightbulb: RiLightbulbLine,
+  sparkle: RiSparklingLine, 'open-in-new': RiExternalLinkLine,
+  grid: RiGridLine, menu: RiMenuLine, arrow: RiArrowRightLine, 'arrow-back': RiArrowLeftLine,
+  'arrow-forward': RiArrowRightLine, refresh: RiRefreshLine, viewport: RiFullscreenLine,
+  globe: RiGlobeLine, 'file-text': RiFileTextLine, 'book-marked': RiBookmarkLine,
+  bot: RiRobotLine, 'alert-triangle': RiAlertLine, 'circle-stop': RiStopCircleLine,
+  check: RiCheckLine, x: RiCloseLine, eye: RiEyeLine, sun: RiSunLine, star: RiStarLine,
+  heart: RiHeartLine, home: RiHomeLine, bell: RiNotificationLine,
+  wave: RiEmotionHappyLine,
 }
 
-function extractPath(svg: string): string {
-  // Extract the d attribute from <path d="...">
-  const m = svg.match(/<path[^>]*d="([^"]+)"/)
-  return m ? m[1] : ''
+// Evernote category coding — colored accents for feature icons (lime/blue/yellow/purple)
+const CATEGORY: Record<string, string> = {
+  focus: '#94e130',   // lime
+  reader: '#4a8fe0',  // blue
+  ai: '#e8b93a',      // yellow
+  privacy: '#9b6fd0', // purple
+  tts: '#4a8fe0',
+  pip: '#e8b93a',
+  split: '#9b6fd0',
+  sleep: '#4a8fe0',
+  'book-marked': '#4a8fe0',
+  bot: '#9b6fd0',
+  'file-text': '#4a8fe0',
+  lightbulb: '#e8b93a',
+  bell: '#e8b93a',
+  'alert-triangle': '#e8b93a',
 }
 
-export default function UIcon({ name, size = 18, title, color = '#fff' }: {
+export default function UIcon({ name, size = 18, title, color }: {
   name: string; size?: number; title?: string; color?: string
 }) {
-  const d = extractPath(ICONS[name] || aiIcon)
+  const C = ICONS[name] || RiSparklingLine
+  const final = color ?? CATEGORY[name] ?? '#141414'
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 -960 960 960"
-      fill={color}
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block', flexShrink: 0 }}
+    <C
+      size={size}
+      color={final}
       aria-label={title || name}
       role="img"
-    >
-      <path d={d} />
-    </svg>
+      style={{ display: 'block', flexShrink: 0 }}
+    />
   )
 }

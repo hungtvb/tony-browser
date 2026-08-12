@@ -2,22 +2,25 @@ import React, { useEffect, useState } from 'react'
 import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
+  // Aaply: slim status band — white, hairline top, carbon text
   status: {
-    position: 'absolute', bottom: 8, left: 14, fontSize: 11,
-    color: 'var(--apple-text-tertiary)', letterSpacing: '-0.08px',
-    pointerEvents: 'none', transition: 'color 0.2s ease', maxWidth: '60%',
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '5px 14px', background: 'rgba(255,255,255,0.8)',
+    color: '#141414', fontSize: 12, fontWeight: 400,
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-    display: 'flex', alignItems: 'center', gap: 5,
+    borderTop: '1px solid #e7e7e7', fontFamily: 'var(--font-body)',
   },
   toastWrap: {
-    position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+    position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
     display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', zIndex: 500,
     pointerEvents: 'none',
   },
   toast: {
-    background: 'rgba(28,28,30,0.92)', color: '#fff', padding: '9px 18px', borderRadius: 'var(--apple-radius-pill)',
-    fontSize: 13, boxShadow: 'var(--apple-shadow-lg)', border: '1px solid rgba(255,255,255,0.1)',
-    letterSpacing: '-0.1px', backdropFilter: 'blur(20px)', whiteSpace: 'nowrap',
+    background: 'rgba(255,255,255,0.78)', color: '#141414', padding: '10px 20px', borderRadius: 10,
+    fontSize: 13, boxShadow: 'none',
+    backdropFilter: 'blur(16px) saturate(1.3)', WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
+    fontWeight: 500, whiteSpace: 'nowrap', fontFamily: 'var(--font-body)',
+    border: '1px solid rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 7,
   },
 }
 
@@ -26,7 +29,10 @@ export function ToastStack({ toasts }: { toasts: { id: number; msg: string; type
     <div style={styles.toastWrap}>
       {toasts.map(t => (
         <div key={t.id} className="anim-toast"
-          style={{ ...styles.toast, ...(t.type === 'success' ? { borderColor: 'rgba(52,199,89,0.4)' } : {}) }}>
+          style={{ ...styles.toast, ...(t.type === 'success' ? { borderColor: '#94e130' } : t.type === 'warn' ? { borderColor: '#94e130' } : {}) }}>
+          {t.type === 'success' && <UIcon name="check" size={14} color="#94e130" />}
+          {t.type === 'error' && <UIcon name="x" size={14} color="#94e130" />}
+          {t.type === 'warn' && <UIcon name="alert-triangle" size={14} color="#94e130" />}
           {t.msg}
         </div>
       ))}
@@ -35,11 +41,10 @@ export function ToastStack({ toasts }: { toasts: { id: number; msg: string; type
 }
 
 export function StatusBar({ status }: { status: string }) {
-  // Hide when idle — only show the bar when there is something to report
   if (!status) return null
   return (
     <div style={styles.status}>
-      <UIcon name="privacy" size={11} title="shield" />
+      <UIcon name="privacy" size={12} color="#94e130" title="shield" />
       {status}
     </div>
   )
@@ -57,7 +62,6 @@ export function useFeedback() {
   }
 
   useEffect(() => {
-    // auto-hide status after 5s
     if (!status) return
     const t = setTimeout(() => setStatus(''), 5000)
     return () => clearTimeout(t)
