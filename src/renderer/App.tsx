@@ -166,11 +166,13 @@ export default function App() {
   }, [tabs, activeId])
 
   useEffect(() => {
+    // Issue #120 — event-driven privacy stats: keep the initial fetch for
+    // instant data, then let main push throttled updates on every block.
+    // The old 3s setInterval polling is gone — it woke main via IPC even when
+    // nothing was blocked (idle CPU/battery drain).
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
-    const iv = setInterval(() => {
-      window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
-    }, 3000)
-    return () => clearInterval(iv)
+    const offStats = window.tony?.privacy.onStats((s) => setPrivacy(s))
+    return () => offStats?.()
   }, [])
 
   // Issue #91 — Adblock chip in the StatusBar: wire privacy.toggle to a real UI

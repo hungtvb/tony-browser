@@ -40,6 +40,40 @@ let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
 
+// Issue #120 — event-driven privacy stats: instead of the renderer polling
+// `privacy:stats` every 3s (IPC round-trip even when nothing was blocked),
+// main pushes a throttled 'privacy:stats' event only when a request is blocked.
+const STATS_THROTTLE_MS = 1000
+let statsBroadcast: (() => void) | undefined
+let statsTimer: ReturnType<typeof setTimeout> | undefined
+let lastStatsEmit = 0
+
+function pushPrivacyStats() {
+  lastStatsEmit = Date.now()
+  statsBroadcast?.()
+}
+
+/** Fire (or schedule, throttled to 1/s) a privacy:stats push after a block. */
+export function schedulePrivacyStats() {
+  const wait = STATS_THROTTLE_MS - (Date.now() - lastStatsEmit)
+  if (wait <= 0) {
+    if (statsTimer) { clearTimeout(statsTimer); statsTimer = undefined }
+    pushPrivacyStats()
+  } else if (!statsTimer) {
+    statsTimer = setTimeout(() => {
+      statsTimer = undefined
+      pushPrivacyStats()
+    }, wait)
+  }
+}
+
+/** Test-only: clear broadcast wiring + throttle state between tests. */
+export function resetPrivacyStatsBroadcast() {
+  if (statsTimer) { clearTimeout(statsTimer); statsTimer = undefined }
+  statsBroadcast = undefined
+  lastStatsEmit = 0
+}
+
 /** sessions that already have a webRequest filter — avoid attaching twice (defaultSession goes through both attachPrivacy and createTabView) */
 const attachedSessions = new Set<Electron.Session>()
 
@@ -73,6 +107,9 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
       blocked = true
+      // Issue #120 — event-driven stats: push a throttled update on every block
+      // (renderer no longer polls privacy:stats every 3s).
+      schedulePrivacyStats()
     }
     // Focus Mode — block distracting sites (state synced with the shared controller)
     const focus = provider?.()
@@ -118,6 +155,13 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
 export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
   const { session } = win.webContents
   listSize = createBlocklist(blocklistDomains).size
+  // Issue #120 — register the privacy:stats broadcast target (the main window).
+  // Container-session blocks share the same counter and reach the same window.
+  statsBroadcast = () => {
+    if (!win.webContents.isDestroyed()) {
+      win.webContents.send('privacy:stats', { blocked: blockedCount, listSize })
+    }
+  }
   // register the shared FocusController source — createTabView's attach for containers uses it too
   focusProvider = getFocus
   attachWebRequestFilters(session, getFocus)
