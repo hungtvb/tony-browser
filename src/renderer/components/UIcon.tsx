@@ -19,6 +19,8 @@ import layoutIcon from '../icons/layout.svg?raw'
 import sendIcon from '../icons/send.svg?raw'
 import lockIcon from '../icons/lock.svg?raw'
 import lightbulbIcon from '../icons/lightbulb.svg?raw'
+import lightModeIcon from '../icons/light_mode.svg?raw'
+import darkModeIcon from '../icons/dark_mode.svg?raw'
 import wavingIcon from '../icons/waving.svg?raw'
 import sparkleIcon from '../icons/sparkle.svg?raw'
 import openInNewIcon from '../icons/open_in_new.svg?raw'
@@ -39,6 +41,7 @@ export const ICONS: Record<string, string> = {
   search: searchIcon, tab: tabIcon, close: closeIcon, plus: plusIcon,
   settings: settingsIcon, save: saveIcon, undo: undoIcon, layout: layoutIcon,
   send: sendIcon, lock: lockIcon,
+  'light_mode': lightModeIcon, 'dark_mode': darkModeIcon,
   lightbulb: lightbulbIcon, waving: wavingIcon, sparkle: sparkleIcon,
   'open-in-new': openInNewIcon, grid: gridIcon, menu: menuIcon, arrow: arrowIcon,
   'arrow-back': arrowBackIcon, 'arrow-forward': arrowForwardIcon, refresh: refreshIcon,
