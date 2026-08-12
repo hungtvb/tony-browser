@@ -250,15 +250,16 @@ export default function App() {
       {paletteOpen && (
         <CommandPalette
           commands={[
-            { id: 'newtab', icon: '➕', label: 'New Tab', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
-            { id: 'search', icon: '🔍', label: 'Search open tabs', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
-            { id: 'focus', icon: '🧘', label: 'Toggle Focus Mode', run: toggleFocus },
-            { id: 'reader', icon: '📖', label: 'Reader Mode', run: openReader },
-            { id: 'ai', icon: '🪄', label: 'Open AI Assistant', hint: 'Ctrl+K', run: () => setAiOpen(true) },
-            { id: 'pip', icon: '🎬', label: pipActive ? 'Stop PiP' : 'Picture-in-Picture', run: togglePip },
-            { id: 'layout', icon: '📐', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
-            { id: 'saved', icon: '🔖', label: 'Saved pages', run: () => setSavedOpen(true) },
-            { id: 'stacks', icon: '🗂', label: 'Stack tabs by domain', run: () => setStackOpen(true) },
+// Issue #114: UIcon names (SVG) — no raw emoji (tofu risk in WebContentsView)
+            { id: 'newtab', name: 'plus', label: 'New Tab', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
+            { id: 'search', name: 'search', label: 'Search open tabs', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
+            { id: 'focus', name: 'focus', label: 'Toggle Focus Mode', run: toggleFocus },
+            { id: 'reader', name: 'reader', label: 'Reader Mode', run: openReader },
+            { id: 'ai', name: 'ai', label: 'Open AI Assistant', hint: 'Ctrl+K', run: () => setAiOpen(true) },
+            { id: 'pip', name: 'pip', label: pipActive ? 'Stop PiP' : 'Picture-in-Picture', run: togglePip },
+            { id: 'layout', name: 'layout', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
+            { id: 'saved', name: 'save', label: 'Saved pages', run: () => setSavedOpen(true) },
+            { id: 'stacks', name: 'stack', label: 'Stack tabs by domain', run: () => setStackOpen(true) },
           ]}
           onClose={() => setPaletteOpen(false)}
         />

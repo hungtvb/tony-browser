@@ -25,6 +25,7 @@ import openInNewIcon from '../icons/open_in_new.svg?raw'
 import gridIcon from '../icons/grid.svg?raw'
 import menuIcon from '../icons/menu.svg?raw'
 import arrowIcon from '../icons/arrow.svg?raw'
+import stackIcon from '../icons/stack.svg?raw'
 import arrowBackIcon from '../icons/arrow_back.svg?raw'
 import arrowForwardIcon from '../icons/arrow_forward.svg?raw'
 import refreshIcon from '../icons/refresh.svg?raw'
@@ -41,6 +42,7 @@ export const ICONS: Record<string, string> = {
   lightbulb: lightbulbIcon, waving: wavingIcon, sparkle: sparkleIcon,
   'open-in-new': openInNewIcon, grid: gridIcon, menu: menuIcon, arrow: arrowIcon,
   'arrow-back': arrowBackIcon, 'arrow-forward': arrowForwardIcon, refresh: refreshIcon,
+  stack: stackIcon,
 }
 
 function extractPath(svg: string): string {
