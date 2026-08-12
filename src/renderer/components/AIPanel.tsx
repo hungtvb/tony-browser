@@ -55,11 +55,20 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
     window.tony?.ai.status().then(setAiStatus).catch(() => {})
   }
 
-  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act', text?: string) {
+  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act' | 'explain' | 'translate' | 'fixGrammar' | 'summarizeSelection', text?: string) {
     if (busy) return
     setBusy(true); setOut('Processing...')
     try {
-      const params: any = { mode, text: text ?? (mode === 'act' ? manualActCommand : msg || ''), tabId: activeTabId }
+      // Issue #127 — page-context actions: use the in-page selection when present
+      let selection: string | undefined
+      if (mode === 'translate' || mode === 'fixGrammar' || mode === 'summarizeSelection' || mode === 'explain') {
+        if (typeof window !== 'undefined' && window.getSelection) {
+          const sel = window.getSelection()?.toString().trim()
+          if (sel) selection = sel
+        }
+      }
+      const effective = text ?? selection ?? (mode === 'act' ? manualActCommand : msg || '')
+      const params: any = { mode, text: effective, tabId: activeTabId }
       const res = await window.tony!.ai.ask(params)
       setOut(res.text || '(empty)')
     } catch (e: any) {
@@ -97,6 +106,9 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Summarize page</button>
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Summarize all tabs</button>
         <button className="apple-focus" style={styles.chip} onClick={() => run('act')}>🤖 Web automation</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('explain')}>⚡ Explain</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('translate')}>🌐 Translate</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('fixGrammar')}>📝 Fix grammar</button>
       </div>
 
       <div style={{ padding: '6px 14px', display: 'flex', gap: 6 }}>

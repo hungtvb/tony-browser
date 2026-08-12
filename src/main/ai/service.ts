@@ -83,6 +83,20 @@ When asked to summarize a webpage, give a coherent summary in Vietnamese (or the
 
   private buildUserMessage(params: AIRequestParams, pageText?: string): string {
     const { mode, text } = params
+    // Issue #127 — page-context quick actions: explain / translate / fix grammar / summarizeSelection
+    if (mode === 'explain') {
+      return `Explain the following webpage content in simple terms. Provide a clear explanation (3-5 bullet points) in Vietnamese (or the language the user is using), keeping important technical terms:\n—— PAGE CONTENT ——\n${pageText || '(could not read the content)'}\n—— END ——`
+    }
+    if (mode === 'translate') {
+      return `Translate the following content into Vietnamese (natural, fluent Vietnamese; keep technical terms where appropriate):\n—— CONTENT ——\n${pageText || '(could not read the content)'}\n—— END ——`
+    }
+    if (mode === 'fixGrammar') {
+      return `Fix the grammar, spelling and punctuation of the following text. Return ONLY the corrected copy, without explanations or notes:\n—— TEXT ——\n${text || pageText || ''}\n—— END ——`
+    }
+    if (mode === 'summarizeSelection') {
+      const selection = text || pageText || '(no content)'
+      return `Summarize the following selected text concisely (3-5 bullet points) in Vietnamese:\n—— SELECTED TEXT ——\n${selection}\n—— END ——`
+    }
     if (mode === 'summarizePage') {
       return `Summarize the following webpage (title/url and content):
 —— PAGE CONTENT ——
