@@ -45,7 +45,7 @@ export interface NavControls {
  * While focused/typing a local draft is shown; Enter commits, Escape reverts,
  * blur commits (non-empty draft) or reverts to the active URL.
  */
-export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip, onSplit, onTts, nav }: {
+export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip, onSplit, onTts, nav, pipActive }: {
   value: string
   onCommit: (url: string) => void
   onOpenAI: () => void
@@ -54,6 +54,7 @@ export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip,
   onSplit?: () => void
   onTts?: () => void
   nav?: NavControls
+  pipActive?: boolean
 }) {
   // null = not editing → show `value`; string = user's in-progress draft
   const [draft, setDraft] = useState<string | null>(null)
@@ -131,7 +132,7 @@ export default function AddressBar({ value, onCommit, onOpenAI, onReader, onPip,
       />
       <button className="apple-focus" style={styles.btn} onClick={go}><UIcon name="arrow" size={14} color="#0a0a0a" /></button>
       {onReader && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'reader' ? styles.aiHover : {}) }} title="Reader Mode" onClick={onReader} onMouseEnter={() => setHoverBtn('reader')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="reader" size={18} /></button>}
-      {onPip && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'pip' ? styles.aiHover : {}) }} title="Picture-in-Picture" onClick={onPip} onMouseEnter={() => setHoverBtn('pip')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="pip" size={18} /></button>}
+      {onPip && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'pip' ? styles.aiHover : {}) }} title={pipActive ? 'Stop PiP' : 'Picture-in-Picture'} onClick={onPip} onMouseEnter={() => setHoverBtn('pip')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="pip" size={18} /></button>}
       {onSplit && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'split' ? styles.aiHover : {}) }} title="Split View" onClick={onSplit} onMouseEnter={() => setHoverBtn('split')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="split" size={18} /></button>}
       {onTts && <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'tts' ? styles.aiHover : {}) }} title="Read article / Save page" onClick={onTts} onMouseEnter={() => setHoverBtn('tts')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="tts" size={18} /></button>}
       <button className="apple-focus" style={{ ...styles.ai, ...(hoverBtn === 'ai' ? styles.aiHover : {}) }} title="AI Assistant" onClick={onOpenAI} onMouseEnter={() => setHoverBtn('ai')} onMouseLeave={() => setHoverBtn(null)}><UIcon name="ai" size={18} /></button>

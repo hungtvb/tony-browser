@@ -49,6 +49,9 @@ export default function App() {
   // Issue #86 — stack-by-domain view consuming window.tony.tabs.stacks()
   const [stackOpen, setStackOpen] = useState(false)
   const [navState, setNavState] = useState({ canGoBack: false, canGoForward: false, isLoading: false })
+  // Issue #113 — PiP active flag so the AddressBar button and the palette command
+  // toggle between pip.start / pip.stop (previously pip:stop had zero consumers).
+  const [pipActive, setPipActive] = useState(false)
   // Issue #72 — ids of heavy-RAM tabs; fed by the proactive 'sleeper:warnings' event
   // (FeatureBar subscribes via onWarned) + the polled evaluate() fallback.
   const [warnedIds, setWarnedIds] = useState<string[]>([])
@@ -161,6 +164,19 @@ export default function App() {
     window.tony?.privacy.stats().then(setPrivacy).catch(() => {})
   }
 
+  // Issue #113 — single toggle for PiP: start on the active tab when no PiP
+  // session is believed active, stop otherwise. Used by the AddressBar button
+  // AND the command palette entry so pip:stop finally has a real consumer.
+  const togglePip = () => {
+    if (pipActive) {
+      window.tony?.pip.stop(activeId).catch(() => {})
+      setPipActive(false)
+    } else {
+      window.tony?.pip.start(activeId).catch(() => {})
+      setPipActive(true)
+    }
+  }
+
   const active = tabs.find(t => t.id === activeId)
   const showSpeedDial = !active || !active.url || active.url === 'about:blank' || active.url.includes('google.com') && active.title === 'New Tab'
   // Issue #42: show placeholder (empty input) for new/blank tabs; otherwise the active tab URL
@@ -189,7 +205,8 @@ export default function App() {
           onReload: () => window.tony?.tabs.nav.reload().catch(() => {}),
         }}
         onReader={openReader}
-        onPip={() => window.tony?.pip.start(activeId)}
+        onPip={togglePip}
+        pipActive={pipActive}
         onSplit={() => {
           const others = tabs.filter(t => t.id !== activeId)
           const b = others[others.length - 1]?.id ?? null
@@ -233,13 +250,13 @@ export default function App() {
       {paletteOpen && (
         <CommandPalette
           commands={[
-            // Issue #114: UIcon names (SVG) — no raw emoji (tofu risk in WebContentsView)
+// Issue #114: UIcon names (SVG) — no raw emoji (tofu risk in WebContentsView)
             { id: 'newtab', name: 'plus', label: 'New Tab', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
             { id: 'search', name: 'search', label: 'Search open tabs', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
             { id: 'focus', name: 'focus', label: 'Toggle Focus Mode', run: toggleFocus },
             { id: 'reader', name: 'reader', label: 'Reader Mode', run: openReader },
             { id: 'ai', name: 'ai', label: 'Open AI Assistant', hint: 'Ctrl+K', run: () => setAiOpen(true) },
-            { id: 'pip', name: 'pip', label: 'Picture-in-Picture', run: () => window.tony?.pip.start(activeId) },
+            { id: 'pip', name: 'pip', label: pipActive ? 'Stop PiP' : 'Picture-in-Picture', run: togglePip },
             { id: 'layout', name: 'layout', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
             { id: 'saved', name: 'save', label: 'Saved pages', run: () => setSavedOpen(true) },
             { id: 'stacks', name: 'stack', label: 'Stack tabs by domain', run: () => setStackOpen(true) },
