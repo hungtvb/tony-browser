@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
+// Issue #114: command icons are SVG UIcon names (repo convention, PR #44) —
+// raw emoji render as tofu/blank boxes in Electron WebContentsView.
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
@@ -26,7 +29,8 @@ const styles: Record<string, React.CSSProperties> = {
 interface Command {
   id: string
   label: string
-  icon: string
+  // Issue #114: UIcon name (SVG) instead of raw emoji text
+  name: string
   hint?: string
   run: () => void
 }
@@ -67,7 +71,8 @@ export default function CommandPalette({ commands, onClose }: {
             <div key={c.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)}
               onClick={() => { c.run(); onClose() }}>
-              <span style={styles.icon}>{c.icon}</span>
+              {/* Issue #114: render SVG icon via UIcon (name), not raw emoji text */}
+              <span style={styles.icon}><UIcon name={c.name} size={15} color="currentColor" /></span>
               <span>{c.label}</span>
               {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: 'rgba(0,0,0,0.6)', borderColor: 'rgba(0,0,0,0.2)' } : {}) }}>{c.hint}</span>}
             </div>
