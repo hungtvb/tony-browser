@@ -32,7 +32,7 @@ export interface PrivacyStats {
 export interface AIAskParams {
   text: string
   tabId?: string // if provided → read that tab's content
-  mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act'
+  mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act' | 'explain' | 'translate' | 'fixGrammar' | 'summarizeSelection'
 }
 
 export interface AIStatus {
