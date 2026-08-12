@@ -18,6 +18,7 @@ import { FocusController } from './focus/controller'
 import { createFocusBlocker, type FocusBlocker } from './focus/blocker'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
+import { DEFAULT_HEAVY_MEMORY_MB } from './perf/sleeper'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -275,13 +276,18 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       const children = winNow.contentView.children as readonly unknown[]
       if (!children.includes(activeView)) attachView(winNow, activeView)
     }
-    // wake the tab if sleeping (TabSleeper) — the view was closed on sleep → rebuild + reload original url.
+    // wake the tab if sleeping (TabSleeper). Tier-2 tabs had their view closed on sleep →
+    // rebuild + reload original url. Tier-1 tabs kept a throttled renderer alive → just
+    // restore it (unmute, normal fps, throttling off) — instant wake, no reload.
     // Also wake while teardown is still pending: the activation must not be silently dropped (race guard).
     if (sleeper.isSleeping(id) || sleeper.isPendingSleep(id)) {
       sleeper.wake(id, (wid) => {
         const wv = deps.getActiveView(wid)
         if (wv && !wv.webContents.isDestroyed()) {
+          // Tier-1 wake — restore the throttled renderer (muted + 1 fps from sleep)
           try { wv.webContents.setBackgroundThrottling(false) } catch {}
+          try { wv.webContents.setAudioMuted(false) } catch {}
+          try { wv.webContents.setFrameRate(60) } catch {}
         } else {
           // view was closed on sleep (RAM freed) → rebuild from the original url
           const tab = tm.get(wid)
@@ -488,14 +494,27 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     }))
     // pass a live getter for activeId so the controller re-validates after the async
     // onSleep (a tab activated mid-teardown must not be marked sleeping — race guard)
+    // Issue #119 — tiered sleep: LIGHT idle tabs get Tier 1 (throttle: muted + 1 fps,
+    // renderer kept alive → wake is instant, no reload); HEAVY tabs (> heavyMemoryMB)
+    // get Tier 2 (close() the renderer to really free RAM — wake rebuilds from URL).
+    const memoryByTab = new Map(views.map(v => [v.id, v.memoryMB]))
     const result = await sleeper.evaluate(tabs, () => tm.activeId, [], views, async (id) => {
       // race guard: never close the view of the tab that just became active
       if (id === tm.activeId) return
       const view = deps.getActiveView(id)
       if (view && !view.webContents.isDestroyed()) {
-        // Electron 31 has no webContents.discard() → close() the renderer to really free RAM,
-        // untrack the view (wake rebuilds it from the original url). setBackgroundThrottling is a default no-op.
-        // detach BEFORE close — like tabs:close, so a destroyed view is never left as a contentView child (review warning 2)
+        if ((memoryByTab.get(id) ?? 0) <= DEFAULT_HEAVY_MEMORY_MB) {
+          // Tier 1 — cheap throttle: stop rendering/audio work but keep the renderer
+          // alive, so waking the tab is instant and keeps URL/scroll/JS state.
+          try { view.webContents.setBackgroundThrottling(true) } catch { /* mid-teardown — ignore */ }
+          try { view.webContents.setAudioMuted(true) } catch { /* ignore */ }
+          try { view.webContents.setFrameRate(1) } catch { /* ignore */ }
+          return
+        }
+        // Tier 2 — heavy tab: Electron 31 has no webContents.discard() → close() the
+        // renderer to really free RAM, untrack the view (wake rebuilds it from the
+        // original url). detach BEFORE close — like tabs:close, so a destroyed view is
+        // never left as a contentView child (review warning 2)
         const w = win()
         if (w) detachView(w, view)
         let closed = false

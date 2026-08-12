@@ -1,6 +1,9 @@
-// TabSleeper — discard: sleeping a tab must really free RAM (close webContents, not just setBackgroundThrottling),
-// wake must recreate the view + reload the original url. Electron 31 has no webContents.discard() →
-// use close() + untrack the view (equivalent to discard: unload the renderer, keep the tab entry).
+// TabSleeper — discard: sleeping a HEAVY tab (> heavyMemoryMB) must really free RAM
+// (close webContents, not just setBackgroundThrottling), wake must recreate the view +
+// reload the original url. Electron 31 has no webContents.discard() → use close() +
+// untrack the view (equivalent to discard: unload the renderer, keep the tab entry).
+// Issue #119 — tiered sleep: only tabs above the heavy threshold take this Tier-2 path;
+// lighter tabs are Tier-1 throttled (muted + 1 fps, renderer kept alive).
 import { describe, it, expect, vi } from 'vitest'
 import { createTabManager } from '../src/main/tabs/TabManager'
 import { SleeperController } from '../src/main/perf/controller'
@@ -8,26 +11,40 @@ import type { Tab } from '../src/main/tabs/TabManager'
 
 // mock electron: registerIpc needs ipcMain.handle; app.getPath for AIController/focus store init
 const handlers = vi.hoisted(() => new Map<string, (...args: any[]) => any>())
+const metrics = vi.hoisted(() => new Map<number, number>()) // pid -> workingSetSize KB
 
 vi.mock('electron', () => ({
   ipcMain: { handle: (ch: string, fn: (...a: any[]) => any) => { handlers.set(ch, fn) } },
   BrowserWindow: class {},
   WebContentsView: class { webContents: any },
   session: { defaultSession: {}, fromPartition: () => ({}) },
-  app: { getPath: () => '/tmp/kenzo-sleeper-test' },
+  app: {
+    getPath: () => '/tmp/kenzo-sleeper-test',
+    getAppMetrics: () => Array.from(metrics.entries()).map(([pid, workingSetSize]) => ({ pid, memory: { workingSetSize } })),
+  },
 }))
 
 import { registerIpc } from '../src/main/ipc'
 import type { IpcDeps } from '../src/main/ipc'
 
-function fakeWC() {
+let pidCounter = 5000
+
+function fakeWC(memoryKB = 0) {
+  const pid = ++pidCounter
+  if (memoryKB) metrics.set(pid, memoryKB)
   return {
     isDestroyed: vi.fn(() => false),
+    getOSProcessId: vi.fn(() => pid),
     close: vi.fn(),
     loadURL: vi.fn((_url: string) => Promise.resolve()),
     setBackgroundThrottling: vi.fn(),
+    setAudioMuted: vi.fn(),
+    setFrameRate: vi.fn(),
   }
 }
+
+// 900 MB working set — above the 500 MB heavy threshold → Tier-2 close path
+const HEAVY_KB = 900 * 1024
 
 function setupIpc(winGetter: () => any = () => null) {
   handlers.clear()
@@ -47,7 +64,7 @@ function setupIpc(winGetter: () => any = () => null) {
     getActiveView: (id) => views.get(id),
     // like the real createTabView: create the view + load the url immediately
     createRealView: (url: string) => {
-      const wc = fakeWC()
+      const wc = fakeWC(HEAVY_KB)
       wc.loadURL(url)
       return { webContents: wc } as any
     },
@@ -63,7 +80,7 @@ function setupIpc(winGetter: () => any = () => null) {
 describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:activate)', () => {
   it('background tab idle 11 min → sleeper:evaluate closes webContents (frees RAM) + untracks the view', async () => {
     const { tm, views } = setupIpc()
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com')
     tm.open('https://siteb.com') // b is active → a is the background tab
     const a = tm.list().find(t => t.url === 'https://sitea.com')!
@@ -78,7 +95,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
 
   it('wake a sleeping tab (view was closed) → tabs:activate creates a new view + loads the original url', async () => {
     const { tm, views, deps } = setupIpc()
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com')
     tm.open('https://siteb.com')
     const a = tm.list().find(t => t.url === 'https://sitea.com')!
@@ -98,7 +115,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
 
   it('wake a CONTAINER tab (view closed) → createRealView receives the container to keep its own partition (review warning: container isolation)', async () => {
     const { tm, views, deps } = setupIpc()
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com', 'work') // container tab — its own persist:container-work session
     tm.open('https://siteb.com')
     const a = tm.list().find(t => t.url === 'https://sitea.com')!
@@ -123,7 +140,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
       webContents: { isDestroyed: () => false, send: vi.fn() },
     } as any
     const { tm, views } = setupIpc(() => fakeWin)
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com')
     tm.open('https://siteb.com')
     const a = tm.list().find(t => t.url === 'https://sitea.com')!
@@ -147,7 +164,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
       webContents: { isDestroyed: () => false, send: vi.fn() },
     } as any
     const { tm, views } = setupIpc(() => fakeWin)
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     wc.close.mockImplementation(() => { throw new Error('cannot close') }) // both attempts throw
     tm.open('https://sitea.com')
     tm.open('https://siteb.com')
@@ -165,7 +182,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
 
   it('wake recreate fails → logged + tab requeued as sleeping → next activate retries and succeeds', async () => {
     const { tm, views, deps } = setupIpc()
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com')
     tm.open('https://siteb.com')
     const a = tm.list().find(t => t.url === 'https://sitea.com')!
@@ -190,7 +207,7 @@ describe('TabSleeper — real RAM release through IPC (sleeper:evaluate + tabs:a
 
   it('wake a sleeping tab with a live view → only unthrottles, does not create a new view', async () => {
     const { tm, views, deps } = setupIpc()
-    const wc = fakeWC()
+    const wc = fakeWC(HEAVY_KB)
     tm.open('https://sitea.com')
     tm.open('https://siteb.com')
     const a = tm.list().find(t => t.url === 'https://sitea.com')!

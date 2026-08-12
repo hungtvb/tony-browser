@@ -1,4 +1,6 @@
 // TabSleeper — sleeps background tabs to save RAM, warns about heavy tabs
+export const DEFAULT_HEAVY_MEMORY_MB = 500
+
 interface SleepableTab {
   id: string
   url: string
@@ -18,7 +20,7 @@ export interface SleeperOptions {
 
 export function createTabSleeper(opts: SleeperOptions = {}) {
   const idleMs = opts.idleMs ?? 10 * 60 * 1000
-  const heavyMemoryMB = opts.heavyMemoryMB ?? 500
+  const heavyMemoryMB = opts.heavyMemoryMB ?? DEFAULT_HEAVY_MEMORY_MB
   const lastActiveMap = new Map<string, number>()
 
   function effectiveLastActive(tab: SleepableTab): number {
