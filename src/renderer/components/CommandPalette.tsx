@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 // Issue #114: command icons are SVG UIcon names (repo convention, PR #44) —
 // raw emoji render as tofu/blank boxes in Electron WebContentsView.
 import UIcon from './UIcon'
+// Issue #116: static footer shortcut hints so users learn the top shortcuts
+// even without a focused palette item.
+import { PALETTE_FOOTER_HINTS } from '../shortcuts'
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
@@ -65,6 +68,15 @@ export default function CommandPalette({ commands, onClose }: {
         <input ref={inputRef} style={styles.input} placeholder="Type a command or ask AI..." value={query}
           onChange={e => setQuery(e.target.value)} onKeyDown={onKey} />
         <div style={styles.hint}>↑↓ select · Enter run · Esc close</div>
+        {/* Issue #116: static shortcut hint row — visible without a focused item */}
+        <div style={styles.hint}>
+          {PALETTE_FOOTER_HINTS.map((h, i) => (
+            <React.Fragment key={h}>
+              {i > 0 && <span>  ·  </span>}
+              <span>{h}</span>
+            </React.Fragment>
+          ))}
+        </div>
         <div style={styles.list}>
           {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No matching commands</div>}
           {filtered.map((c, i) => (

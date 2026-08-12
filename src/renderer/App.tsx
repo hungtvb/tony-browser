@@ -8,6 +8,7 @@ import ContainerMenu from './components/ContainerMenu'
 import ReaderView from './components/ReaderView'
 import CommandPalette from './components/CommandPalette'
 import SearchOverlay from './components/SearchOverlay'
+import ShortcutsOverlay from './components/ShortcutsOverlay'
 import TtsPanel from './components/TtsPanel'
 import SpeedDial from './components/SpeedDial'
 import SavedPages from './components/SavedPages'
@@ -43,6 +44,8 @@ export default function App() {
   const [reader, setReader] = useState<{ title: string; content: string } | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  // Issue #116 — full shortcut reference overlay (opened by '?' or palette command)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [ttsOpen, setTtsOpen] = useState(false)
   // Issue #85 — saved-pages collection panel (read/delete side of save:* API)
   const [savedOpen, setSavedOpen] = useState(false)
@@ -149,6 +152,13 @@ export default function App() {
         e.preventDefault()
         const t = tabs[Number(e.key) - 1]
         if (t) activate(t.id)
+      }
+      // Issue #116 — '?' opens the keyboard shortcuts reference overlay.
+      // Guarded against editable targets so typing '?' in the address bar,
+      // palette, or AI panel never pops the overlay.
+      else if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey && !isEditableTarget(e)) {
+        e.preventDefault()
+        setShortcutsOpen(o => !o)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -268,11 +278,14 @@ export default function App() {
             { id: 'layout', name: 'layout', label: `Change layout: ${layout === 'side' ? 'Vertical' : 'Horizontal'}`, run: () => setLayout(l => l === 'top' ? 'side' : 'top') },
             { id: 'saved', name: 'save', label: 'Saved pages', run: () => setSavedOpen(true) },
             { id: 'stacks', name: 'stack', label: 'Stack tabs by domain', run: () => setStackOpen(true) },
+            // Issue #116 — palette entry mirrors the '?' key for discoverability
+            { id: 'shortcuts', name: 'lightbulb', label: 'Keyboard shortcuts', hint: '?', run: () => setShortcutsOpen(true) },
           ]}
           onClose={() => setPaletteOpen(false)}
         />
       )}
       {searchOpen && <SearchOverlay onSelect={activate} onClose={() => setSearchOpen(false)} />}
+      {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />}
       {stackOpen && <StackView onSelect={activate} onClose={() => setStackOpen(false)} />}
       {savedOpen && <SavedPages onClose={() => setSavedOpen(false)} />}
       {ttsOpen && (
