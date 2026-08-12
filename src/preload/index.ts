@@ -42,6 +42,14 @@ const api: TonyAPI = {
   privacy: {
     stats: () => ipcRenderer.invoke('privacy:stats') as Promise<PrivacyStats>,
     toggle: (on: boolean) => ipcRenderer.invoke('privacy:toggle', on),
+    // Issue #120 — event-driven stats: main pushes throttled 'privacy:stats'
+    // updates when a request is blocked. Returns an unsubscribe fn so the
+    // renderer can remove the listener on unmount (no leak, no polling).
+    onStats: (cb: (s: PrivacyStats) => void) => {
+      const listener = (_e: unknown, s: PrivacyStats) => cb(s)
+      ipcRenderer.on('privacy:stats', listener)
+      return () => ipcRenderer.removeListener('privacy:stats', listener)
+    },
   },
   ai: {
     config: () => ipcRenderer.invoke('ai:config'),

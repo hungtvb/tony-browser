@@ -25,7 +25,7 @@ function mockTony() {
       },
     },
     pip: { start: pipStart, stop: pipStop },
-    privacy: { stats: vi.fn().mockResolvedValue({ blocked: 0, listSize: 0 }), toggle: vi.fn().mockResolvedValue(true) },
+    privacy: { stats: vi.fn().mockResolvedValue({ blocked: 0, listSize: 0 }), toggle: vi.fn().mockResolvedValue(true), onStats: vi.fn(() => () => {}) },
     focus: {
       state: vi.fn().mockResolvedValue({ blocklist: [], whitelist: [], enabled: false, blocked: 0 }),
       toggle: vi.fn(),

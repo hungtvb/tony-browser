@@ -101,6 +101,8 @@ export interface TonyAPI {
   privacy: {
     stats: () => Promise<PrivacyStats>
     toggle: (on: boolean) => Promise<boolean>
+    // Issue #120 — event-driven stats: subscribe to main-pushed updates; returns an unsubscribe fn.
+    onStats: (cb: (s: PrivacyStats) => void) => () => void
   }
   ai: {
     config: () => Promise<AIConfig | null>
