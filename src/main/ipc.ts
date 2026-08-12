@@ -263,6 +263,17 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     }
   })
 
+  ipcMain.handle('tabs:reorder', (_e, fromId: string, toId: string) => {
+    // Issue #125 — sidebar drag & drop reorder. No-op for unknown/equal ids;
+    // keep view z-order in sync with the new tab order + broadcast once.
+    const ok = tm.reorder(fromId, toId)
+    if (ok) {
+      deps.layoutViews()
+      broadcastTabs()
+    }
+    return ok
+  })
+
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
     // Issue #82: a restored tab (2..N) already has a live view in viewByTab that was never

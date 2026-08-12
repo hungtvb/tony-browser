@@ -21,7 +21,7 @@ export interface Tab {
   lastActive?: number
 }
 
-export type TabEvent = { type: 'open' | 'close' | 'activate'; id: string }
+export type TabEvent = { type: 'open' | 'close' | 'activate' | 'reorder'; id: string }
 
 export function createTabManager(factory: ViewFactory) {
   const emitter = new EventEmitter()
@@ -68,6 +68,26 @@ export function createTabManager(factory: ViewFactory) {
     emitter.emit('changed', { type: 'activate', id })
   }
 
+  // Issue #125 — sidebar drag & drop: move `fromId` to the position of `toId`
+  // (the dragged tab takes the target tab's slot). Map preserves insertion order,
+  // so rebuild the map in the new order. No-op when ids are missing/equal.
+  function reorder(fromId: string, toId: string): boolean {
+    if (fromId === toId) return false
+    if (!tabs.has(fromId) || !tabs.has(toId)) return false
+    const ids = [...tabs.keys()]
+    ids.splice(ids.indexOf(fromId), 1)
+    ids.splice(ids.indexOf(toId), 0, fromId)
+    const next = new Map<string, Tab>()
+    for (const id of ids) {
+      const tab = tabs.get(id)
+      if (tab) next.set(id, tab)
+    }
+    tabs.clear()
+    for (const [id, tab] of next) tabs.set(id, tab)
+    emitter.emit('changed', { type: 'reorder', id: fromId })
+    return true
+  }
+
   function list(): Tab[] {
     return [...tabs.values()]
   }
@@ -89,6 +109,7 @@ export function createTabManager(factory: ViewFactory) {
     open,
     close,
     activate,
+    reorder,
     list,
     listByContainer,
     get,

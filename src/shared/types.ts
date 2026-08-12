@@ -83,6 +83,7 @@ export interface TonyAPI {
     openContainer: (url: string, container: string) => Promise<TabState>
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
+    reorder: (fromId: string, toId: string) => Promise<boolean>
     list: () => Promise<TabState[]>
     stacks: () => Promise<{ label: string; tabs: TabState[] }[]>
     search: (q: string) => Promise<TabState[]>

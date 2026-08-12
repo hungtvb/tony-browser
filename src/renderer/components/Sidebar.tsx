@@ -70,12 +70,17 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 6, padding: '2px 7px', fontSize: 10, cursor: 'pointer',
   },
   sessionEmpty: { padding: '6px 10px 8px', fontSize: 11, color: 'rgba(255,255,255,0.35)' },
+  // Issue #125 — drop target indicator: top accent line on the hovered row
+  dragOver: { boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.55)' },
 }
 
-export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }: {
+export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, onReorder, dragDisabled }: {
   tabs: TabState[]; activeId: string
   onSelect: (id: string) => void; onClose: (id: string) => void
   onNewTab: () => void
+  // Issue #125 — drag & drop reorder: called with (draggedId, targetId) on drop
+  onReorder?: (fromId: string, toId: string) => void
+  dragDisabled?: boolean
 }) {
   // Issue #87 — Spaces grouping state (domain/theme) + session list
   const [mode, setMode] = useState<'domain' | 'theme'>('domain')
@@ -83,17 +88,24 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
   const [showSessions, setShowSessions] = useState(false)
   const [sessions, setSessions] = useState<TabSessionInfo[]>([])
   const [sessionName, setSessionName] = useState('')
+  // Issue #125 — drag state (dragged tab id + row currently hovered for the indicator)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   const refreshSessions = () => {
     window.tony?.smarttab.sessions().then(setSessions).catch(() => setSessions([]))
   }
+
+  // Issue #125 — refetch groups when the tab ORDER/membership changes (open/close/reorder),
+  // not on every title/loading broadcast: the signature only tracks ids in order.
+  const orderKey = tabs.map(t => t.id).join(',')
 
   useEffect(() => {
     window.tony?.smarttab.groups(mode).then(setGroups).catch(err => {
       console.warn('smarttab.groups failed:', err)
       setGroups([])
     })
-  }, [mode])
+  }, [mode, orderKey])
 
   useEffect(() => {
     refreshSessions()
@@ -111,6 +123,39 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
     window.tony?.smarttab.restoreSession(name).then(opened => {
       opened.forEach(t => window.tony?.tabs.open(t.url))
     }).catch(err => console.warn('smarttab.restoreSession failed:', err))
+  }
+
+  // Issue #125 — HTML5 drag & drop handlers for tab rows
+  const onDragStart = (e: React.DragEvent, id: string) => {
+    if (dragDisabled) { e.preventDefault(); return }
+    setDragId(id)
+    try {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', id)
+    } catch { /* jsdom/tests may lack a real DataTransfer */ }
+  }
+
+  const onDragOver = (e: React.DragEvent, id: string) => {
+    if (!dragId || dragId === id) return
+    e.preventDefault() // allow the drop
+    try { e.dataTransfer.dropEffect = 'move' } catch {}
+    setDragOverId(id)
+  }
+
+  const onDrop = (e: React.DragEvent, id: string) => {
+    e.preventDefault()
+    let from = dragId
+    if (!from) {
+      try { from = e.dataTransfer.getData('text/plain') || null } catch { from = null }
+    }
+    setDragId(null)
+    setDragOverId(null)
+    if (from && from !== id) onReorder?.(from, id)
+  }
+
+  const endDrag = () => {
+    setDragId(null)
+    setDragOverId(null)
   }
 
   // Flat list fallback: groups fetch may resolve empty (no tabs / grouping no-op)
@@ -134,7 +179,18 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab }:
           {g.label && <div style={styles.groupLabel}>{g.label}</div>}
           {g.tabs.map(t => (
             <button key={t.id} className="apple-focus"
-              style={{ ...styles.tab, ...(t.id === activeId ? styles.active : {}) }}
+              draggable={!dragDisabled}
+              onDragStart={e => onDragStart(e, t.id)}
+              onDragOver={e => onDragOver(e, t.id)}
+              onDrop={e => onDrop(e, t.id)}
+              onDragEnd={endDrag}
+              onDragLeave={endDrag}
+              style={{
+                ...styles.tab,
+                ...(t.id === activeId ? styles.active : {}),
+                // Issue #125 — insertion indicator on the row being hovered
+                ...(dragOverId === t.id ? styles.dragOver : {}),
+              }}
               onClick={() => onSelect(t.id)} title={t.url}>
               <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
               <span style={styles.title}>{t.title}</span>
