@@ -33,7 +33,7 @@ const styles: Record<string, React.CSSProperties> = {
 }
 
 export default function App() {
-  const { tabs, activeId, open, openInContainer, close, activate } = useTabs()
+  const { tabs, activeId, open, openInContainer, close, activate, reorder } = useTabs()
   const [privacy, setPrivacy] = useState<PrivacyStats>({ blocked: 0, listSize: 0 })
   // Issue #91 — real UI control for privacy.toggle: the StatusBar Adblock chip.
   // `privacyOn` mirrors the main-side filter state (toggle returns the new value).
@@ -236,7 +236,10 @@ export default function App() {
       <div style={styles.body}>
         {layout === 'side' && (
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
-            onNewTab={() => setContainerMenu(true)} />
+            onNewTab={() => setContainerMenu(true)}
+            onReorder={reorder}
+            // Issue #125 — never drag while an overlay grabs the mouse (palette/search/saved pages)
+            dragDisabled={paletteOpen || searchOpen || savedOpen} />
         )}
         <div style={styles.content}>
           {showSpeedDial ? (

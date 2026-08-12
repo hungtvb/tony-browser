@@ -20,6 +20,7 @@ const api: TonyAPI = {
     openContainer: (url: string, container: string) => ipcRenderer.invoke('tabs:openContainer', url, container),
     close: (id: string) => ipcRenderer.invoke('tabs:close', id),
     activate: (id: string) => ipcRenderer.invoke('tabs:activate', id),
+    reorder: (fromId: string, toId: string) => ipcRenderer.invoke('tabs:reorder', fromId, toId) as Promise<boolean>,
     list: () => ipcRenderer.invoke('tabs:list'),
     stacks: () => ipcRenderer.invoke('tabs:stacks'),
     search: (q: string) => ipcRenderer.invoke('tabs:search', q),

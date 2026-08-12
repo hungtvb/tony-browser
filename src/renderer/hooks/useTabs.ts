@@ -38,5 +38,10 @@ export function useTabs() {
     window.tony?.sleeper.activity(id)
   }
 
-  return { tabs, activeId, ready, open, openInContainer, close, activate }
+  // Issue #125 — sidebar drag & drop: ask main to move the tab in its ordered list
+  function reorder(fromId: string, toId: string) {
+    window.tony?.tabs.reorder(fromId, toId)
+  }
+
+  return { tabs, activeId, ready, open, openInContainer, close, activate, reorder }
 }
