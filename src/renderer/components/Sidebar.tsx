@@ -21,6 +21,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: 28, height: 28, borderRadius: 52, border: '1px solid #e7e7e7', background: '#ffffff',
     color: '#141414', cursor: 'pointer', fontSize: 15, lineHeight: 1, fontWeight: 500,
     transition: 'all 0.15s var(--ease-out)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
   },
   tab: {
     display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 5,
