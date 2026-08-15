@@ -43,7 +43,7 @@ describe('ShortcutsOverlay (issue #116)', () => {
 
   it('every row keys match shortcuts handled in App.tsx keydown map', () => {
     const handled = new Set([
-      'Ctrl+K', 'Ctrl+Shift+F', 'Ctrl+Shift+T', 'Ctrl+W', 'Ctrl+L',
+      'Ctrl+T', 'Ctrl+K', 'Ctrl+Shift+F', 'Ctrl+Shift+T', 'Ctrl+W', 'Ctrl+L',
       'Ctrl+Tab', 'Alt+1-9', '?',
     ])
     for (const g of SHORTCUT_GROUPS) {
