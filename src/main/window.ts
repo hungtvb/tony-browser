@@ -2,6 +2,7 @@
 import { app, BrowserWindow, WebContentsView, session } from 'electron'
 import { attachWebRequestFilters } from './ipc'
 import { appVersionArg } from '../shared/app-version'
+import { trackPartition } from './privacy/auto-clear'
 import path from 'path'
 
 export const TOOLBAR_HEIGHT = 92 // TabBar (42) + AddressBar (50)
@@ -77,6 +78,9 @@ export function createTabView(url: string, container = 'default'): WebContentsVi
   const ses = container === 'default'
     ? session.defaultSession
     : session.fromPartition(`persist:container-${container}`)
+  // Issue #124 — remember every container partition so quit-time auto-clear
+  // can wipe its cookies/cache too (no Electron API to enumerate partitions).
+  if (container !== 'default') trackPartition(`persist:container-${container}`)
   const view = new WebContentsView({
     webPreferences: {
       contextIsolation: true,

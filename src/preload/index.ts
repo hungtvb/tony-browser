@@ -43,6 +43,10 @@ const api: TonyAPI = {
   privacy: {
     stats: () => ipcRenderer.invoke('privacy:stats') as Promise<PrivacyStats>,
     toggle: (on: boolean) => ipcRenderer.invoke('privacy:toggle', on),
+    // Issue #124 — cookie auto-clear policy (whitelist + enabled), shared with Settings
+    getClearPolicy: () => ipcRenderer.invoke('privacy:getClearPolicy') as Promise<{ enabled: boolean; whitelist: string[] }>,
+    setClearPolicy: (patch: { enabled?: boolean; whitelist?: string[] }) =>
+      ipcRenderer.invoke('privacy:setClearPolicy', patch) as Promise<{ enabled: boolean; whitelist: string[] }>,
     // Issue #120 — event-driven stats: main pushes throttled 'privacy:stats'
     // updates when a request is blocked. Returns an unsubscribe fn so the
     // renderer can remove the listener on unmount (no leak, no polling).
