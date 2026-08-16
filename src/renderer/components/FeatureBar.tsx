@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import UIcon from './UIcon'
+// Issue #121 — hidden-window perf: while the window is hidden the sleeper poll
+// slows 3x and an immediate evaluate fires on show (visible again).
+import { isDocumentHidden, sleeperPollMs } from '../../shared/perf-visibility'
 
 const styles: Record<string, React.CSSProperties> = {
   bar: {
@@ -101,20 +104,44 @@ export default function FeatureBar({ layout, onToggleLayout, warnedIds, onWarned
   }
 
   useEffect(() => {
-    const iv = setInterval(() => {
-      window.tony?.sleeper.evaluate().then(r => {
-        setSleeping(r.sleeping)
-        // Issue #72 — polled warnings kept as a fallback; the authoritative warned-id
-        // set arrives via the proactive 'sleeper:warnings' event below (onWarned).
-        onWarned(r.warnings)
-      }).catch(() => {})
-    }, 10000)
+    // Issue #121 — hidden-window guard: while the window is hidden (document.hidden),
+    // skip the sleeper evaluate body entirely (no IPC wake for memory sampling) and
+    // slow the poll cadence 3x (10s -> 30s). On becoming visible again, run one
+    // immediate evaluate so the "N tabs asleep" chip refreshes right away.
+    let iv: ReturnType<typeof setInterval> | null = null
+    const startPoll = () => {
+      if (iv) clearInterval(iv)
+      iv = setInterval(() => {
+        if (isDocumentHidden(document)) return
+        window.tony?.sleeper.evaluate().then(r => {
+          setSleeping(r.sleeping)
+          // Issue #72 — polled warnings kept as a fallback; the authoritative warned-id
+          // set arrives via the proactive 'sleeper:warnings' event below (onWarned).
+          onWarned(r.warnings)
+        }).catch(() => {})
+      }, sleeperPollMs(isDocumentHidden(document)))
+    }
+    const onVisibility = () => {
+      if (isDocumentHidden(document)) {
+        // hidden → restart the timer with the slow cadence (no immediate work)
+        startPoll()
+      } else {
+        // shown → refresh the chip immediately, then resume the fast cadence
+        window.tony?.sleeper.evaluate().then(r => {
+          setSleeping(r.sleeping)
+          onWarned(r.warnings)
+        }).catch(() => {})
+        startPoll()
+      }
+    }
+    startPoll()
     // Issue #72 — proactive event: fires the moment the warned set changes in main,
     // so a heavy tab is highlighted immediately instead of waiting for the next poll.
     // onWarnings returns an unsubscribe fn — call it in cleanup so a re-mounted
     // FeatureBar never leaks a second 'sleeper:warnings' listener.
     const offWarnings = window.tony?.sleeper.onWarnings(onWarned)
-    return () => { clearInterval(iv); offWarnings?.() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { if (iv) clearInterval(iv); offWarnings?.(); document.removeEventListener('visibilitychange', onVisibility) }
   }, [onWarned])
 
   return (

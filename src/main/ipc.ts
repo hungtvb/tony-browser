@@ -20,6 +20,9 @@ import { createFocusBlocker, type FocusBlocker } from './focus/blocker'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
 import { DEFAULT_HEAVY_MEMORY_MB } from './perf/sleeper'
+// Issue #121 — hidden-window perf: skip per-tab memory sampling (getAppMetrics walk)
+// while the window is hidden/minimized — wasted work the user isn't looking at.
+import { isWindowHidden } from '../shared/perf-visibility'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -541,6 +544,15 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // instead of relying on polling-only. No event when the set is unchanged.
   let warnedIds = new Set<string>()
   ipcMain.handle('sleeper:evaluate', async () => {
+    // Issue #121 — hidden-window guard: while the window exists but is
+    // hidden/minimized, skip the per-tab memory sampling (getAppMetrics) walk
+    // entirely — wasted work the user isn't looking at, and the heavy-tab
+    // warning only matters while visible (the renderer also polls 3x slower
+    // while hidden). No window at all → run the normal path.
+    const hiddenWin = deps.getWindow()
+    if (hiddenWin && isWindowHidden(hiddenWin)) {
+      return { sleeping: sleeper.sleepingCount(), warnings: [] }
+    }
     // feed real per-tab memory into the controller so the heavy-tab RAM warning can fire (fix #68)
     const tabs = tm.list()
     const views = await Promise.all(tabs.map(async (t) => {

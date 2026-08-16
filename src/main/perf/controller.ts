@@ -69,6 +69,11 @@ export class SleeperController {
     return this.sleepingIds.has(id)
   }
 
+  // Issue #121 — cheap count for hidden-window evaluate fast-path (no memory sampling)
+  sleepingCount(): number {
+    return this.sleepingIds.size
+  }
+
   isPendingSleep(id: string): boolean {
     return this.pendingIds.has(id)
   }
