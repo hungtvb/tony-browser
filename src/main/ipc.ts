@@ -20,6 +20,7 @@ import { createFocusBlocker, type FocusBlocker } from './focus/blocker'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
 import { DEFAULT_HEAVY_MEMORY_MB } from './perf/sleeper'
+import type { ClearPolicy } from './privacy/clear-policy'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -34,6 +35,8 @@ export interface IpcDeps {
   setSplitIds: (ids: string[]) => void
   /** Shared FocusController — attachPrivacy blocking requests + registerIpc exposing IPC must use the same instance */
   getFocus: () => FocusController
+  /** Issue #124 — cookie auto-clear policy, shared with the quit hook in index.ts */
+  getClearPolicy?: () => ClearPolicy
 }
 
 // Privacy filter state — shared by EVERY session (default + container)
@@ -534,6 +537,13 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))
   ipcMain.handle('privacy:toggle', (_e, on: boolean) => { privacyFilterOn = on; return on })
+  // Issue #124 — cookie auto-clear policy (get/apply whitelist + enabled flag)
+  ipcMain.handle('privacy:getClearPolicy', () => deps.getClearPolicy?.().getState() ?? { enabled: false, whitelist: [] })
+  ipcMain.handle('privacy:setClearPolicy', (_e, patch: { enabled?: boolean; whitelist?: string[] }) => {
+    const p = deps.getClearPolicy?.()
+    if (p) { p.apply(patch); return p.getState() }
+    return { enabled: false, whitelist: [] }
+  })
 
   // ─── ai ───
   const ai = new AIController(deps)
