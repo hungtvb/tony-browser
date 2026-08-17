@@ -14,6 +14,7 @@ const electronMock = vi.hoisted(() => {
       handlers,
       webRequest: {
         onBeforeRequest: (filter: any, handler: any) => { handlers.push({ filter, handler }) },
+        onBeforeSendHeaders: (filter: any, handler: any) => { handlers.push({ filter, handler }) },
         filterResponseData: () => ({ on: () => {}, write: () => {}, end: () => {} }),
       },
       setPermissionRequestHandler: () => {},
