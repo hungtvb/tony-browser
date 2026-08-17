@@ -21,6 +21,8 @@ const api: TonyAPI = {
     close: (id: string) => ipcRenderer.invoke('tabs:close', id),
     activate: (id: string) => ipcRenderer.invoke('tabs:activate', id),
     reorder: (fromId: string, toId: string) => ipcRenderer.invoke('tabs:reorder', fromId, toId) as Promise<boolean>,
+    // Issue #140 — move tab to another container (drop on a group header)
+    moveToContainer: (id: string, container: string) => ipcRenderer.invoke('tabs:moveToContainer', id, container) as Promise<boolean>,
     list: () => ipcRenderer.invoke('tabs:list'),
     stacks: () => ipcRenderer.invoke('tabs:stacks'),
     search: (q: string) => ipcRenderer.invoke('tabs:search', q),
@@ -43,6 +45,10 @@ const api: TonyAPI = {
   privacy: {
     stats: () => ipcRenderer.invoke('privacy:stats') as Promise<PrivacyStats>,
     toggle: (on: boolean) => ipcRenderer.invoke('privacy:toggle', on),
+    // Issue #124 — cookie auto-clear policy (whitelist + enabled), shared with Settings
+    getClearPolicy: () => ipcRenderer.invoke('privacy:getClearPolicy') as Promise<{ enabled: boolean; whitelist: string[] }>,
+    setClearPolicy: (patch: { enabled?: boolean; whitelist?: string[] }) =>
+      ipcRenderer.invoke('privacy:setClearPolicy', patch) as Promise<{ enabled: boolean; whitelist: string[] }>,
     // Issue #120 — event-driven stats: main pushes throttled 'privacy:stats'
     // updates when a request is blocked. Returns an unsubscribe fn so the
     // renderer can remove the listener on unmount (no leak, no polling).

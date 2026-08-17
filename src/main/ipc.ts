@@ -23,6 +23,7 @@ import { DEFAULT_HEAVY_MEMORY_MB } from './perf/sleeper'
 // Issue #121 — hidden-window perf: skip per-tab memory sampling (getAppMetrics walk)
 // while the window is hidden/minimized — wasted work the user isn't looking at.
 import { isWindowHidden } from '../shared/perf-visibility'
+import type { ClearPolicy } from './privacy/clear-policy'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -37,6 +38,8 @@ export interface IpcDeps {
   setSplitIds: (ids: string[]) => void
   /** Shared FocusController — attachPrivacy blocking requests + registerIpc exposing IPC must use the same instance */
   getFocus: () => FocusController
+  /** Issue #124 — cookie auto-clear policy, shared with the quit hook in index.ts */
+  getClearPolicy?: () => ClearPolicy
 }
 
 // Privacy filter state — shared by EVERY session (default + container)
@@ -150,19 +153,33 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
       if (!privacyFilterOn) { callback({}); return }
-      const filter = ses.webRequest.filterResponseData(details.id)
-      const chunks: Buffer[] = []
-      filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
-      filter.on('end', () => {
-        try {
-          const body = Buffer.concat(chunks).toString('utf-8')
-          const stripped = stripPlayerResponse(body)
-          filter.write(stripped ?? body)
-        } catch { /* keep the original body on error */ }
-        filter.end()
-      })
-      filter.on('error', () => { try { filter.end() } catch { /* ignore */ } })
-      callback({})
+      try {
+        const filter = ses.webRequest.filterResponseData(details.id)
+        const chunks: Buffer[] = []
+        let done = false
+        const safeEnd = () => {
+          if (done) return
+          done = true
+          try { filter.end() } catch { /* stream already closed */ }
+        }
+        filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
+        filter.on('end', () => {
+          // NOTE: `end` can fire AFTER `error` (stream cancelled mid-response).
+          // Guard via done so we never double-write/end a closed stream.
+          if (done) return
+          try {
+            const body = Buffer.concat(chunks).toString('utf-8')
+            const stripped = stripPlayerResponse(body)
+            try { filter.write(stripped ?? body) } catch { /* stream closed — nothing to write */ }
+          } catch { /* keep the original body on error */ }
+          safeEnd()
+        })
+        filter.on('error', () => { safeEnd() })
+        callback({})
+      } catch {
+        // filterResponseData unavailable / already consumed → let the request pass
+        callback({})
+      }
     },
   )
 }
@@ -328,6 +345,21 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     // keep view z-order in sync with the new tab order + broadcast once.
     const ok = tm.reorder(fromId, toId)
     if (ok) {
+      deps.layoutViews()
+      broadcastTabs()
+    }
+    return ok
+  })
+
+  ipcMain.handle('tabs:moveToContainer', (_e, id: string, container: string) => {
+    // Issue #140 — sidebar drag & drop Phase 2: move a tab to another container
+    // (drop on a group header). TabManager recreates the view under the target
+    // partition; re-track + relayout + broadcast so the renderer sees the new
+    // container membership.
+    const ok = tm.moveToContainer(id, container)
+    if (ok) {
+      const v = tm.get(id)?.view as WebContentsView | undefined
+      if (v) deps.trackView(id, v)
       deps.layoutViews()
       broadcastTabs()
     }
@@ -508,6 +540,13 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))
   ipcMain.handle('privacy:toggle', (_e, on: boolean) => { privacyFilterOn = on; return on })
+  // Issue #124 — cookie auto-clear policy (get/apply whitelist + enabled flag)
+  ipcMain.handle('privacy:getClearPolicy', () => deps.getClearPolicy?.().getState() ?? { enabled: false, whitelist: [] })
+  ipcMain.handle('privacy:setClearPolicy', (_e, patch: { enabled?: boolean; whitelist?: string[] }) => {
+    const p = deps.getClearPolicy?.()
+    if (p) { p.apply(patch); return p.getState() }
+    return { enabled: false, whitelist: [] }
+  })
 
   // ─── ai ───
   const ai = new AIController(deps)
