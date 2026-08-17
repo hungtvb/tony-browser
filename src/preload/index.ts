@@ -21,6 +21,8 @@ const api: TonyAPI = {
     close: (id: string) => ipcRenderer.invoke('tabs:close', id),
     activate: (id: string) => ipcRenderer.invoke('tabs:activate', id),
     reorder: (fromId: string, toId: string) => ipcRenderer.invoke('tabs:reorder', fromId, toId) as Promise<boolean>,
+    // Issue #140 — move tab to another container (drop on a group header)
+    moveToContainer: (id: string, container: string) => ipcRenderer.invoke('tabs:moveToContainer', id, container) as Promise<boolean>,
     list: () => ipcRenderer.invoke('tabs:list'),
     stacks: () => ipcRenderer.invoke('tabs:stacks'),
     search: (q: string) => ipcRenderer.invoke('tabs:search', q),

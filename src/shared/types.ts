@@ -84,6 +84,8 @@ export interface TonyAPI {
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
     reorder: (fromId: string, toId: string) => Promise<boolean>
+    // Issue #140 — move tab to another container (drop on a group header)
+    moveToContainer: (id: string, container: string) => Promise<boolean>
     list: () => Promise<TabState[]>
     stacks: () => Promise<{ label: string; tabs: TabState[] }[]>
     search: (q: string) => Promise<TabState[]>

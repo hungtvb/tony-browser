@@ -237,6 +237,8 @@ export default function App() {
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
             onNewTab={() => setContainerMenu(true)}
             onReorder={reorder}
+            // Issue #140 — drop tab on a group header → move it to that container
+            onMoveToContainer={(id, container) => { window.tony?.tabs.moveToContainer(id, container).catch(() => {}) }}
             // Issue #125 — never drag while an overlay grabs the mouse (palette/search/saved pages)
             dragDisabled={paletteOpen || searchOpen || savedOpen} />
         )}

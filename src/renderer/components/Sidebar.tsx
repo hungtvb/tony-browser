@@ -74,12 +74,14 @@ const styles: Record<string, React.CSSProperties> = {
   dragOver: { boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.55)' },
 }
 
-export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, onReorder, dragDisabled }: {
+export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, onReorder, onMoveToContainer, dragDisabled }: {
   tabs: TabState[]; activeId: string
   onSelect: (id: string) => void; onClose: (id: string) => void
   onNewTab: () => void
   // Issue #125 — drag & drop reorder: called with (draggedId, targetId) on drop
   onReorder?: (fromId: string, toId: string) => void
+  // Issue #140 — drag & drop Phase 2: move tab to another container (drop on a group header)
+  onMoveToContainer?: (fromId: string, container: string) => void
   dragDisabled?: boolean
 }) {
   // Issue #87 — Spaces grouping state (domain/theme) + session list
@@ -91,6 +93,8 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
   // Issue #125 — drag state (dragged tab id + row currently hovered for the indicator)
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
+  // Issue #140 — group header currently hovered (move-to-container target)
+  const [dragOverGroup, setDragOverGroup] = useState<string | null>(null)
 
   const refreshSessions = () => {
     window.tony?.smarttab.sessions().then(setSessions).catch(() => setSessions([]))
@@ -150,12 +154,36 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
     }
     setDragId(null)
     setDragOverId(null)
+    setDragOverGroup(null)
     if (from && from !== id) onReorder?.(from, id)
+  }
+
+  // Issue #140 — drop ON a group header moves the dragged tab into that
+  // container. The header carries the container name of its first tab; only
+  // fires when the dragged tab is NOT already in that container.
+  const onGroupDragOver = (e: React.DragEvent, container: string) => {
+    if (!dragId) return
+    e.preventDefault()
+    try { e.dataTransfer.dropEffect = 'move' } catch {}
+    setDragOverGroup(container)
+  }
+
+  const onGroupDrop = (e: React.DragEvent, container: string) => {
+    e.preventDefault()
+    let from = dragId
+    if (!from) {
+      try { from = e.dataTransfer.getData('text/plain') || null } catch { from = null }
+    }
+    setDragId(null)
+    setDragOverId(null)
+    setDragOverGroup(null)
+    if (from) onMoveToContainer?.(from, container)
   }
 
   const endDrag = () => {
     setDragId(null)
     setDragOverId(null)
+    setDragOverGroup(null)
   }
 
   // Flat list fallback: groups fetch may resolve empty (no tabs / grouping no-op)
@@ -174,9 +202,24 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
       {tabs.length === 0 && (
         <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, padding: '12px 10px' }}>No tabs yet</div>
       )}
-      {list.map(g => (
+      {list.map(g => {
+        const container = g.tabs[0]?.container ?? 'default'
+        return (
         <React.Fragment key={g.label || 'flat'}>
-          {g.label && <div style={styles.groupLabel}>{g.label}</div>}
+          {g.label && (
+            <div style={{
+              ...styles.groupLabel,
+              // Issue #140 — group header is a drop target: moving a tab here
+              // reassigns it to this group's container
+              ...(dragOverGroup === container ? styles.dragOver : {}),
+            }}
+              onDragOver={e => onGroupDragOver(e, container)}
+              onDrop={e => onGroupDrop(e, container)}
+              onDragLeave={endDrag}
+            >
+              {g.label}
+            </div>
+          )}
           {g.tabs.map(t => (
             <button key={t.id} className="apple-focus"
               draggable={!dragDisabled}
@@ -198,7 +241,8 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
             </button>
           ))}
         </React.Fragment>
-      ))}
+        )
+      })}
       <div style={styles.spacer} />
       <div style={styles.spacesHeader}>
         <span>Sessions</span>

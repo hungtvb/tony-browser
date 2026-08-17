@@ -345,6 +345,21 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     return ok
   })
 
+  ipcMain.handle('tabs:moveToContainer', (_e, id: string, container: string) => {
+    // Issue #140 — sidebar drag & drop Phase 2: move a tab to another container
+    // (drop on a group header). TabManager recreates the view under the target
+    // partition; re-track + relayout + broadcast so the renderer sees the new
+    // container membership.
+    const ok = tm.moveToContainer(id, container)
+    if (ok) {
+      const v = tm.get(id)?.view as WebContentsView | undefined
+      if (v) deps.trackView(id, v)
+      deps.layoutViews()
+      broadcastTabs()
+    }
+    return ok
+  })
+
   ipcMain.handle('tabs:activate', (_e, id: string) => {
     tm.activate(id)
     // Issue #82: a restored tab (2..N) already has a live view in viewByTab that was never
