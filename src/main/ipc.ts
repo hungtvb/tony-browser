@@ -147,19 +147,33 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
       if (!privacyFilterOn) { callback({}); return }
-      const filter = ses.webRequest.filterResponseData(details.id)
-      const chunks: Buffer[] = []
-      filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
-      filter.on('end', () => {
-        try {
-          const body = Buffer.concat(chunks).toString('utf-8')
-          const stripped = stripPlayerResponse(body)
-          filter.write(stripped ?? body)
-        } catch { /* keep the original body on error */ }
-        filter.end()
-      })
-      filter.on('error', () => { try { filter.end() } catch { /* ignore */ } })
-      callback({})
+      try {
+        const filter = ses.webRequest.filterResponseData(details.id)
+        const chunks: Buffer[] = []
+        let done = false
+        const safeEnd = () => {
+          if (done) return
+          done = true
+          try { filter.end() } catch { /* stream already closed */ }
+        }
+        filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
+        filter.on('end', () => {
+          // NOTE: `end` can fire AFTER `error` (stream cancelled mid-response).
+          // Guard via done so we never double-write/end a closed stream.
+          if (done) return
+          try {
+            const body = Buffer.concat(chunks).toString('utf-8')
+            const stripped = stripPlayerResponse(body)
+            try { filter.write(stripped ?? body) } catch { /* stream closed — nothing to write */ }
+          } catch { /* keep the original body on error */ }
+          safeEnd()
+        })
+        filter.on('error', () => { safeEnd() })
+        callback({})
+      } catch {
+        // filterResponseData unavailable / already consumed → let the request pass
+        callback({})
+      }
     },
   )
 }
