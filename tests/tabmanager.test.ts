@@ -116,4 +116,37 @@ describe('TabManager', () => {
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toMatchObject({ type: 'reorder', id: c.id })
   })
+
+  // ─── Issue #140 — moveToContainer (sidebar drag & drop Phase 2) ───
+  it('moves a tab to another container and recreates its view (issue #140)', () => {
+    const { factory, views } = makeVM()
+    const tm = createTabManager(factory)
+    const t = tm.open('https://a.com', 'work')
+    expect(t.container).toBe('work')
+    const ok = tm.moveToContainer(t.id, 'personal')
+    expect(ok).toBe(true)
+    const after = tm.get(t.id)!
+    expect(after.container).toBe('personal')
+    expect(after.url).toBe('https://a.com')
+    // old view destroyed + a new view created and loaded the same URL
+    expect(views[0].destroyed).toBe(true)
+    expect(views.length).toBe(2)
+    expect(views[1].url).toBe('https://a.com')
+  })
+
+  it('moveToContainer to the same container is a no-op (issue #140)', () => {
+    const { factory, views } = makeVM()
+    const tm = createTabManager(factory)
+    const t = tm.open('https://a.com', 'work')
+    expect(tm.moveToContainer(t.id, 'work')).toBe(false)
+    expect(views.length).toBe(1)
+    expect(views[0].destroyed).toBe(false)
+  })
+
+  it('moveToContainer with an unknown id is a no-op (issue #140)', () => {
+    const { factory, views } = makeVM()
+    const tm = createTabManager(factory)
+    expect(tm.moveToContainer('missing', 'personal')).toBe(false)
+    expect(views.length).toBe(0)
+  })
 })

@@ -17,6 +17,7 @@ import { ToastStack, StatusBar, useFeedback } from './components/Feedback'
 import { useTabs } from './hooks/useTabs'
 import { nextPhase, phaseStyle, type ProgressPhase } from './progress'
 import type { PrivacyStats } from '../shared/types'
+import { isEditableTarget, isNewTabShortcut } from './shortcuts'
 
 const styles: Record<string, React.CSSProperties> = {
   app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#101110' },
@@ -111,18 +112,16 @@ export default function App() {
 
   // Keyboard shortcuts
   useEffect(() => {
-    // Issue #115 — true when the keydown target is an editable field (input,
-    // textarea, contenteditable): global shortcuts must not fire while typing.
-    const isEditableTarget = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null
-      return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
-    }
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase()
       // Ctrl/Cmd+K command palette
       if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); setPaletteOpen(o => !o) }
       // Ctrl/Cmd+Shift+F search tabs
       else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 'f') { e.preventDefault(); setSearchOpen(o => !o) }
+      // Issue #139 — Ctrl+T / Cmd+T new tab (same behaviour as the New Tab
+      // button: open the container menu). Guarded against Ctrl+Shift+T
+      // (reopen) and editable targets (typing).
+      else if (isNewTabShortcut(e)) { e.preventDefault(); setContainerMenu(true) }
       // Ctrl/Cmd+Shift+T undo close
       else if ((e.ctrlKey || e.metaKey) && e.shiftKey && k === 't') {
         e.preventDefault()
@@ -238,6 +237,8 @@ export default function App() {
           <Sidebar tabs={tabs} activeId={activeId} onSelect={activate} onClose={close}
             onNewTab={() => setContainerMenu(true)}
             onReorder={reorder}
+            // Issue #140 — drop tab on a group header → move it to that container
+            onMoveToContainer={(id, container) => { window.tony?.tabs.moveToContainer(id, container).catch(() => {}) }}
             // Issue #125 — never drag while an overlay grabs the mouse (palette/search/saved pages)
             dragDisabled={paletteOpen || searchOpen || savedOpen} />
         )}

@@ -60,6 +60,26 @@ export function createTabManager(factory: ViewFactory) {
     emitter.emit('changed', { type: 'close', id })
   }
 
+  // Issue #140 — sidebar drag & drop Phase 2: move a tab to another container
+  // (drop on a group header). Destroys the current partition-backed view and
+  // recreates it under the target container's partition (cookies/session move
+  // with the tab). No-op when the target container equals the current one.
+  function moveToContainer(id: string, container: string): boolean {
+    const tab = tabs.get(id)
+    if (!tab || tab.container === container) return false
+    const { url, favicon, title } = tab
+    tab.view.destroy()
+    const view = factory(id)
+    tab.view = view
+    tab.container = container
+    tab.url = url
+    tab.favicon = favicon
+    tab.lastActive = Date.now()
+    view.loadURL(url)
+    emitter.emit('changed', { type: 'container', id })
+    return true
+  }
+
   function activate(id: string) {
     if (!tabs.has(id)) return
     activeId = id
@@ -110,6 +130,7 @@ export function createTabManager(factory: ViewFactory) {
     close,
     activate,
     reorder,
+    moveToContainer,
     list,
     listByContainer,
     get,
