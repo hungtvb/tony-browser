@@ -56,7 +56,8 @@ export class AIController {
 
     let pageText: string | undefined
 
-    if (params.mode === 'summarizePage' && wc) {
+    if (params.mode === 'summarizePage' || params.mode === 'explain' || params.mode === 'translate') {
+      if (!wc) throw new Error(`No active tab to ${params.mode === 'summarizePage' ? 'summarize' : 'read'} — open a page first`)
       const [text, meta] = await Promise.all([
         extractPageText(wc),
         extractPageMeta(wc),

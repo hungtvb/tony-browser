@@ -32,7 +32,7 @@ export interface PrivacyStats {
 export interface AIAskParams {
   text: string
   tabId?: string // if provided → read that tab's content
-  mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act'
+  mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act' | 'explain' | 'translate' | 'fixGrammar' | 'summarizeSelection'
 }
 
 export interface AIStatus {
@@ -83,6 +83,9 @@ export interface TonyAPI {
     openContainer: (url: string, container: string) => Promise<TabState>
     close: (id: string) => Promise<boolean>
     activate: (id: string) => Promise<boolean>
+    reorder: (fromId: string, toId: string) => Promise<boolean>
+    // Issue #140 — move tab to another container (drop on a group header)
+    moveToContainer: (id: string, container: string) => Promise<boolean>
     list: () => Promise<TabState[]>
     stacks: () => Promise<{ label: string; tabs: TabState[] }[]>
     search: (q: string) => Promise<TabState[]>
@@ -101,6 +104,11 @@ export interface TonyAPI {
   privacy: {
     stats: () => Promise<PrivacyStats>
     toggle: (on: boolean) => Promise<boolean>
+    // Issue #120 — event-driven stats: subscribe to main-pushed updates; returns an unsubscribe fn.
+    onStats: (cb: (s: PrivacyStats) => void) => () => void
+    // Issue #124 — cookie auto-clear policy (whitelist + enabled) shared with Settings
+    getClearPolicy: () => Promise<{ enabled: boolean; whitelist: string[] }>
+    setClearPolicy: (patch: { enabled?: boolean; whitelist?: string[] }) => Promise<{ enabled: boolean; whitelist: string[] }>
   }
   ai: {
     config: () => Promise<AIConfig | null>

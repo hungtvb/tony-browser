@@ -38,7 +38,13 @@ export default function SearchOverlay({ onSelect, onClose }: {
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); return }
-    window.tony?.tabs.search(query).then(r => { setResults(r); setIdx(0) }).catch(() => {})
+    let cancelled = false
+    const timer = setTimeout(() => {
+      window.tony?.tabs.search(query).then(r => {
+        if (!cancelled) { setResults(r); setIdx(0) }
+      }).catch(() => {})
+    }, 150)
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [query])
 
   function onKey(e: React.KeyboardEvent) {

@@ -9,6 +9,9 @@ import { registerIpc, attachPrivacy, createCosmeticInjector, type IpcDeps } from
 import { FocusController } from './focus/controller'
 import { loadFocusState } from './focus/store'
 import { openRestoredTabs } from './save/session-restore'
+import { createSessionPersist, createDebouncedPersist } from './save/session-store'
+import { clearCookiesOnQuit } from './privacy/auto-clear'
+import { createClearPolicy, type ClearPolicy } from './privacy/clear-policy'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -55,12 +58,6 @@ function smartTabSessionsFile() {
   return path.join(app.getPath('userData'), 'smarttab-sessions.json')
 }
 
-function saveSessionToDisk(tabs: { url: string; title: string; container?: string; favicon?: string }[]) {
-  try {
-    fs.writeFileSync(sessionFile(), JSON.stringify(tabs), 'utf-8')
-  } catch { /* ignore */ }
-}
-
 function loadSessionFromDisk() {
   try {
     return JSON.parse(fs.readFileSync(sessionFile(), 'utf-8')) as { url: string; title: string; container?: string; favicon?: string }[]
@@ -72,6 +69,17 @@ const tm = createTabManager(() => ({
   loadURL: () => {},
   destroy: () => {},
 }))
+
+// Session persistence — debounced (issue #122): 'changed' fires on every tab
+// event (open/close/activate/navigate/title/favicon) and writing the full list
+// synchronously each time is wasted I/O. createDebouncedPersist coalesces bursts
+// into a single atomic write and skips writes when the snapshot is unchanged.
+const sessionPersist = createDebouncedPersist(createSessionPersist(sessionFile()), 500)
+// Issue #124 — auto-clear cookie policy (whitelist persisted in userData/privacy-policy.json)
+const clearPolicy: ClearPolicy = createClearPolicy({ file: path.join(app.getPath('userData'), 'privacy-policy.json') })
+function snapshotTabs() {
+  return tm.list().map(t => ({ url: t.url, title: t.title, container: t.container, favicon: t.favicon }))
+}
 
 // Track a tab view: keep viewByTab fresh + sync url/loading state from webContents events
 // (issues #42/#43) — did-navigate updates the tab url, start/stop-loading updates isLoading.
@@ -117,6 +125,7 @@ const deps: IpcDeps = {
   getSplitIds,
   setSplitIds,
   getFocus: () => focusController,
+  getClearPolicy: () => clearPolicy,
 }
 
 // Shared FocusController: attachPrivacy really blocks requests + registerIpc exposes IPC
@@ -142,6 +151,8 @@ app.whenReady().then(() => {
     smartPersistFile: smartTabSessionsFile(),
     undoPersistFile: path.join(app.getPath('userData'), 'undo-close.json'),
   })
+  // persist the session (debounced) whenever the tab list changes
+  tm.on('changed', () => sessionPersist.save(snapshotTabs()))
 
   // window resize → re-layout every view (full + split) to the new size
   mainWindow.on('resize', () => layoutViews())
@@ -189,7 +200,11 @@ app.whenReady().then(() => {
 
 // auto-save the session on quit
 app.on('before-quit', () => {
-  saveSessionToDisk(tm.list().map(t => ({ url: t.url, title: t.title, container: t.container, favicon: t.favicon })))
+  // flush any pending debounced write so the very last state hits disk (issue #122)
+  sessionPersist.flush()
+  // Issue #124 — auto-clear cookies/cache (minus whitelist) before exit.
+  // Fires-and-forgets: a failure must never block the quit.
+  clearCookiesOnQuit(clearPolicy).catch(() => {})
 })
 
 app.on('window-all-closed', () => {

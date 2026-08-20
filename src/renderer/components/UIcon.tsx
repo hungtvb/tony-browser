@@ -9,10 +9,18 @@ import {
   RiArrowLeftLine, RiRefreshLine, RiFullscreenLine, RiGlobeLine, RiFileTextLine,
   RiBookmarkLine, RiRobotLine, RiAlertLine, RiStopCircleLine, RiCheckLine,
   RiEyeLine, RiSunLine, RiStarLine, RiHeartLine, RiHomeLine, RiNotificationLine,
-  RiEmotionHappyLine,
+  RiEmotionHappyLine, RiEditLine, RiStackLine,
 } from '@remixicon/react'
 
-type RemixIcon = React.ComponentType<{ size?: number | string; color?: string; title?: string }>
+// RemixIcon extended so callers may pass aria-label/role/style (a11y + layout)
+type RemixIcon = React.ComponentType<{
+  size?: number | string
+  color?: string
+  title?: string
+  'aria-label'?: string
+  role?: string
+  style?: React.CSSProperties
+}>
 
 export const ICONS: Record<string, RemixIcon> = {
   focus: RiFocus2Line, reader: RiBook2Line, pip: RiPictureInPicture2Line, split: RiLayoutColumnLine,
@@ -28,6 +36,8 @@ export const ICONS: Record<string, RemixIcon> = {
   check: RiCheckLine, x: RiCloseLine, eye: RiEyeLine, sun: RiSunLine, star: RiStarLine,
   heart: RiHeartLine, home: RiHomeLine, bell: RiNotificationLine,
   wave: RiEmotionHappyLine,
+  edit: RiEditLine, light_mode: RiSunLine, dark_mode: RiMoonLine,
+  stack: RiStackLine,
 }
 
 // Evernote category coding — colored accents for feature icons (lime/blue/yellow/purple)

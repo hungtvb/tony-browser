@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import type { AIConfig } from '../../shared/types'
+import type { AIConfig, AIStatus } from '../../shared/types'
 import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
@@ -42,13 +42,33 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   const [manualActCommand, setManualActCommand] = useState('')
   const [config, setConfig] = useState<AIConfig>({ baseUrl: '', apiKey: '', model: '' })
 
-  useEffect(() => { window.tony?.ai.config().then(c => c && setConfig(c)) }, [])
+  // Issue #93 — wire the previously dead `ai:status` channel: show provider/model
+  // state on mount and keep it fresh after each config save.
+  const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
 
-  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act', text?: string) {
+  useEffect(() => {
+    window.tony?.ai.config().then(c => c && setConfig(c))
+    window.tony?.ai.status().then(setAiStatus).catch(() => {})
+  }, [])
+
+  function refreshStatus() {
+    window.tony?.ai.status().then(setAiStatus).catch(() => {})
+  }
+
+  async function run(mode: 'chat' | 'summarizePage' | 'summarizeAll' | 'act' | 'explain' | 'translate' | 'fixGrammar' | 'summarizeSelection', text?: string) {
     if (busy) return
     setBusy(true); setOut('Processing...')
     try {
-      const params: any = { mode, text: text ?? (mode === 'act' ? manualActCommand : msg || ''), tabId: activeTabId }
+      // Issue #127 — page-context actions: use the in-page selection when present
+      let selection: string | undefined
+      if (mode === 'translate' || mode === 'fixGrammar' || mode === 'summarizeSelection' || mode === 'explain') {
+        if (typeof window !== 'undefined' && window.getSelection) {
+          const sel = window.getSelection()?.toString().trim()
+          if (sel) selection = sel
+        }
+      }
+      const effective = text ?? selection ?? (mode === 'act' ? manualActCommand : msg || '')
+      const params: any = { mode, text: effective, tabId: activeTabId }
       const res = await window.tony!.ai.ask(params)
       setOut(res.text || '(empty)')
     } catch (e: any) {
@@ -57,7 +77,7 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
   }
 
   function saveCfg() {
-    window.tony?.ai.saveConfig(config).then(() => setShowSettings(false))
+    window.tony?.ai.saveConfig(config).then(() => { setShowSettings(false); refreshStatus() })
   }
 
   return (
@@ -65,7 +85,7 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       <div style={styles.header}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><UIcon name="ai" size={15} /> AI Assistant</span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)}><UIcon name="settings" size={13} /></button>
+          <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)} aria-label="AI settings"><UIcon name="settings" size={13} /></button>
           <button className="apple-focus" style={styles.chip} onClick={onClose}><UIcon name="close" size={13} /></button>
         </div>
       </div>
@@ -86,6 +106,9 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}><UIcon name="file-text" size={13} /> Summarize page</button>
         <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}><UIcon name="book-marked" size={13} /> Summarize all tabs</button>
         <button className="apple-focus" style={styles.chip} onClick={() => run('act')}><UIcon name="bot" size={13} /> Web automation</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('explain')}><UIcon name="sparkle" size={13} /> Explain</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('translate')}><UIcon name="globe" size={13} /> Translate</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('fixGrammar')}><UIcon name="edit" size={13} /> Fix grammar</button>
       </div>
 
       <div style={{ padding: '6px 14px', display: 'flex', gap: 6 }}>
@@ -95,6 +118,13 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       </div>
 
       <div style={styles.body}>
+        {aiStatus && (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 10, letterSpacing: '-0.08px' }}>
+            {aiStatus.configured
+              ? `⚙️ ${config.model || 'model not set'} · ${aiStatus.busy ? 'Busy' : 'Ready'}`
+              : '⚙️ Not configured — open settings to set up your AI provider'}
+          </div>
+        )}
         <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{out}</pre>
       </div>
 

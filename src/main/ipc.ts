@@ -5,6 +5,7 @@ import * as path from 'path'
 import { attachView, detachView, TOOLBAR_HEIGHT, createTabView } from './window'
 import { createBlocklist } from './privacy/blocklist'
 import { createUrlFilter, createCosmeticFilter } from './privacy/filters'
+import { sanitizeHeaders } from './privacy/headers'
 import { isYouTubeAdRequest, stripPlayerResponse } from './privacy/youtube'
 import { createTabStacker, searchTabs } from './tabs/stacker'
 import { computeSplitBounds } from './tabs/split'
@@ -18,6 +19,11 @@ import { FocusController } from './focus/controller'
 import { createFocusBlocker, type FocusBlocker } from './focus/blocker'
 import { SmartTabController } from './smarttab/controller'
 import { SleeperController } from './perf/controller'
+import { DEFAULT_HEAVY_MEMORY_MB } from './perf/sleeper'
+// Issue #121 — hidden-window perf: skip per-tab memory sampling (getAppMetrics walk)
+// while the window is hidden/minimized — wasted work the user isn't looking at.
+import { isWindowHidden } from '../shared/perf-visibility'
+import type { ClearPolicy } from './privacy/clear-policy'
 
 export interface IpcDeps {
   getWindow: () => BrowserWindow | null
@@ -32,12 +38,48 @@ export interface IpcDeps {
   setSplitIds: (ids: string[]) => void
   /** Shared FocusController — attachPrivacy blocking requests + registerIpc exposing IPC must use the same instance */
   getFocus: () => FocusController
+  /** Issue #124 — cookie auto-clear policy, shared with the quit hook in index.ts */
+  getClearPolicy?: () => ClearPolicy
 }
 
 // Privacy filter state — shared by EVERY session (default + container)
 let privacyFilterOn = true
 let blockedCount = 0
 let listSize = 0
+
+// Issue #120 — event-driven privacy stats: instead of the renderer polling
+// `privacy:stats` every 3s (IPC round-trip even when nothing was blocked),
+// main pushes a throttled 'privacy:stats' event only when a request is blocked.
+const STATS_THROTTLE_MS = 1000
+let statsBroadcast: (() => void) | undefined
+let statsTimer: ReturnType<typeof setTimeout> | undefined
+let lastStatsEmit = 0
+
+function pushPrivacyStats() {
+  lastStatsEmit = Date.now()
+  statsBroadcast?.()
+}
+
+/** Fire (or schedule, throttled to 1/s) a privacy:stats push after a block. */
+export function schedulePrivacyStats() {
+  const wait = STATS_THROTTLE_MS - (Date.now() - lastStatsEmit)
+  if (wait <= 0) {
+    if (statsTimer) { clearTimeout(statsTimer); statsTimer = undefined }
+    pushPrivacyStats()
+  } else if (!statsTimer) {
+    statsTimer = setTimeout(() => {
+      statsTimer = undefined
+      pushPrivacyStats()
+    }, wait)
+  }
+}
+
+/** Test-only: clear broadcast wiring + throttle state between tests. */
+export function resetPrivacyStatsBroadcast() {
+  if (statsTimer) { clearTimeout(statsTimer); statsTimer = undefined }
+  statsBroadcast = undefined
+  lastStatsEmit = 0
+}
 
 /** sessions that already have a webRequest filter — avoid attaching twice (defaultSession goes through both attachPrivacy and createTabView) */
 const attachedSessions = new Set<Electron.Session>()
@@ -72,6 +114,9 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     if (privacyFilterOn && (bl.shouldBlock(details.url) || urlFilter.shouldBlock(details.url) || isYouTubeAdRequest(details.url))) {
       blockedCount++
       blocked = true
+      // Issue #120 — event-driven stats: push a throttled update on every block
+      // (renderer no longer polls privacy:stats every 3s).
+      schedulePrivacyStats()
     }
     // Focus Mode — block distracting sites (state synced with the shared controller)
     const focus = provider?.()
@@ -92,24 +137,49 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
     }
   })
 
+  // Fingerprinting protection (issue #123): strip/replace high-entropy request headers
+  // (User-Agent platform, Sec-CH-UA client hints, Accept-Language) on every request.
+  // Gated by the same privacy toggle as adblock — off → original headers pass through.
+  ses.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
+    if (!privacyFilterOn) {
+      callback({ requestHeaders: details.requestHeaders })
+      return
+    }
+    callback({ requestHeaders: sanitizeHeaders(details.requestHeaders) })
+  })
+
   // Strip ads from the YouTube player response (filterResponseData rewrites the body)
   ses.webRequest.onBeforeRequest(
     { urls: ['*://*.youtube.com/youtubei/v1/player*', '*://*.youtube.com/youtubei/v1/next*'] },
     (details, callback) => {
       if (!privacyFilterOn) { callback({}); return }
-      const filter = ses.webRequest.filterResponseData(details.id)
-      const chunks: Buffer[] = []
-      filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
-      filter.on('end', () => {
-        try {
-          const body = Buffer.concat(chunks).toString('utf-8')
-          const stripped = stripPlayerResponse(body)
-          filter.write(stripped ?? body)
-        } catch { /* keep the original body on error */ }
-        filter.end()
-      })
-      filter.on('error', () => { try { filter.end() } catch { /* ignore */ } })
-      callback({})
+      try {
+        const filter = ses.webRequest.filterResponseData(details.id)
+        const chunks: Buffer[] = []
+        let done = false
+        const safeEnd = () => {
+          if (done) return
+          done = true
+          try { filter.end() } catch { /* stream already closed */ }
+        }
+        filter.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)))
+        filter.on('end', () => {
+          // NOTE: `end` can fire AFTER `error` (stream cancelled mid-response).
+          // Guard via done so we never double-write/end a closed stream.
+          if (done) return
+          try {
+            const body = Buffer.concat(chunks).toString('utf-8')
+            const stripped = stripPlayerResponse(body)
+            try { filter.write(stripped ?? body) } catch { /* stream closed — nothing to write */ }
+          } catch { /* keep the original body on error */ }
+          safeEnd()
+        })
+        filter.on('error', () => { safeEnd() })
+        callback({})
+      } catch {
+        // filterResponseData unavailable / already consumed → let the request pass
+        callback({})
+      }
     },
   )
 }
@@ -117,6 +187,13 @@ export function attachWebRequestFilters(ses: Electron.Session, getFocus?: () => 
 export function attachPrivacy(win: BrowserWindow, _deps: IpcDeps, getFocus?: () => FocusController | null) {
   const { session } = win.webContents
   listSize = createBlocklist(blocklistDomains).size
+  // Issue #120 — register the privacy:stats broadcast target (the main window).
+  // Container-session blocks share the same counter and reach the same window.
+  statsBroadcast = () => {
+    if (!win.webContents.isDestroyed()) {
+      win.webContents.send('privacy:stats', { blocked: blockedCount, listSize })
+    }
+  }
   // register the shared FocusController source — createTabView's attach for containers uses it too
   focusProvider = getFocus
   attachWebRequestFilters(session, getFocus)
@@ -248,7 +325,7 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     const view = tabId ? deps.getActiveView(tabId) : undefined
     if (!view) return { ok: false, error: 'No tab' }
     try {
-      await view.webContents.executeJavaScript(`
+      const res = (await view.webContents.executeJavaScript(`
         (() => {
           if (document.pictureInPictureElement) {
             document.exitPictureInPicture().catch(e => {});
@@ -256,11 +333,37 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
           }
           return { ok: false, error: 'No PiP video' };
         })()
-      `)
-      return { ok: true }
+      `)) as { ok: boolean; error?: string }
+      return res
     } catch (e: any) {
       return { ok: false, error: e?.message ?? 'Exit PiP error' }
     }
+  })
+
+  ipcMain.handle('tabs:reorder', (_e, fromId: string, toId: string) => {
+    // Issue #125 — sidebar drag & drop reorder. No-op for unknown/equal ids;
+    // keep view z-order in sync with the new tab order + broadcast once.
+    const ok = tm.reorder(fromId, toId)
+    if (ok) {
+      deps.layoutViews()
+      broadcastTabs()
+    }
+    return ok
+  })
+
+  ipcMain.handle('tabs:moveToContainer', (_e, id: string, container: string) => {
+    // Issue #140 — sidebar drag & drop Phase 2: move a tab to another container
+    // (drop on a group header). TabManager recreates the view under the target
+    // partition; re-track + relayout + broadcast so the renderer sees the new
+    // container membership.
+    const ok = tm.moveToContainer(id, container)
+    if (ok) {
+      const v = tm.get(id)?.view as WebContentsView | undefined
+      if (v) deps.trackView(id, v)
+      deps.layoutViews()
+      broadcastTabs()
+    }
+    return ok
   })
 
   ipcMain.handle('tabs:activate', (_e, id: string) => {
@@ -275,13 +378,18 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
       const children = winNow.contentView.children as readonly unknown[]
       if (!children.includes(activeView)) attachView(winNow, activeView)
     }
-    // wake the tab if sleeping (TabSleeper) — the view was closed on sleep → rebuild + reload original url.
+    // wake the tab if sleeping (TabSleeper). Tier-2 tabs had their view closed on sleep →
+    // rebuild + reload original url. Tier-1 tabs kept a throttled renderer alive → just
+    // restore it (unmute, normal fps, throttling off) — instant wake, no reload.
     // Also wake while teardown is still pending: the activation must not be silently dropped (race guard).
     if (sleeper.isSleeping(id) || sleeper.isPendingSleep(id)) {
       sleeper.wake(id, (wid) => {
         const wv = deps.getActiveView(wid)
         if (wv && !wv.webContents.isDestroyed()) {
+          // Tier-1 wake — restore the throttled renderer (muted + 1 fps from sleep)
           try { wv.webContents.setBackgroundThrottling(false) } catch {}
+          try { wv.webContents.setAudioMuted(false) } catch {}
+          try { wv.webContents.setFrameRate(60) } catch {}
         } else {
           // view was closed on sleep (RAM freed) → rebuild from the original url
           const tab = tm.get(wid)
@@ -432,6 +540,13 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // ─── privacy ───
   ipcMain.handle('privacy:stats', (): PrivacyStats => ({ blocked: blockedCount, listSize }))
   ipcMain.handle('privacy:toggle', (_e, on: boolean) => { privacyFilterOn = on; return on })
+  // Issue #124 — cookie auto-clear policy (get/apply whitelist + enabled flag)
+  ipcMain.handle('privacy:getClearPolicy', () => deps.getClearPolicy?.().getState() ?? { enabled: false, whitelist: [] })
+  ipcMain.handle('privacy:setClearPolicy', (_e, patch: { enabled?: boolean; whitelist?: string[] }) => {
+    const p = deps.getClearPolicy?.()
+    if (p) { p.apply(patch); return p.getState() }
+    return { enabled: false, whitelist: [] }
+  })
 
   // ─── ai ───
   const ai = new AIController(deps)
@@ -468,6 +583,15 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
   // instead of relying on polling-only. No event when the set is unchanged.
   let warnedIds = new Set<string>()
   ipcMain.handle('sleeper:evaluate', async () => {
+    // Issue #121 — hidden-window guard: while the window exists but is
+    // hidden/minimized, skip the per-tab memory sampling (getAppMetrics) walk
+    // entirely — wasted work the user isn't looking at, and the heavy-tab
+    // warning only matters while visible (the renderer also polls 3x slower
+    // while hidden). No window at all → run the normal path.
+    const hiddenWin = deps.getWindow()
+    if (hiddenWin && isWindowHidden(hiddenWin)) {
+      return { sleeping: sleeper.sleepingCount(), warnings: [] }
+    }
     // feed real per-tab memory into the controller so the heavy-tab RAM warning can fire (fix #68)
     const tabs = tm.list()
     const views = await Promise.all(tabs.map(async (t) => {
@@ -488,14 +612,27 @@ export function registerIpc(deps: IpcDeps, opts?: { smartPersistFile?: string; u
     }))
     // pass a live getter for activeId so the controller re-validates after the async
     // onSleep (a tab activated mid-teardown must not be marked sleeping — race guard)
+    // Issue #119 — tiered sleep: LIGHT idle tabs get Tier 1 (throttle: muted + 1 fps,
+    // renderer kept alive → wake is instant, no reload); HEAVY tabs (> heavyMemoryMB)
+    // get Tier 2 (close() the renderer to really free RAM — wake rebuilds from URL).
+    const memoryByTab = new Map(views.map(v => [v.id, v.memoryMB]))
     const result = await sleeper.evaluate(tabs, () => tm.activeId, [], views, async (id) => {
       // race guard: never close the view of the tab that just became active
       if (id === tm.activeId) return
       const view = deps.getActiveView(id)
       if (view && !view.webContents.isDestroyed()) {
-        // Electron 31 has no webContents.discard() → close() the renderer to really free RAM,
-        // untrack the view (wake rebuilds it from the original url). setBackgroundThrottling is a default no-op.
-        // detach BEFORE close — like tabs:close, so a destroyed view is never left as a contentView child (review warning 2)
+        if ((memoryByTab.get(id) ?? 0) <= DEFAULT_HEAVY_MEMORY_MB) {
+          // Tier 1 — cheap throttle: stop rendering/audio work but keep the renderer
+          // alive, so waking the tab is instant and keeps URL/scroll/JS state.
+          try { view.webContents.setBackgroundThrottling(true) } catch { /* mid-teardown — ignore */ }
+          try { view.webContents.setAudioMuted(true) } catch { /* ignore */ }
+          try { view.webContents.setFrameRate(1) } catch { /* ignore */ }
+          return
+        }
+        // Tier 2 — heavy tab: Electron 31 has no webContents.discard() → close() the
+        // renderer to really free RAM, untrack the view (wake rebuilds it from the
+        // original url). detach BEFORE close — like tabs:close, so a destroyed view is
+        // never left as a contentView child (review warning 2)
         const w = win()
         if (w) detachView(w, view)
         let closed = false

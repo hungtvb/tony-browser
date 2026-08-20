@@ -37,7 +37,13 @@ export default function TtsPanel({ tab, onClose, onSave }: {
   }, [])
 
   async function speak() {
-    if (speaking) { speechSynthesis.cancel(); setSpeaking(false); setStatus('Stopped'); return }
+    if (speaking) {
+      speechSynthesis.cancel(); setSpeaking(false); setStatus('Stopped')
+      // Issue #91 — tts.stop was orphaned (zero renderer call sites): wire it to
+      // the Stop reading action so main can run its stop routine too.
+      window.tony?.tts.stop()
+      return
+    }
     const res = await window.tony?.tts.speak(tab?.id)
     if (!res?.ok) { setStatus(res?.error ?? 'Error'); return }
     const u = new SpeechSynthesisUtterance(res.text!)

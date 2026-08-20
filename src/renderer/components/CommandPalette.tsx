@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import UIcon from './UIcon'
+// Issue #116: static footer shortcut hints so users learn the top shortcuts
+// even without a focused palette item.
+import { PALETTE_FOOTER_HINTS } from '../shortcuts'
 
 const styles: Record<string, React.CSSProperties> = {
   overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.25)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
@@ -27,7 +30,8 @@ const styles: Record<string, React.CSSProperties> = {
 interface Command {
   id: string
   label: string
-  icon: string
+  // Issue #114: UIcon name (SVG) instead of raw emoji text
+  name: string
   hint?: string
   run: () => void
 }
@@ -62,13 +66,22 @@ export default function CommandPalette({ commands, onClose }: {
         <input ref={inputRef} style={styles.input} placeholder="Type a command or ask AI..." value={query}
           onChange={e => setQuery(e.target.value)} onKeyDown={onKey} />
         <div style={styles.hint}>↑↓ select · Enter run · Esc close</div>
+        {/* Issue #116: static shortcut hint row — visible without a focused item */}
+        <div style={styles.hint}>
+          {PALETTE_FOOTER_HINTS.map((h, i) => (
+            <React.Fragment key={h}>
+              {i > 0 && <span>  ·  </span>}
+              <span>{h}</span>
+            </React.Fragment>
+          ))}
+        </div>
         <div style={styles.list}>
           {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: '#6e6e6e', fontSize: 13 }}>No matching commands</div>}
           {filtered.map((c, i) => (
             <div key={c.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)}
               onClick={() => { c.run(); onClose() }}>
-              <span style={styles.icon}><UIcon name={c.icon} size={15} color={i === idx ? '#141414' : undefined} /></span>
+<span style={styles.icon}><UIcon name={c.name} size={15} color={i === idx ? '#141414' : 'currentColor'} /></span>
               <span>{c.label}</span>
               {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: '#141414', borderColor: '#141414', background: '#ffffff' } : {}) }}>{c.hint}</span>}
             </div>
