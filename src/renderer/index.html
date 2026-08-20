@@ -5,107 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tony Browser</title>
     <style>
-      /* ─── Apple Design Tokens v2 ─── */
+      /* ─── Evernote Design Tokens (DESIGN_4) ─── */
       :root {
-        --apple-bg: #101110;
-        --apple-bg-light: #161816;
-        --apple-surface: #181a18;
-        --apple-surface2: #232623;
-        --apple-surface3: #2c2f2b;
-        --apple-text: #ffffff;
-        --apple-text-secondary: rgba(255, 255, 255, 0.64);
-        --apple-text-tertiary: rgba(255, 255, 255, 0.48);
-        --apple-blue: #d4ff40;
-        --apple-blue-bright: #e3ff8a;
-        --apple-green: #34c759;
-        --apple-orange: #ff9f0a;
-        --apple-red: #ff453a;
-        --apple-gray-1: #f5f5f7;
-        --apple-gray-text: #1d1d1f;
-        --apple-glass: rgba(22, 24, 20, 0.55);
-        --apple-glass-strong: rgba(18, 20, 16, 0.72);
-        --apple-glass-light: rgba(255, 255, 255, 0.06);
-        --apple-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
-        --apple-shadow-lg: rgba(0, 0, 0, 0.5) 0 20px 60px;
-        --apple-glow-lime: 0 0 18px rgba(212, 255, 64, 0.35);
-        --apple-radius-sm: 5px;
-        --apple-radius: 8px;
-        --apple-radius-lg: 12px;
-        --apple-radius-xl: 16px;
-        --apple-radius-pill: 980px;
-        --apple-space: 8px;
-        --apple-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        --apple-font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        /* Colors — cream + charcoal + lime triad is the system */
+        --aaply-yellow: #94e130;        /* Lime Sprout — SINGLE energy accent: CTA, icons, highlights */
+        --aaply-sunbeam: #a8f04a;       /* brighter lime variant */
+        --aaply-red: #94e130;           /* lime (Evernote: no second accent) */
+        --aaply-blue: #4a8fe0;          /* icon-square blue (category coding only) */
+        --aaply-peach: #f4eee5;         /* Ivory Card — warm-toned elevated panels */
+        --aaply-carbon: #141414;        /* Charcoal — primary text, dark filled buttons */
+        --aaply-paper: #ffffff;         /* Pure White — elevated card surfaces */
+        --aaply-mist: #f9f6f2;          /* Paper Cream — page canvas (never pure white) */
+        --aaply-hairline: #e7e7e7;      /* Slate Border — hairline card borders, dividers */
+        --aaply-shadow-gray: #a1a1a1;   /* Smoke — muted link borders, subtle dividers */
+
+        /* Evernote extended neutrals */
+        --ev-stone: #737373;            /* helper text, tertiary body */
+        --ev-graphite: #4e4d4c;         /* secondary text, icon strokes */
+        --ev-iron: #262626;             /* dark surface elements */
+        --ev-onyx: #141414;             /* max-contrast borders, SVG fills */
+
+        --font-display: 'Figtree', 'Inter', 'DM Sans', 'Nunito Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-body: 'Figtree', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+        /* Radius — Evernote: subtle rounding, buttons 5px / cards 10px / large 16px / tags pill */
+        --radius-inputs: 5px;
+        --radius-cards: 10px;
+        --radius-cards-lg: 16px;
+        --radius-nav: 5px;
+        --radius-pill: 52px;
+
+        /* Elevation — FLAT: no drop shadows, hairline borders carry separation */
+        --shadow-md: none;
+
         --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        font-family: var(--apple-font);
-        background: #121212;
-        color: var(--apple-text);
+        font-family: var(--font-body);
+        background: var(--aaply-mist);
+        /* Paper Cream canvas — warm flat surface, no texture */
+        color: var(--aaply-carbon);
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
-        letter-spacing: -0.12px;
       }
-      ::selection { background: var(--apple-blue); color: #fff; }
+      ::selection { background: var(--aaply-yellow); color: #141414; }
 
-      /* Scrollbar kiểu macOS */
       ::-webkit-scrollbar { width: 8px; height: 8px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 8px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+      ::-webkit-scrollbar-thumb { background: rgba(20,20,20,0.2); border-radius: 8px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(20,20,20,0.4); }
 
       .apple-focus:focus-visible {
-        outline: 2px solid var(--apple-blue);
+        outline: 3px solid var(--aaply-yellow);
         outline-offset: 2px;
-        border-radius: var(--apple-radius);
+        border-radius: var(--radius-inputs);
       }
 
-      /* ─── Motion tokens ─── */
-      @keyframes tony-fade-in {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes tony-slide-up {
-        from { opacity: 0; transform: translateY(12px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes tony-slide-right {
-        from { opacity: 0; transform: translateX(-16px); }
-        to { opacity: 1; transform: translateX(0); }
-      }
-      @keyframes tony-pop {
-        0% { opacity: 0; transform: scale(0.9); }
-        60% { transform: scale(1.03); }
-        100% { opacity: 1; transform: scale(1); }
-      }
-      @keyframes tony-toast-in {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes tony-spin {
-        to { transform: rotate(360deg); }
-      }
+      /* ─── Motion ─── */
+      @keyframes tony-fade-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes tony-slide-up { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes tony-slide-right { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+      @keyframes tony-pop { 0% { opacity: 0; transform: scale(0.9); } 60% { transform: scale(1.03); } 100% { opacity: 1; transform: scale(1); } }
+      @keyframes tony-toast-in { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes tony-spin { to { transform: rotate(360deg); } }
 
       .anim-fade { animation: tony-fade-in 0.25s var(--ease-out) both; }
       .anim-slide-up { animation: tony-slide-up 0.3s var(--ease-out) both; }
       .anim-slide-right { animation: tony-slide-right 0.25s var(--ease-out) both; }
       .anim-pop { animation: tony-pop 0.25s var(--ease-out) both; }
       .anim-toast { animation: tony-toast-in 0.3s var(--ease-out) both; }
-
-      /* Glass surface chuẩn */
-      .glass {
-        background: var(--apple-glass-strong);
-        backdrop-filter: saturate(180%) blur(20px);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
-      }
-      .glass-light {
-        background: var(--apple-glass);
-        backdrop-filter: saturate(180%) blur(12px);
-        -webkit-backdrop-filter: saturate(180%) blur(12px);
-      }
     </style>
   </head>
   <body>

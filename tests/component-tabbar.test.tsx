@@ -61,7 +61,8 @@ describe('TabBar', () => {
   it('marks the active tab and renders a spinner for loading tabs', () => {
     renderBar()
     const active = screen.getByText('Alpha').closest('button')!
-    expect(active.style.background).toContain('212, 255, 64')
+    // Evernote lime #94e130 = rgb(148, 225, 48)
+    expect(active.style.background).toContain('148, 225, 48')
     // Beta is loading → spinner span, no favicon img
     const beta = screen.getByText('Beta').closest('button')!
     expect(beta.querySelector('span[style*="animation"]')).toBeTruthy()

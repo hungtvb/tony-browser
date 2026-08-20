@@ -43,7 +43,7 @@ describe('AIPanel (issue #93 — ai.status wiring)', () => {
     render(<AIPanel activeTabId="t1" onClose={vi.fn()} />)
     expect(await screen.findByText(/gpt-4o-mini/)).toBeInTheDocument()
     ;(window.tony!.ai.status as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ configured: true, busy: false })
-    fireEvent.click(screen.getByText('⚙️'))
+    fireEvent.click(screen.getByRole('button', { name: /ai settings/i }))
     const modelInput = screen.getByPlaceholderText(/Model/)
     fireEvent.change(modelInput, { target: { value: 'gpt-5' } })
     fireEvent.click(screen.getByText('Save config'))

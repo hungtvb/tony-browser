@@ -100,6 +100,6 @@ describe('SearchOverlay', () => {
     await flush()
     const rows = screen.getAllByText(/Alpha Docs|Beta Blog/)
     // active (highlighted) row is the first result after a fresh search
-    expect(rows[0].closest('div')?.style.background).toContain('var(--apple-blue)')
+    expect(rows[0].closest('div')?.style.background).toContain('rgb(148, 225, 48)')
   })
 })

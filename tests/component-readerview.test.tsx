@@ -46,7 +46,7 @@ describe('ReaderView (issue #117)', () => {
   it('still fires onClose from the close button', () => {
     const onClose = vi.fn()
     render(<ReaderView title="T" content="C" onClose={onClose} />)
-    fireEvent.click(screen.getByText('✕ Close'))
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 

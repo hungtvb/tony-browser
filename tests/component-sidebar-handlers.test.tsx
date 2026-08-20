@@ -77,7 +77,7 @@ describe('Sidebar tab-list handlers (issue #88)', () => {
     const active = screen.getByText('GitHub').closest('button')!
     const inactive = screen.getByText('YouTube').closest('button')!
     expect(active.style.background).not.toBe(inactive.style.background)
-    expect(active.style.background).toContain('rgba(255, 255, 255, 0.14)')
+    expect(active.style.background).toContain('rgb(148, 225, 48)')
     expect(inactive.style.background).toBe('transparent')
   })
 

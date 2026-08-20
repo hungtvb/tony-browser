@@ -1,27 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react'
 import type { TabState } from '../../shared/types'
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, zIndex: 250, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '10vh' },
+  overlay: { position: 'fixed', inset: 0, zIndex: 250, background: 'rgba(0,0,0,0.25)', display: 'flex', justifyContent: 'center', paddingTop: '10vh' },
   box: {
-    width: 520, background: 'rgba(28,28,30,0.98)', borderRadius: 16, overflow: 'hidden',
-    boxShadow: 'rgba(0,0,0,0.5) 0 20px 60px', border: '1px solid rgba(255,255,255,0.1)',
-    backdropFilter: 'saturate(180%) blur(30px)',
+    width: 520, background: 'rgba(255,255,255,0.72)', borderRadius: 40, overflow: 'hidden',
+    backdropFilter: 'blur(28px) saturate(1.5)', WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+    boxShadow: 'none', border: '1px solid rgba(255,255,255,0.65)',
   },
   input: {
-    width: '100%', padding: '14px 18px', background: 'transparent', border: 'none',
-    color: '#fff', fontSize: 15, outline: 'none', letterSpacing: '-0.12px',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    width: '100%', padding: '14px 20px', background: 'transparent', border: 'none',
+    color: '#141414', fontSize: 15, outline: 'none', fontWeight: 400,
+    borderBottom: '1px solid #e7e7e7', fontFamily: 'var(--font-body)',
   },
-  list: { maxHeight: 360, overflow: 'auto', padding: 6 },
+  list: { maxHeight: 360, overflow: 'auto', padding: 8 },
   item: {
-    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10,
-    cursor: 'pointer', fontSize: 13, color: 'rgba(255,255,255,0.85)',
+    display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderRadius: 16,
+    cursor: 'pointer', fontSize: 13, color: '#141414', fontWeight: 500, fontFamily: 'var(--font-body)',
   },
-  itemActive: { background: 'var(--apple-blue)', color: '#0a0a0a' },
+  itemActive: { background: '#94e130', color: '#141414', fontWeight: 600 },
   title: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  url: { fontSize: 11, color: 'rgba(255,255,255,0.4)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  hint: { padding: '6px 18px', fontSize: 11, color: 'rgba(255,255,255,0.4)' },
+  url: { fontSize: 11, color: '#6e6e6e', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  hint: { padding: '6px 20px', fontSize: 12, color: '#6e6e6e', fontWeight: 400 },
 }
 
 export default function SearchOverlay({ onSelect, onClose }: {
@@ -60,13 +61,13 @@ export default function SearchOverlay({ onSelect, onClose }: {
           onChange={e => setQuery(e.target.value)} onKeyDown={onKey} />
         <div style={styles.hint}>{results.length} results · ↑↓ select · Enter open · Esc close</div>
         <div style={styles.list}>
-          {query && results.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>No tabs found</div>}
+          {query && results.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: '#6e6e6e' }}>No tabs found</div>}
           {results.map((t, i) => (
             <div key={t.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)} onClick={() => { onSelect(t.id); onClose() }}>
-              <span>🌐</span>
+              <UIcon name="globe" size={14} />
               <span style={styles.title}>{t.title}</span>
-              <span style={{ ...styles.url, ...(i === idx ? { color: 'rgba(255,255,255,0.7)' } : {}) }}>{t.url}</span>
+              <span style={{ ...styles.url, ...(i === idx ? { color: 'rgba(0,0,0,0.6)' } : {}) }}>{t.url}</span>
             </div>
           ))}
         </div>

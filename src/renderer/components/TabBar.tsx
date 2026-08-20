@@ -6,45 +6,41 @@ import { isMiddleClickClose, wheelDeltaToDirection, nextTabId, createWheelGate }
 interface Tab { id: string; title: string; url: string; favicon?: string; loading?: boolean; container?: string }
 
 const styles: Record<string, React.CSSProperties> = {
+  // Aaply: floating white card on gray canvas — rounded, one soft shadow
   bar: {
-    display: 'flex', gap: 4, padding: '8px 12px', minHeight: 44,
-    background: 'rgba(14,16,12,0.38)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(212,255,64,0.12)',
-    backdropFilter: 'saturate(180%) blur(24px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-    alignItems: 'center', overflowX: 'auto',
+    display: 'flex', gap: 4, padding: '8px 12px', minHeight: 48,
+    background: 'rgba(255,255,255,0.66)', borderRadius: 10, boxShadow: 'none',
+    backdropFilter: 'blur(18px) saturate(1.3)', WebkitBackdropFilter: 'blur(18px) saturate(1.3)',
+    alignItems: 'center', overflowX: 'auto', margin: '8px 12px 0', border: '1px solid rgba(255,255,255,0.55)',
   },
   tab: {
-    padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 400,
-    cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.75)',
+    padding: '6px 12px', borderRadius: 52, fontSize: 12, fontWeight: 500,
+    cursor: 'pointer', background: 'transparent', color: '#141414',
     whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis',
-    flexShrink: 0, letterSpacing: '-0.12px', border: 'none',
-    display: 'flex', alignItems: 'center', gap: 6,
-    transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.15s var(--ease-out)',
+    flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+    transition: 'background 0.15s var(--ease-out), transform 0.15s var(--ease-out)',
+    border: 'none', fontFamily: 'var(--font-body)',
   },
-  active: { background: 'rgba(212,255,64,0.18)', color: '#fff' },
+  active: { background: '#94e130', color: '#141414', fontWeight: 600 },
   dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'transform 0.2s var(--ease-out)' },
-  // Issue #46: 16px favicon, rounded 3px; tiny container dot kept as status marker next to it
-  favicon: { width: 16, height: 16, borderRadius: 3, flexShrink: 0, objectFit: 'contain', background: 'rgba(255,255,255,0.08)' },
-  miniDot: { width: 4, height: 4, borderRadius: '50%', flexShrink: 0, position: 'absolute', right: -1, bottom: -1, boxShadow: '0 0 2px rgba(0,0,0,0.6)' },
+  favicon: { width: 16, height: 16, borderRadius: 4, flexShrink: 0, objectFit: 'contain', background: '#f4eee5' },
+  miniDot: { width: 4, height: 4, borderRadius: '50%', flexShrink: 0, position: 'absolute', right: -1, bottom: -1, border: '1px solid #fff' },
   faviconWrap: { position: 'relative', display: 'inline-flex', flexShrink: 0 },
-  // Issue #43: border-based spinner replaces the container dot while the tab is loading
   spinner: {
     width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-    border: '2px solid rgba(255,255,255,0.25)', borderTopColor: '#fff',
+    border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#141414',
     animation: 'tony-spin 0.8s linear infinite',
   },
   close: { marginLeft: 6, opacity: 0, cursor: 'pointer', fontSize: 11, transition: 'opacity 0.15s ease', padding: '0 2px', borderRadius: 4 },
   closeHover: { opacity: 1 },
-  // Issue #72 — RAM badge on tabs whose id is in the warned set (proactive sleeper:warnings event)
   ramBadge: {
-    fontSize: 10, fontWeight: 600, color: '#ff9f0a', background: 'rgba(255,159,10,0.16)',
-    borderRadius: 980, padding: '1px 6px', flexShrink: 0, letterSpacing: '-0.1px',
+    fontSize: 10, fontWeight: 500, color: '#ffffff', background: '#94e130',
+    borderRadius: 52, padding: '1px 7px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3,
   },
   plus: {
-    padding: '4px 12px', background: 'transparent', border: 'none', borderRadius: 8,
-    cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 16, lineHeight: 1,
-    transition: 'background 0.2s var(--ease-out), transform 0.15s var(--ease-out)',
+    padding: '5px 14px', background: '#ffffff', border: '1px solid #e7e7e7', borderRadius: 5,
+    cursor: 'pointer', color: '#141414', fontSize: 16, lineHeight: 1, fontWeight: 500,
+    transition: 'background 0.15s var(--ease-out), transform 0.15s var(--ease-out)',
   },
 }
 
@@ -56,7 +52,6 @@ export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, o
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [hoverPlus, setHoverPlus] = useState(false)
-  // Issue #48: throttle wheel tab-switching so a fast spin doesn't jump several tabs
   const wheelGate = useRef(createWheelGate(150))
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -69,7 +64,7 @@ export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, o
 
   return (
     <div style={styles.bar} onWheel={handleWheel}>
-      <button className="apple-focus" style={{ ...styles.plus, ...(hoverPlus ? { background: 'rgba(255,255,255,0.1)', transform: 'scale(1.08)' } : {}) }}
+      <button className="apple-focus" style={{ ...styles.plus, ...(hoverPlus ? { background: '#94e130', borderColor: '#94e130', transform: 'scale(1.05)' } : {}) }}
         title="New Tab (Ctrl+T)" onClick={() => onNewTab?.()}
         onMouseEnter={() => setHoverPlus(true)} onMouseLeave={() => setHoverPlus(false)}>+</button>
       {tabs.map(t => (
@@ -79,11 +74,10 @@ export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, o
           style={{
             ...styles.tab,
             ...(t.id === activeId ? styles.active : {}),
-            ...(hoverId === t.id && t.id !== activeId ? { background: 'rgba(255,255,255,0.08)' } : {}),
+            ...(hoverId === t.id && t.id !== activeId ? { background: '#f4eee5' } : {}),
           }}
           onClick={() => onSelect(t.id)}
           onAuxClick={(e) => {
-            // Issue #48: middle-click closes the tab (preventDefault stops Linux auto-scroll)
             if (isMiddleClickClose(e)) {
               e.preventDefault()
               onClose(t.id)
@@ -93,7 +87,7 @@ export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, o
           onMouseLeave={() => setHoverId(null)}
           title={t.url}
         >
-{t.loading ? (
+          {t.loading ? (
             <span style={styles.spinner} />
           ) : t.favicon ? (
             <span style={styles.faviconWrap}>
@@ -105,9 +99,9 @@ export default function TabBar({ tabs, activeId, warnedIds, onSelect, onClose, o
             <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
           )}
           {t.title}
-          {(warnedIds ?? []).includes(t.id) && <span style={styles.ramBadge} title="Heavy tab — high RAM usage"><UIcon name="lock" size={10} /> RAM</span>}
+          {(warnedIds ?? []).includes(t.id) && <span style={styles.ramBadge} title="Heavy tab — high RAM usage"><UIcon name="lock" size={10} color="#ffffff" /> RAM</span>}
           <span style={{ ...styles.close, ...(hoverId === t.id || t.id === activeId ? styles.closeHover : {}) }}
-            onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>
+            onClick={(e) => { e.stopPropagation(); onClose(t.id) }}><UIcon name="close" size={11} /></span>
         </button>
       ))}
     </div>

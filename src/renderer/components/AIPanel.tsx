@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from 'react'
 import type { AIConfig, AIStatus } from '../../shared/types'
+import UIcon from './UIcon'
 
 const styles: Record<string, React.CSSProperties> = {
   panel: {
     position: 'fixed', top: 0, right: 0, bottom: 0, width: 380, zIndex: 100,
-    background: 'rgba(20,20,22,0.96)',
-    backdropFilter: 'saturate(180%) blur(24px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(24px)',
-    borderLeft: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.72)',
+    backdropFilter: 'blur(28px) saturate(1.5)', WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+    borderLeft: '1px solid rgba(255,255,255,0.65)',
     display: 'flex', flexDirection: 'column',
   },
   header: {
-    padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+    padding: '14px 16px', borderBottom: '1px solid #e7e7e7',
     fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontSize: 15, letterSpacing: '-0.12px',
+    fontSize: 15, letterSpacing: '-0.2px', color: '#141414', fontFamily: 'var(--font-display)',
   },
-  body: { flex: 1, overflow: 'auto', padding: 14, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.12px' },
-  inputRow: { display: 'flex', gap: 6, padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' },
+  body: { flex: 1, overflow: 'auto', padding: 14, fontSize: 13, lineHeight: 1.6, color: '#141414', fontWeight: 400, fontFamily: 'var(--font-body)' },
+  inputRow: { display: 'flex', gap: 6, padding: 12, borderTop: '1px solid #e7e7e7' },
   input: {
-    flex: 1, padding: 8, borderRadius: 980, border: 'none', background: 'rgba(255,255,255,0.10)', color: '#fff', outline: 'none', fontSize: 13,
+    flex: 1, padding: 9, borderRadius: 16, border: '1px solid #e7e7e7', background: '#fdfcf9', color: '#141414', outline: 'none', fontSize: 13, fontWeight: 400, fontFamily: 'var(--font-body)',
   },
-  btn: { padding: '8px 14px', borderRadius: 980, border: 'none', background: 'var(--apple-blue)', color: '#0a0a0a', cursor: 'pointer', fontSize: 13, fontWeight: 600 },
-  actions: { display: 'flex', gap: 6, padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' },
+  btn: { padding: '9px 16px', borderRadius: 5, border: 'none', background: '#94e130', color: '#141414', cursor: 'pointer', fontSize: 13, fontWeight: 500, fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', gap: 5 },
+  actions: { display: 'flex', gap: 6, padding: '8px 14px', borderBottom: '1px solid #e7e7e7', flexWrap: 'wrap' },
   chip: {
-    padding: '4px 12px', borderRadius: 980,
-    color: 'rgba(255,255,255,0.85)', fontSize: 11, cursor: 'pointer', border: 'none', background: 'rgba(255,255,255,0.09)',
+    display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 52,
+    color: '#141414', fontSize: 11, cursor: 'pointer', border: '1px solid #e7e7e7', background: '#ffffff', fontWeight: 500, fontFamily: 'var(--font-body)',
   },
-  settings: { background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, margin: '0 14px', marginTop: 10 },
+  settings: { background: '#f4eee5', borderRadius: 16, padding: 12, margin: '0 14px', marginTop: 10, border: '1px solid #e7e7e7' },
   config: {
-    width: '100%', marginBottom: 8, padding: 7, borderRadius: 8,
-    border: 'none', background: 'rgba(255,255,255,0.08)',
-    color: '#fff', fontSize: 12, outline: 'none',
+    width: '100%', marginBottom: 8, padding: 8, borderRadius: 16,
+    border: '1px solid #e7e7e7', background: '#ffffff',
+    color: '#141414', fontSize: 12, outline: 'none', fontWeight: 400, fontFamily: 'var(--font-body)',
   },
 }
 
@@ -82,11 +82,11 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
 
   return (
     <div style={styles.panel} className="anim-slide-right">
-          <div style={styles.header}>
-        <span>🪄 AI Assistant</span>
+      <div style={styles.header}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><UIcon name="ai" size={15} /> AI Assistant</span>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)}>⚙️</button>
-          <button className="apple-focus" style={styles.chip} onClick={onClose}>✕</button>
+          <button className="apple-focus" style={styles.chip} onClick={() => setShowSettings(s => !s)} aria-label="AI settings"><UIcon name="settings" size={13} /></button>
+          <button className="apple-focus" style={styles.chip} onClick={onClose}><UIcon name="close" size={13} /></button>
         </div>
       </div>
 
@@ -103,12 +103,12 @@ export default function AIPanel({ onClose, activeTabId }: { onClose: () => void;
       )}
 
       <div style={styles.actions}>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}>📄 Summarize page</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}>📚 Summarize all tabs</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('act')}>🤖 Web automation</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('explain')}>⚡ Explain</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('translate')}>🌐 Translate</button>
-        <button className="apple-focus" style={styles.chip} onClick={() => run('fixGrammar')}>📝 Fix grammar</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizePage')}><UIcon name="file-text" size={13} /> Summarize page</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('summarizeAll')}><UIcon name="book-marked" size={13} /> Summarize all tabs</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('act')}><UIcon name="bot" size={13} /> Web automation</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('explain')}><UIcon name="sparkle" size={13} /> Explain</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('translate')}><UIcon name="globe" size={13} /> Translate</button>
+        <button className="apple-focus" style={styles.chip} onClick={() => run('fixGrammar')}><UIcon name="edit" size={13} /> Fix grammar</button>
       </div>
 
       <div style={{ padding: '6px 14px', display: 'flex', gap: 6 }}>

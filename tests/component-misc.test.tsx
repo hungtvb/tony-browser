@@ -94,13 +94,13 @@ describe('ReaderView (issue #88)', () => {
     render(<ReaderView title="My Article" content="Long form text here" onClose={onClose} />)
     expect(screen.getByRole('heading', { name: 'My Article' })).toBeInTheDocument()
     expect(screen.getByText('Long form text here')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('✕ Close'))
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('falls back to "Reader Mode" when no title is given', () => {
     render(<ReaderView title="" content="Body" onClose={vi.fn()} />)
-    expect(screen.getByText('📖 Reader Mode')).toBeInTheDocument()
+    expect(screen.getByText('Reader Mode')).toBeInTheDocument()
   })
 })
 

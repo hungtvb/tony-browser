@@ -11,6 +11,7 @@ import SearchOverlay from './components/SearchOverlay'
 import ShortcutsOverlay from './components/ShortcutsOverlay'
 import TtsPanel from './components/TtsPanel'
 import SpeedDial from './components/SpeedDial'
+import UIcon from './components/UIcon'
 import SavedPages from './components/SavedPages'
 import StackView from './components/StackView'
 import { ToastStack, StatusBar, useFeedback } from './components/Feedback'
@@ -20,14 +21,13 @@ import type { PrivacyStats } from '../shared/types'
 import { isEditableTarget, isNewTabShortcut } from './shortcuts'
 
 const styles: Record<string, React.CSSProperties> = {
-  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: '#101110' },
+  app: { display: 'flex', flexDirection: 'column', height: '100vh', background: 'transparent' },
   body: { display: 'flex', flex: 1, overflow: 'hidden' },
-  content: { flex: 1, position: 'relative', background: '#101110' },
-  // Issue #43: 2px top progress bar — width animates 0→90% while loading, snaps 100% + fades on stop
+  content: { flex: 1, position: 'relative', background: 'transparent' },
+  // Aaply: solid highlighter-yellow progress bar, no glow
   progress: {
-    position: 'fixed', top: 0, left: 0, height: 2, zIndex: 9999,
-    background: 'linear-gradient(90deg, #2997ff, #0071e3)',
-    boxShadow: '0 0 8px rgba(41,151,255,0.6)',
+    position: 'fixed', top: 0, left: 0, height: 3, zIndex: 9999,
+    background: '#94e130',
     transition: 'width 0.3s ease, opacity 0.4s ease 0.1s',
     pointerEvents: 'none',
   },
@@ -41,7 +41,8 @@ export default function App() {
   const [privacyOn, setPrivacyOn] = useState(true)
   const [aiOpen, setAiOpen] = useState(false)
   const [containerMenu, setContainerMenu] = useState(false)
-  const [layout, setLayout] = useState<'top' | 'side'>('top')
+  // Bento redesign: vertical tabs are the default (issue #2A)
+  const [layout, setLayout] = useState<'top' | 'side'>('side')
   const [reader, setReader] = useState<{ title: string; content: string } | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -245,21 +246,20 @@ export default function App() {
         <div style={styles.content}>
           {showSpeedDial ? (
             <div className="anim-fade" style={{ height: '100%' }}>
-              <SpeedDial onNavigate={(url) => open(url)} />
+              <SpeedDial onNavigate={(url) => open(url)} privacy={privacy} />
             </div>
           ) : active && (
-            <div style={{ textAlign: 'center', paddingTop: 64, color: 'rgba(255,255,255,0.48)' }} className="anim-fade">
-              <div style={{ fontSize: 13 }}>🌐 Viewing</div>
-              <div style={{ fontSize: 21, fontWeight: 600, color: '#fff', marginTop: 6, letterSpacing: '-0.28px' }}>
+            <div style={{ textAlign: 'center', paddingTop: 64, color: '#6e6e6e' }} className="anim-fade">
+              <div style={{ fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><UIcon name="globe" size={13} /> Viewing</div>
+              <div style={{ fontSize: 21, fontWeight: 300, color: '#141414', marginTop: 6, letterSpacing: '-0.6px', fontFamily: 'var(--font-display)' }}>
                 {active.title}
               </div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.64)', marginTop: 8 }}>{active.url}</div>
+              <div style={{ fontSize: 12, color: '#6e6e6e', marginTop: 8 }}>{active.url}</div>
             </div>
           )}
-          <StatusBar status={`${status}${status ? ' · ' : ''}Blocked ${privacy.blocked} requests · ${privacy.listSize} domains`}
-            privacyOn={privacyOn} onTogglePrivacy={togglePrivacy} />
-        </div>
+</div>
       </div>
+      <StatusBar status={`${status}${status ? ' · ' : ''}Blocked ${privacy.blocked} requests · ${privacy.listSize} domains`} privacyOn={privacyOn} onTogglePrivacy={togglePrivacy} />
       {containerMenu && (
         <ContainerMenu
           onPick={(url, container) => {
@@ -274,7 +274,6 @@ export default function App() {
       {paletteOpen && (
         <CommandPalette
           commands={[
-// Issue #114: UIcon names (SVG) — no raw emoji (tofu risk in WebContentsView)
             { id: 'newtab', name: 'plus', label: 'New Tab', hint: 'Ctrl+T', run: () => setContainerMenu(true) },
             { id: 'search', name: 'search', label: 'Search open tabs', hint: 'Ctrl+Shift+F', run: () => setSearchOpen(true) },
             { id: 'focus', name: 'focus', label: 'Toggle Focus Mode', run: toggleFocus },
@@ -300,9 +299,9 @@ export default function App() {
             if (active) {
               try {
                 await window.tony?.save.page(active.url, active.title, active.container)
-                toast('✅ Saved: ' + (active.title || active.url), 'success')
+                toast('Saved: ' + (active.title || active.url), 'success')
               } catch {
-                toast('❌ Save failed', 'error')
+                toast('Save failed', 'error')
               }
             }
             setTtsOpen(false)

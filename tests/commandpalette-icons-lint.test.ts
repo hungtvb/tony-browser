@@ -20,9 +20,9 @@ const blockText = commandsBlock ? commandsBlock[0].replace(/^\s*\/\/.*$/gm, '') 
 // Extract icon values: `id: 'x', name: 'y'` lines (or icon: '…' pre-fix)
 const iconValues = [...blockText.matchAll(/\b(?:icon|name):\s*'([^']+)'/g)].map(m => m[1])
 
-// Valid UIcon names registered in ICONS (keys before `: xIcon` pairs)
+// Valid UIcon names registered in ICONS (keys before `: RiXxxIcon/RiXxxLine` pairs)
 const validNames = new Set(
-  [...uiconSrc.matchAll(/\b([a-z0-9'-]+):\s+\w+Icon,/g)].map(m => m[1])
+  [...uiconSrc.matchAll(/\b([a-z0-9'-]+):\s+(?:\w+Icon|\w+Line),/g)].map(m => m[1])
 )
 
 // Emoji ranges: pictographs + common symbols/misc

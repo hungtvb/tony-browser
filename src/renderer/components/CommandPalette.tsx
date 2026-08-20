@@ -1,32 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react'
-// Issue #114: command icons are SVG UIcon names (repo convention, PR #44) —
-// raw emoji render as tofu/blank boxes in Electron WebContentsView.
 import UIcon from './UIcon'
 // Issue #116: static footer shortcut hints so users learn the top shortcuts
 // even without a focused palette item.
 import { PALETTE_FOOTER_HINTS } from '../shortcuts'
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
+  overlay: { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.25)', display: 'flex', justifyContent: 'center', paddingTop: '12vh' },
   palette: {
-    width: 560, background: 'rgba(28,28,30,0.98)', borderRadius: 16,
-    boxShadow: 'rgba(0,0,0,0.5) 0 20px 60px', border: '1px solid rgba(255,255,255,0.1)',
-    overflow: 'hidden', backdropFilter: 'saturate(180%) blur(30px)',
+    width: 560, background: 'rgba(255,255,255,0.72)', borderRadius: 40,
+    backdropFilter: 'blur(28px) saturate(1.5)', WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+    overflow: 'hidden', border: '1px solid rgba(255,255,255,0.65)',
   },
   input: {
-    width: '100%', padding: '16px 20px', background: 'transparent', border: 'none',
-    color: '#fff', fontSize: 16, outline: 'none', letterSpacing: '-0.12px',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    width: '100%', padding: '16px 22px', background: 'transparent', border: 'none',
+    color: '#141414', fontSize: 16, outline: 'none', fontWeight: 400,
+    borderBottom: '1px solid #e7e7e7', fontFamily: 'var(--font-body)',
   },
-  hint: { padding: '6px 20px', fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '-0.08px' },
-  list: { maxHeight: 340, overflow: 'auto', padding: 6 },
+  hint: { padding: '6px 22px', fontSize: 12, color: '#6e6e6e', fontWeight: 400 },
+  list: { maxHeight: 340, overflow: 'auto', padding: 8 },
   item: {
-    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10,
-    cursor: 'pointer', fontSize: 13, color: 'rgba(255,255,255,0.85)',
+    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderRadius: 16,
+    cursor: 'pointer', fontSize: 14, color: '#141414', fontWeight: 500, fontFamily: 'var(--font-body)',
   },
-  itemActive: { background: 'var(--apple-blue)', color: '#0a0a0a' },
+  itemActive: { background: '#94e130', color: '#141414', fontWeight: 600 },
   icon: { fontSize: 15, width: 22, textAlign: 'center' as const },
-  kbd: { marginLeft: 'auto', fontSize: 11, color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, padding: '1px 5px' },
+  kbd: { marginLeft: 'auto', fontSize: 11, color: '#6e6e6e', border: '1px solid #e7e7e7', borderRadius: 8, padding: '1px 6px', fontWeight: 500, background: '#fdfcf9' },
 }
 
 interface Command {
@@ -78,15 +76,14 @@ export default function CommandPalette({ commands, onClose }: {
           ))}
         </div>
         <div style={styles.list}>
-          {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No matching commands</div>}
+          {filtered.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: '#6e6e6e', fontSize: 13 }}>No matching commands</div>}
           {filtered.map((c, i) => (
             <div key={c.id} style={{ ...styles.item, ...(i === idx ? styles.itemActive : {}) }}
               onMouseEnter={() => setIdx(i)}
               onClick={() => { c.run(); onClose() }}>
-              {/* Issue #114: render SVG icon via UIcon (name), not raw emoji text */}
-              <span style={styles.icon}><UIcon name={c.name} size={15} color="currentColor" /></span>
+<span style={styles.icon}><UIcon name={c.name} size={15} color={i === idx ? '#141414' : 'currentColor'} /></span>
               <span>{c.label}</span>
-              {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: 'rgba(0,0,0,0.6)', borderColor: 'rgba(0,0,0,0.2)' } : {}) }}>{c.hint}</span>}
+              {c.hint && <span style={{ ...styles.kbd, ...(i === idx ? { color: '#141414', borderColor: '#141414', background: '#ffffff' } : {}) }}>{c.hint}</span>}
             </div>
           ))}
         </div>

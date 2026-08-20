@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { CONTAINER_COLORS, GroupedTabInfo, TabSessionInfo, TabState } from '../../shared/types'
+import UIcon from './UIcon'
 
 // Issue #87 — smarttab IPC family now has a real renderer consumer: the "Spaces"
 // panel below the tab list. Mode toggle (domain/theme) renders grouped tabs via
@@ -8,32 +9,35 @@ import { CONTAINER_COLORS, GroupedTabInfo, TabSessionInfo, TabState } from '../.
 // English (repo language rule). Falls back to the flat list when groups are empty.
 
 const styles: Record<string, React.CSSProperties> = {
+  // Aaply: floating white card on the gray canvas — one soft shadow, no thick borders
   sidebar: {
-    display: 'flex', flexDirection: 'column', width: 220, background: 'rgba(20,20,22,0.95)',
-    backdropFilter: 'saturate(180%) blur(20px)',
-    WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-    borderRight: '1px solid rgba(255,255,255,0.08)',
-    padding: '8px 8px 0', gap: 2, overflowY: 'auto', flexShrink: 0,
+    display: 'flex', flexDirection: 'column', width: 236, background: '#ffffff',
+    borderRadius: 10, boxShadow: 'none',
+    padding: '14px 10px 10px', gap: 2, overflowY: 'auto', flexShrink: 0,
+    margin: '0 0 10px 12px',
   },
   header: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '6px 10px 10px', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)',
-    letterSpacing: '-0.12px',
+    padding: '4px 6px 10px', fontSize: 13, fontWeight: 600, color: '#141414',
+    fontFamily: 'var(--font-display)', letterSpacing: '-0.2px',
   },
   newBtn: {
-    width: 24, height: 24, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.1)',
-    color: '#fff', cursor: 'pointer', fontSize: 15, lineHeight: 1,
+    width: 28, height: 28, borderRadius: 52, border: '1px solid #e7e7e7', background: '#ffffff',
+    color: '#141414', cursor: 'pointer', fontSize: 15, lineHeight: 1, fontWeight: 500,
+    transition: 'all 0.15s var(--ease-out)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
   },
   tab: {
-    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 10,
-    cursor: 'pointer', fontSize: 12, color: 'rgba(255,255,255,0.75)', overflow: 'hidden',
-    letterSpacing: '-0.08px', transition: 'background 0.12s', border: 'none', background: 'transparent',
-    textAlign: 'left', width: '100%',
+    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 5,
+    cursor: 'pointer', fontSize: 12.5, color: '#141414', overflow: 'hidden',
+    transition: 'background 0.12s var(--ease-out)', background: 'transparent',
+    textAlign: 'left', width: '100%', fontWeight: 500, border: 'none', fontFamily: 'var(--font-body)',
   },
-  active: { background: 'rgba(255,255,255,0.14)', color: '#fff' },
+  active: { background: '#94e130', color: '#141414', fontWeight: 600 },
   dot: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0 },
+  favicon: { width: 16, height: 16, borderRadius: 4, flexShrink: 0, objectFit: 'contain', background: '#f4eee5' },
   title: { flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  close: { opacity: 0.4, cursor: 'pointer', fontSize: 11, flexShrink: 0, color: 'rgba(255,255,255,0.8)' },
+close: { opacity: 0.4, cursor: 'pointer', fontSize: 11, flexShrink: 0, color: 'rgba(255,255,255,0.8)' },
   // Issue #87 — Spaces panel
   spacesHeader: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
@@ -84,7 +88,7 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
   onMoveToContainer?: (fromId: string, container: string) => void
   dragDisabled?: boolean
 }) {
-  // Issue #87 — Spaces grouping state (domain/theme) + session list
+// Issue #87 — Spaces grouping state (domain/theme) + session list
   const [mode, setMode] = useState<'domain' | 'theme'>('domain')
   const [groups, setGroups] = useState<GroupedTabInfo[] | null>(null)
   const [showSessions, setShowSessions] = useState(false)
@@ -95,9 +99,11 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   // Issue #140 — group header currently hovered (move-to-container target)
   const [dragOverGroup, setDragOverGroup] = useState<string | null>(null)
+  // hover state for the New Tab button (redesign hover style)
+  const [hoverNew, setHoverNew] = useState(false)
 
   const refreshSessions = () => {
-    window.tony?.smarttab.sessions().then(setSessions).catch(() => setSessions([]))
+    window.tony?.smarttab?.sessions().then(setSessions).catch(() => setSessions([]))
   }
 
   // Issue #125 — refetch groups when the tab ORDER/membership changes (open/close/reorder),
@@ -105,7 +111,7 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
   const orderKey = tabs.map(t => t.id).join(',')
 
   useEffect(() => {
-    window.tony?.smarttab.groups(mode).then(setGroups).catch(err => {
+    window.tony?.smarttab?.groups(mode).then(setGroups).catch(err => {
       console.warn('smarttab.groups failed:', err)
       setGroups([])
     })
@@ -117,7 +123,7 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
 
   const saveSession = () => {
     const name = sessionName.trim() || undefined
-    window.tony?.smarttab.saveSession(name)
+    window.tony?.smarttab?.saveSession(name)
       .then(() => refreshSessions())
       .catch(err => console.warn('smarttab.saveSession failed:', err))
     setSessionName('')
@@ -192,10 +198,12 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
   return (
     <div style={styles.sidebar}>
       <div style={styles.header}>
-        <span>☰ Spaces</span>
-        <button className="apple-focus" style={styles.newBtn} onClick={onNewTab} title="New Tab">+</button>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><UIcon name="menu" size={13} /> Spaces</span>
+        <button className="apple-focus" style={{ ...styles.newBtn, ...(hoverNew ? { background: '#94e130', borderColor: '#94e130', transform: 'scale(1.08)' } : {}) }}
+          onClick={onNewTab} title="New Tab"
+          onMouseEnter={() => setHoverNew(true)} onMouseLeave={() => setHoverNew(false)}><UIcon name="plus" size={15} /></button>
       </div>
-      <div style={styles.modeRow}>
+<div style={styles.modeRow}>
         <button className="apple-focus" style={{ ...styles.modeBtn, ...(mode === 'domain' ? styles.modeActive : {}) }} onClick={() => setMode('domain')}>By domain</button>
         <button className="apple-focus" style={{ ...styles.modeBtn, ...(mode === 'theme' ? styles.modeActive : {}) }} onClick={() => setMode('theme')}>By theme</button>
       </div>
@@ -237,7 +245,7 @@ export default function Sidebar({ tabs, activeId, onSelect, onClose, onNewTab, o
               onClick={() => onSelect(t.id)} title={t.url}>
               <span style={{ ...styles.dot, background: CONTAINER_COLORS[t.container ?? 'default'] ?? '#6b7280' }} />
               <span style={styles.title}>{t.title}</span>
-              <span style={styles.close} onClick={(e) => { e.stopPropagation(); onClose(t.id) }}>✕</span>
+              <span style={styles.close} onClick={(e) => { e.stopPropagation(); onClose(t.id) }}><UIcon name="close" size={11} /></span>
             </button>
           ))}
         </React.Fragment>

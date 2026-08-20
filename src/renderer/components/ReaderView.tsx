@@ -78,12 +78,12 @@ export default function ReaderView({ title, content, onClose }: {
     <div ref={overlayRef} style={styles.overlay} onScroll={onScroll}>
       <div style={styles.progress} data-reader-progress />
       <div style={styles.bar}>
-        <span style={styles.title}>📖 {title || 'Reader Mode'}</span>
+<span style={styles.title}><UIcon name="reader" size={14} /> {title || 'Reader Mode'}</span>
         <button className="apple-focus" style={styles.themeBtn} onClick={toggle} aria-label={dark ? 'Toggle light theme' : 'Toggle dark theme'}>
           <UIcon name={dark ? 'light_mode' : 'dark_mode'} size={16} color="#0066cc" />
           {dark ? 'Light' : 'Dark'}
         </button>
-        <button className="apple-focus" style={styles.btn} onClick={onClose}>✕ Close</button>
+        <button className="apple-focus" style={styles.btn} onClick={onClose}><UIcon name="close" size={13} /> Close</button>
       </div>
       <div style={styles.body}>
         <h1 style={styles.h1}>{title}</h1>
